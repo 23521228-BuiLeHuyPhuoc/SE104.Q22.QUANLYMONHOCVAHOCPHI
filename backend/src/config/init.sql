@@ -121,7 +121,8 @@ INSERT INTO semesters (name, year, start_date, end_date, registration_start, reg
 ('Học kỳ 1', 2024, '2024-09-01', '2025-01-15', '2024-08-01', '2024-08-31', false),
 ('Học kỳ 2', 2024, '2025-02-01', '2025-06-15', '2025-01-15', '2025-01-31', true);
 
--- Insert admin user (password: admin123)
+-- Insert admin user (password: admin123 - CHANGE THIS IN PRODUCTION!)
+-- Note: In production, create admin user via application or with a secure password
 INSERT INTO users (username, password, role) VALUES
 ('admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
 

@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 // Import routes
@@ -14,10 +15,25 @@ const semesterRoutes = require('./routes/semesterRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Rate limiting configuration
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: { success: false, message: 'Quá nhiều yêu cầu, vui lòng thử lại sau' }
+});
+
+// Stricter rate limit for authentication endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 login attempts per windowMs
+  message: { success: false, message: 'Quá nhiều lần đăng nhập thất bại, vui lòng thử lại sau 15 phút' }
+});
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(generalLimiter); // Apply general rate limiting to all routes
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -30,8 +46,8 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
 
-// API Routes
-app.use('/api/auth', authRoutes);
+// API Routes - Apply stricter rate limiting to auth routes
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/registrations', registrationRoutes);

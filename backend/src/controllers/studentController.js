@@ -1,5 +1,11 @@
 const pool = require('../config/database');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+
+// Generate a random password
+const generateRandomPassword = () => {
+  return crypto.randomBytes(4).toString('hex'); // 8 character random password
+};
 
 // Get all students with pagination and search
 const getAllStudents = async (req, res) => {
@@ -97,8 +103,11 @@ const createStudent = async (req, res) => {
       class_name,
       major,
       enrollment_year,
-      password = 'student123' // default password
+      password // optional: if not provided, will generate random password
     } = req.body;
+
+    // Generate random password if not provided
+    const actualPassword = password || generateRandomPassword();
 
     if (!student_code || !full_name || !email) {
       return res.status(400).json({
@@ -124,7 +133,7 @@ const createStudent = async (req, res) => {
 
     // Create user account for student
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(actualPassword, salt);
     
     const userResult = await client.query(
       'INSERT INTO users (username, password, role) VALUES ($1, $2, $3) RETURNING id',
@@ -146,7 +155,8 @@ const createStudent = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Thêm sinh viên thành công',
-      data: result.rows[0]
+      data: result.rows[0],
+      generatedPassword: !password ? actualPassword : undefined // Only return if password was generated
     });
   } catch (error) {
     await client.query('ROLLBACK');
