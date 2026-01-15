@@ -416,3 +416,17 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Build outputs
+dist/
+build/
+
+# Frontend Vite
+frontend/dist/
+
+# Backend
+backend/.env
+
+# IDE
+.idea/
+

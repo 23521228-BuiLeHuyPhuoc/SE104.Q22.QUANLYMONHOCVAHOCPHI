@@ -1,0 +1,24 @@
+const express = require('express');
+const router = express.Router();
+const paymentController = require('../controllers/paymentController');
+const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+
+// All routes require authentication
+router.use(authMiddleware);
+
+// Get all payments
+router.get('/', paymentController.getAllPayments);
+
+// Get payment statistics
+router.get('/stats', paymentController.getPaymentStats);
+
+// Get student's payment history
+router.get('/student/:student_id', paymentController.getStudentPayments);
+
+// Get payment by ID
+router.get('/:id', paymentController.getPaymentById);
+
+// Create payment (admin only)
+router.post('/', adminMiddleware, paymentController.createPayment);
+
+module.exports = router;
