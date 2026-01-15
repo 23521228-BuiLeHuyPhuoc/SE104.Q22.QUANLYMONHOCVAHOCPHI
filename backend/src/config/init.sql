@@ -123,8 +123,9 @@ INSERT INTO semesters (name, year, start_date, end_date, registration_start, reg
 
 -- Insert admin user (password: admin123 - CHANGE THIS IN PRODUCTION!)
 -- Note: In production, create admin user via application or with a secure password
+-- Password: admin123
 INSERT INTO users (username, password, role) VALUES
-('admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+('admin', '$2b$10$uxBn3xaW9L2LwaBqQDrv3Oy3JE8iEHPq49YxoyjPRNtnymbFmUTmO', 'admin');
 
 -- Insert sample courses
 INSERT INTO courses (course_code, course_name, credits, description, fee_per_credit, max_students, semester_id, schedule, room, instructor) VALUES
