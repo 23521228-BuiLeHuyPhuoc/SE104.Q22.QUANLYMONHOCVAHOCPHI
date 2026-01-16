@@ -12,6 +12,9 @@ router.get('/', semesterController.getAllSemesters);
 // Get active semester
 router.get('/active', semesterController.getActiveSemester);
 
+// Get academic years
+router.get('/years', semesterController.getAcademicYears);
+
 // Get semester by ID
 router.get('/:id', semesterController.getSemesterById);
 

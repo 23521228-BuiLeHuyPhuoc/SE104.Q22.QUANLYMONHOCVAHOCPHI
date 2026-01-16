@@ -13,12 +13,15 @@ router.get('/', paymentController.getAllPayments);
 router.get('/stats', paymentController.getPaymentStats);
 
 // Get student's payment history
-router.get('/student/:student_id', paymentController.getStudentPayments);
+router.get('/student/:studentId', paymentController.getStudentPayments);
 
 // Get payment by ID
 router.get('/:id', paymentController.getPaymentById);
 
 // Create payment (admin only)
 router.post('/', adminMiddleware, paymentController.createPayment);
+
+// Cancel payment (admin only)
+router.put('/:id/cancel', adminMiddleware, paymentController.cancelPayment);
 
 module.exports = router;

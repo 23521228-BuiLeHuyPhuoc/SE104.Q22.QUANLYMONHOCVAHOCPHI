@@ -12,6 +12,9 @@ router.get('/', courseController.getAllCourses);
 // Get course statistics
 router.get('/stats', courseController.getCourseStats);
 
+// Get opened classes for semester
+router.get('/opened', courseController.getOpenedClasses);
+
 // Get course by ID
 router.get('/:id', courseController.getCourseById);
 

@@ -1,10 +1,12 @@
 import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from './Sidebar';
+import Header from './Header';
+import Footer from './Footer';
 import './Layout.css';
 
 const Layout = () => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, isAdmin, loading } = useAuth();
 
   if (loading) {
     return (
@@ -20,11 +22,15 @@ const Layout = () => {
   }
 
   return (
-    <div className="layout">
+    <div className={`layout ${isAdmin ? 'admin-layout' : 'student-layout'}`}>
       <Sidebar />
-      <main className="main-content">
-        <Outlet />
-      </main>
+      <div className="layout-main">
+        <Header />
+        <main className="main-content">
+          <Outlet />
+        </main>
+        <Footer />
+      </div>
     </div>
   );
 };

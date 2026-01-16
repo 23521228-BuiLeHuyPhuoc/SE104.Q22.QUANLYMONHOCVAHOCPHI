@@ -44,4 +44,10 @@ const adminMiddleware = (req, res, next) => {
   }
 };
 
-module.exports = { authMiddleware, adminMiddleware };
+module.exports = { 
+  authMiddleware, 
+  adminMiddleware,
+  authenticateToken: authMiddleware,
+  isAdmin: adminMiddleware,
+  authorizeAdmin: adminMiddleware
+};

@@ -3000,6 +3000,76 @@ INSERT INTO don_gia_tin_chi (loai_mon, loai_hoc, don_gia, ghi_chu) VALUES
 ('LT', 'hoc_he', 35000, 'Đơn giá môn Lý thuyết - học hè'),
 ('TH', 'hoc_he', 45000, 'Đơn giá môn Thực hành - học hè');
 
+-- =====================================================
+-- INSERT DATA - Thông báo mẫu (Sample Notifications)
+-- =====================================================
+INSERT INTO thong_bao (tieu_de, noi_dung, loai_thong_bao, doi_tuong, ghim_top, trang_thai) VALUES
+('Đợt đăng ký môn học HK2 2024-2025', 'Thời gian đăng ký: 15/01/2025 - 25/01/2025. Sinh viên truy cập hệ thống đăng ký học để chọn môn. Lưu ý kiểm tra điều kiện tiên quyết trước khi đăng ký.', 'Quan trọng', 'Tất cả', TRUE, TRUE),
+('Hạn nộp học phí HK2 2024-2025', 'Hạn cuối nộp học phí: 15/02/2025. Sinh viên chưa nộp đủ học phí sẽ bị khóa đăng ký môn học kỳ tiếp theo. Vui lòng thanh toán qua các phương thức được hỗ trợ.', 'Học phí', 'Sinh viên', TRUE, TRUE),
+('Lịch thi cuối kỳ HK1 2024-2025 đã được cập nhật', 'Sinh viên kiểm tra lịch thi trong mục Thời khóa biểu. Mọi thắc mắc liên hệ Phòng Đào tạo.', 'Lịch thi', 'Sinh viên', FALSE, TRUE),
+('Thông báo nghỉ lễ 30/4 - 1/5', 'Nhà trường thông báo lịch nghỉ lễ 30/4 - 1/5: từ ngày 30/04 đến hết ngày 01/05. Sinh viên quay lại học tập bình thường từ ngày 02/05.', 'Chung', 'Tất cả', FALSE, TRUE),
+('Cập nhật thông tin sinh viên', 'Phòng Công tác sinh viên yêu cầu tất cả sinh viên cập nhật thông tin cá nhân (CCCD, số điện thoại, địa chỉ) trước ngày 30/01/2025.', 'Chung', 'Sinh viên', FALSE, TRUE),
+('Đợt xét học bổng HK1 2024-2025', 'Danh sách xét học bổng HK1 đã được công bố. Sinh viên kiểm tra kết quả tại Phòng Công tác sinh viên hoặc qua hệ thống trực tuyến.', 'Học bổng', 'Sinh viên', FALSE, TRUE);
+
+-- =====================================================
+-- INSERT DATA - Tài khoản mẫu (Sample Accounts)
+-- Password: admin123 -> bcrypt hash
+-- Password: student123 -> bcrypt hash
+-- =====================================================
+
+-- Tài khoản Admin
+INSERT INTO tai_khoan (ten_dang_nhap, mat_khau, role, ho_ten, email, trang_thai) VALUES
+('admin', '$2b$10$aMTwtHVFreMooCvW6/aHuucOqzapBULA2NxTuIdnqQjQpf3WBBeY2', 'admin', 'Quản trị viên', 'admin@school.edu.vn', TRUE);
+
+-- Tạo quan trị viên (sử dụng subquery để lấy đúng ID)
+INSERT INTO quan_tri_vien (ma_tai_khoan, ho_ten, chuc_vu) 
+SELECT ma_tai_khoan, 'Quản trị viên', 'Admin hệ thống' 
+FROM tai_khoan WHERE ten_dang_nhap = 'admin';
+
+-- =====================================================
+-- Tài khoản Sinh viên mẫu (password: student123)
+-- Bước 1: Tạo tài khoản KHÔNG có ma_sv (tránh circular FK)
+-- =====================================================
+INSERT INTO tai_khoan (ten_dang_nhap, mat_khau, role, ho_ten, email, trang_thai) VALUES
+('22520001', '$2b$10$i04Sd3Yr.zmOypY1FGMpbu81qNNYBqkwFQMQKKzxHGHIupZO19uPi', 'sinh_vien', 'Nguyễn Văn An', 'an.nguyen@student.edu.vn', TRUE),
+('22520002', '$2b$10$i04Sd3Yr.zmOypY1FGMpbu81qNNYBqkwFQMQKKzxHGHIupZO19uPi', 'sinh_vien', 'Trần Thị Bình', 'binh.tran@student.edu.vn', TRUE),
+('22520003', '$2b$10$i04Sd3Yr.zmOypY1FGMpbu81qNNYBqkwFQMQKKzxHGHIupZO19uPi', 'sinh_vien', 'Lê Văn Cường', 'cuong.le@student.edu.vn', TRUE),
+('22520004', '$2b$10$i04Sd3Yr.zmOypY1FGMpbu81qNNYBqkwFQMQKKzxHGHIupZO19uPi', 'sinh_vien', 'Phạm Thị Dung', 'dung.pham@student.edu.vn', TRUE),
+('22520005', '$2b$10$i04Sd3Yr.zmOypY1FGMpbu81qNNYBqkwFQMQKKzxHGHIupZO19uPi', 'sinh_vien', 'Hoàng Minh Đức', 'duc.hoang@student.edu.vn', TRUE);
+
+-- =====================================================
+-- Bước 2: Tạo sinh viên với ma_tai_khoan (dùng subquery)
+-- ma_huyen: Q1, Q3, BTH, GV, Q7 (các quận ở HCM)
+-- ma_nganh: KTPM, KHMT, HTTT, MMT, ATTT
+-- =====================================================
+INSERT INTO sinh_vien (ma_sv, ma_tai_khoan, ho_ten, ngay_sinh, gioi_tinh, cccd, ma_huyen, ma_nganh, sdt, email, trang_thai)
+SELECT '22520001', ma_tai_khoan, 'Nguyễn Văn An', '2004-05-15', 'Nam', '079204001234', 'Q1', 'KTPM', '0901234567', 'an.nguyen@student.edu.vn', 'Đang học'
+FROM tai_khoan WHERE ten_dang_nhap = '22520001';
+
+INSERT INTO sinh_vien (ma_sv, ma_tai_khoan, ho_ten, ngay_sinh, gioi_tinh, cccd, ma_huyen, ma_nganh, sdt, email, trang_thai)
+SELECT '22520002', ma_tai_khoan, 'Trần Thị Bình', '2004-08-20', 'Nữ', '079204005678', 'Q3', 'KHMT', '0909876543', 'binh.tran@student.edu.vn', 'Đang học'
+FROM tai_khoan WHERE ten_dang_nhap = '22520002';
+
+INSERT INTO sinh_vien (ma_sv, ma_tai_khoan, ho_ten, ngay_sinh, gioi_tinh, cccd, ma_huyen, ma_nganh, sdt, email, trang_thai)
+SELECT '22520003', ma_tai_khoan, 'Lê Văn Cường', '2004-03-10', 'Nam', '079204009012', 'BTH', 'HTTT', '0912345678', 'cuong.le@student.edu.vn', 'Đang học'
+FROM tai_khoan WHERE ten_dang_nhap = '22520003';
+
+INSERT INTO sinh_vien (ma_sv, ma_tai_khoan, ho_ten, ngay_sinh, gioi_tinh, cccd, ma_huyen, ma_nganh, sdt, email, trang_thai)
+SELECT '22520004', ma_tai_khoan, 'Phạm Thị Dung', '2004-11-25', 'Nữ', '079204003456', 'GV', 'KTPM', '0923456789', 'dung.pham@student.edu.vn', 'Đang học'
+FROM tai_khoan WHERE ten_dang_nhap = '22520004';
+
+INSERT INTO sinh_vien (ma_sv, ma_tai_khoan, ho_ten, ngay_sinh, gioi_tinh, cccd, ma_huyen, ma_nganh, sdt, email, trang_thai)
+SELECT '22520005', ma_tai_khoan, 'Hoàng Minh Đức', '2004-07-08', 'Nam', '079204007890', 'Q7', 'MMT', '0934567890', 'duc.hoang@student.edu.vn', 'Đang học'
+FROM tai_khoan WHERE ten_dang_nhap = '22520005';
+
+-- =====================================================
+-- Bước 3: Cập nhật ma_sv trong tai_khoan
+-- =====================================================
+UPDATE tai_khoan SET ma_sv = '22520001' WHERE ten_dang_nhap = '22520001';
+UPDATE tai_khoan SET ma_sv = '22520002' WHERE ten_dang_nhap = '22520002';
+UPDATE tai_khoan SET ma_sv = '22520003' WHERE ten_dang_nhap = '22520003';
+UPDATE tai_khoan SET ma_sv = '22520004' WHERE ten_dang_nhap = '22520004';
+UPDATE tai_khoan SET ma_sv = '22520005' WHERE ten_dang_nhap = '22520005';
 
 -- =====================================================
 -- END OF INIT.SQL

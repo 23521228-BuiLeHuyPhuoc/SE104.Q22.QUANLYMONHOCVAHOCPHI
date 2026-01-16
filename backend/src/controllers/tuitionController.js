@@ -1,74 +1,87 @@
 const pool = require('../config/database');
 
-// Get all tuition fees with filters
-const getAllTuitionFees = async (req, res) => {
+// Lấy tất cả học phí với phân trang và filter
+const getAllTuition = async (req, res) => {
   try {
     const { 
       page = 1, 
       limit = 10, 
-      student_id, 
-      semester_id,
-      status,
-      search = ''
+      search = '', 
+      ma_hoc_ky,
+      trang_thai
     } = req.query;
     const offset = (page - 1) * limit;
 
-    let whereConditions = [];
-    let params = [];
-    let paramIndex = 1;
+    let whereClause = `WHERE (sv.ma_sv ILIKE $1 OR sv.ho_ten ILIKE $1)`;
+    let params = [`%${search}%`];
+    let paramIndex = 2;
 
-    if (student_id) {
-      whereConditions.push(`tf.student_id = $${paramIndex}`);
-      params.push(student_id);
+    if (ma_hoc_ky) {
+      whereClause += ` AND pdk.ma_hoc_ky = $${paramIndex}`;
+      params.push(ma_hoc_ky);
       paramIndex++;
     }
 
-    if (semester_id) {
-      whereConditions.push(`tf.semester_id = $${paramIndex}`);
-      params.push(semester_id);
-      paramIndex++;
+    if (trang_thai) {
+      if (trang_thai === 'chua_dong') {
+        whereClause += ` AND (pdk.tong_tien_da_dong < pdk.tong_tien_phai_dong OR pdk.tong_tien_da_dong IS NULL)`;
+      } else if (trang_thai === 'da_dong') {
+        whereClause += ` AND pdk.tong_tien_da_dong >= pdk.tong_tien_phai_dong`;
+      }
     }
 
-    if (status) {
-      whereConditions.push(`tf.status = $${paramIndex}`);
-      params.push(status);
-      paramIndex++;
-    }
-
-    if (search) {
-      whereConditions.push(`(s.student_code ILIKE $${paramIndex} OR s.full_name ILIKE $${paramIndex})`);
-      params.push(`%${search}%`);
-      paramIndex++;
-    }
-
-    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
-
-    // Count total
+    // Đếm tổng
     const countResult = await pool.query(
-      `SELECT COUNT(*) FROM tuition_fees tf
-       JOIN students s ON tf.student_id = s.id
+      `SELECT COUNT(DISTINCT pdk.so_phieu)
+       FROM phieu_dang_ky pdk
+       JOIN sinh_vien sv ON pdk.ma_sv = sv.ma_sv
        ${whereClause}`,
       params
     );
     const total = parseInt(countResult.rows[0].count);
 
-    // Get tuition fees
+    // Lấy danh sách học phí
     const result = await pool.query(
-      `SELECT tf.*, 
-       s.student_code, s.full_name as student_name, s.email, s.class_name,
-       sem.name as semester_name, sem.year as semester_year
-       FROM tuition_fees tf
-       JOIN students s ON tf.student_id = s.id
-       LEFT JOIN semesters sem ON tf.semester_id = sem.id
+      `SELECT pdk.*, sv.ho_ten, sv.email, hk.ten_hoc_ky, nh.ten_nam_hoc,
+       (SELECT COUNT(*) FROM chi_tiet_dang_ky WHERE so_phieu = pdk.so_phieu AND trang_thai = 'Đã đăng ký') as so_mon,
+       (SELECT COALESCE(SUM(so_tien_thu), 0) FROM phieu_thu_hoc_phi WHERE so_phieu_dang_ky = pdk.so_phieu AND trang_thai = 'Thành công') as da_thu
+       FROM phieu_dang_ky pdk
+       JOIN sinh_vien sv ON pdk.ma_sv = sv.ma_sv
+       JOIN hoc_ky hk ON pdk.ma_hoc_ky = hk.ma_hoc_ky
+       JOIN nam_hoc nh ON hk.ma_nam_hoc = nh.ma_nam_hoc
        ${whereClause}
-       ORDER BY tf.created_at DESC
+       ORDER BY pdk.ngay_dang_ky DESC
        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
       [...params, limit, offset]
     );
 
+    const tuitions = result.rows.map(t => ({
+      id: t.so_phieu,
+      so_phieu: t.so_phieu,
+      ma_sv: t.ma_sv,
+      student_code: t.ma_sv,
+      ho_ten: t.ho_ten,
+      student_name: t.ho_ten,
+      email: t.email,
+      ma_hoc_ky: t.ma_hoc_ky,
+      ten_hoc_ky: t.ten_hoc_ky,
+      semester_name: t.ten_hoc_ky,
+      ten_nam_hoc: t.ten_nam_hoc,
+      so_mon: parseInt(t.so_mon) || 0,
+      courses_count: parseInt(t.so_mon) || 0,
+      tong_tien_phai_dong: parseFloat(t.tong_tien_phai_dong) || 0,
+      total_amount: parseFloat(t.tong_tien_phai_dong) || 0,
+      tong_tien_da_dong: parseFloat(t.da_thu) || 0,
+      paid_amount: parseFloat(t.da_thu) || 0,
+      con_no: (parseFloat(t.tong_tien_phai_dong) || 0) - (parseFloat(t.da_thu) || 0),
+      remaining: (parseFloat(t.tong_tien_phai_dong) || 0) - (parseFloat(t.da_thu) || 0),
+      trang_thai: (parseFloat(t.da_thu) || 0) >= (parseFloat(t.tong_tien_phai_dong) || 0) ? 'Đã đóng đủ' : 'Còn nợ',
+      status: (parseFloat(t.da_thu) || 0) >= (parseFloat(t.tong_tien_phai_dong) || 0) ? 'paid' : 'pending'
+    }));
+
     res.json({
       success: true,
-      data: result.rows,
+      data: tuitions,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -77,7 +90,7 @@ const getAllTuitionFees = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Get all tuition fees error:', error);
+    console.error('Get all tuition error:', error);
     res.status(500).json({
       success: false,
       message: 'Lỗi server'
@@ -85,19 +98,20 @@ const getAllTuitionFees = async (req, res) => {
   }
 };
 
-// Get tuition fee by ID
-const getTuitionFeeById = async (req, res) => {
+// Lấy học phí theo ID phiếu
+const getTuitionById = async (req, res) => {
   try {
     const { id } = req.params;
     
     const result = await pool.query(
-      `SELECT tf.*, 
-       s.student_code, s.full_name as student_name, s.email, s.class_name,
-       sem.name as semester_name, sem.year as semester_year
-       FROM tuition_fees tf
-       JOIN students s ON tf.student_id = s.id
-       LEFT JOIN semesters sem ON tf.semester_id = sem.id
-       WHERE tf.id = $1`,
+      `SELECT pdk.*, sv.ho_ten, sv.email, sv.so_dien_thoai, hk.ten_hoc_ky, nh.ten_nam_hoc,
+       (SELECT COALESCE(SUM(so_tien_thu), 0) FROM phieu_thu_hoc_phi 
+        WHERE so_phieu_dang_ky = pdk.so_phieu AND trang_thai = 'Thành công') as da_thu
+       FROM phieu_dang_ky pdk
+       JOIN sinh_vien sv ON pdk.ma_sv = sv.ma_sv
+       JOIN hoc_ky hk ON pdk.ma_hoc_ky = hk.ma_hoc_ky
+       JOIN nam_hoc nh ON hk.ma_nam_hoc = nh.ma_nam_hoc
+       WHERE pdk.so_phieu = $1`,
       [id]
     );
 
@@ -108,36 +122,58 @@ const getTuitionFeeById = async (req, res) => {
       });
     }
 
-    // Get payment history
-    const payments = await pool.query(
-      `SELECT p.*, u.username as created_by_name
-       FROM payments p
-       LEFT JOIN users u ON p.created_by = u.id
-       WHERE p.tuition_fee_id = $1
-       ORDER BY p.payment_date DESC`,
+    const t = result.rows[0];
+
+    // Lấy chi tiết môn đăng ký
+    const detailsResult = await pool.query(
+      `SELECT ctdk.*, l.ma_lop, mh.ma_mon_hoc, mh.ten_mon_hoc, mh.loai_mon
+       FROM chi_tiet_dang_ky ctdk
+       JOIN lop l ON ctdk.ma_lop = l.ma_lop
+       JOIN mon_hoc mh ON l.ma_mon_hoc = mh.ma_mon_hoc
+       WHERE ctdk.so_phieu = $1 AND ctdk.trang_thai = 'Đã đăng ký'
+       ORDER BY mh.ten_mon_hoc`,
       [id]
     );
 
-    // Get registered courses
-    const courses = await pool.query(
-      `SELECT c.course_code, c.course_name, c.credits, c.fee_per_credit,
-       (c.credits * c.fee_per_credit) as course_fee
-       FROM course_registrations cr
-       JOIN courses c ON cr.course_id = c.id
-       WHERE cr.student_id = $1 AND cr.semester_id = $2 AND cr.status = 'registered'`,
-      [result.rows[0].student_id, result.rows[0].semester_id]
+    // Lấy lịch sử thanh toán
+    const paymentsResult = await pool.query(
+      `SELECT * FROM phieu_thu_hoc_phi 
+       WHERE so_phieu_dang_ky = $1
+       ORDER BY ngay_lap DESC`,
+      [id]
     );
 
     res.json({
       success: true,
       data: {
-        tuitionFee: result.rows[0],
-        payments: payments.rows,
-        courses: courses.rows
+        id: t.so_phieu,
+        so_phieu: t.so_phieu,
+        ma_sv: t.ma_sv,
+        ho_ten: t.ho_ten,
+        email: t.email,
+        so_dien_thoai: t.so_dien_thoai,
+        ma_hoc_ky: t.ma_hoc_ky,
+        ten_hoc_ky: t.ten_hoc_ky,
+        ten_nam_hoc: t.ten_nam_hoc,
+        tong_tien_phai_dong: parseFloat(t.tong_tien_phai_dong) || 0,
+        total_amount: parseFloat(t.tong_tien_phai_dong) || 0,
+        tong_tien_da_dong: parseFloat(t.da_thu) || 0,
+        paid_amount: parseFloat(t.da_thu) || 0,
+        con_no: (parseFloat(t.tong_tien_phai_dong) || 0) - (parseFloat(t.da_thu) || 0),
+        remaining: (parseFloat(t.tong_tien_phai_dong) || 0) - (parseFloat(t.da_thu) || 0),
+        courses: detailsResult.rows.map(c => ({
+          ma_mon_hoc: c.ma_mon_hoc,
+          ten_mon_hoc: c.ten_mon_hoc,
+          so_tin_chi: c.so_tin_chi,
+          don_gia: c.don_gia,
+          so_tien: c.so_tien,
+          loai_dang_ky: c.loai_dang_ky
+        })),
+        payments: paymentsResult.rows
       }
     });
   } catch (error) {
-    console.error('Get tuition fee by ID error:', error);
+    console.error('Get tuition by ID error:', error);
     res.status(500).json({
       success: false,
       message: 'Lỗi server'
@@ -145,36 +181,56 @@ const getTuitionFeeById = async (req, res) => {
   }
 };
 
-// Get student's tuition fee
-const getStudentTuitionFee = async (req, res) => {
+// Lấy học phí của sinh viên
+const getStudentTuition = async (req, res) => {
   try {
-    const { student_id } = req.params;
-    const { semester_id } = req.query;
+    const { studentId } = req.params;
+    const { ma_hoc_ky } = req.query;
 
-    let whereClause = 'WHERE tf.student_id = $1';
-    let params = [student_id];
+    let whereClause = `WHERE pdk.ma_sv = $1`;
+    let params = [studentId];
+    let paramIndex = 2;
 
-    if (semester_id) {
-      whereClause += ' AND tf.semester_id = $2';
-      params.push(semester_id);
+    if (ma_hoc_ky) {
+      whereClause += ` AND pdk.ma_hoc_ky = $${paramIndex}`;
+      params.push(ma_hoc_ky);
     }
 
     const result = await pool.query(
-      `SELECT tf.*, 
-       sem.name as semester_name, sem.year as semester_year
-       FROM tuition_fees tf
-       LEFT JOIN semesters sem ON tf.semester_id = sem.id
+      `SELECT pdk.*, hk.ten_hoc_ky, nh.ten_nam_hoc,
+       (SELECT COALESCE(SUM(so_tien_thu), 0) FROM phieu_thu_hoc_phi 
+        WHERE so_phieu_dang_ky = pdk.so_phieu AND trang_thai = 'Thành công') as da_thu
+       FROM phieu_dang_ky pdk
+       JOIN hoc_ky hk ON pdk.ma_hoc_ky = hk.ma_hoc_ky
+       JOIN nam_hoc nh ON hk.ma_nam_hoc = nh.ma_nam_hoc
        ${whereClause}
-       ORDER BY sem.year DESC, sem.name DESC`,
+       ORDER BY pdk.ngay_dang_ky DESC`,
       params
     );
 
+    const tuitions = result.rows.map(t => ({
+      id: t.so_phieu,
+      so_phieu: t.so_phieu,
+      ma_hoc_ky: t.ma_hoc_ky,
+      ten_hoc_ky: t.ten_hoc_ky,
+      semester_name: t.ten_hoc_ky,
+      ten_nam_hoc: t.ten_nam_hoc,
+      tong_tien_phai_dong: parseFloat(t.tong_tien_phai_dong) || 0,
+      total_amount: parseFloat(t.tong_tien_phai_dong) || 0,
+      tong_tien_da_dong: parseFloat(t.da_thu) || 0,
+      paid_amount: parseFloat(t.da_thu) || 0,
+      con_no: (parseFloat(t.tong_tien_phai_dong) || 0) - (parseFloat(t.da_thu) || 0),
+      remaining: (parseFloat(t.tong_tien_phai_dong) || 0) - (parseFloat(t.da_thu) || 0),
+      trang_thai: (parseFloat(t.da_thu) || 0) >= (parseFloat(t.tong_tien_phai_dong) || 0) ? 'Đã đóng đủ' : 'Còn nợ',
+      status: (parseFloat(t.da_thu) || 0) >= (parseFloat(t.tong_tien_phai_dong) || 0) ? 'paid' : 'pending'
+    }));
+
     res.json({
       success: true,
-      data: result.rows
+      data: tuitions
     });
   } catch (error) {
-    console.error('Get student tuition fee error:', error);
+    console.error('Get student tuition error:', error);
     res.status(500).json({
       success: false,
       message: 'Lỗi server'
@@ -182,79 +238,59 @@ const getStudentTuitionFee = async (req, res) => {
   }
 };
 
-// Calculate tuition fee for student
-const calculateTuitionFee = async (req, res) => {
+// Tính học phí cho sinh viên
+const calculateTuition = async (req, res) => {
   try {
-    const { student_id, semester_id } = req.body;
+    const { ma_sv, ma_hoc_ky } = req.body;
 
-    if (!student_id || !semester_id) {
+    if (!ma_sv || !ma_hoc_ky) {
       return res.status(400).json({
         success: false,
-        message: 'Vui lòng cung cấp student_id và semester_id'
+        message: 'Vui lòng cung cấp mã sinh viên và học kỳ'
       });
     }
 
-    // Get registered courses
-    const coursesResult = await pool.query(
-      `SELECT c.credits, c.fee_per_credit
-       FROM course_registrations cr
-       JOIN courses c ON cr.course_id = c.id
-       WHERE cr.student_id = $1 AND cr.semester_id = $2 AND cr.status = 'registered'`,
-      [student_id, semester_id]
+    // Lấy phiếu đăng ký
+    const phieuResult = await pool.query(
+      'SELECT so_phieu FROM phieu_dang_ky WHERE ma_sv = $1 AND ma_hoc_ky = $2',
+      [ma_sv, ma_hoc_ky]
     );
 
-    let totalCredits = 0;
-    let totalAmount = 0;
-
-    coursesResult.rows.forEach(course => {
-      totalCredits += course.credits;
-      totalAmount += course.credits * parseFloat(course.fee_per_credit);
-    });
-
-    // Check existing tuition fee record
-    const existingFee = await pool.query(
-      'SELECT * FROM tuition_fees WHERE student_id = $1 AND semester_id = $2',
-      [student_id, semester_id]
-    );
-
-    let tuitionFee;
-    if (existingFee.rows.length > 0) {
-      // Update existing record
-      const paidAmount = parseFloat(existingFee.rows[0].paid_amount) || 0;
-      const remainingAmount = totalAmount - paidAmount;
-      const status = paidAmount >= totalAmount ? 'paid' : (paidAmount > 0 ? 'partial' : 'unpaid');
-
-      const updateResult = await pool.query(
-        `UPDATE tuition_fees 
-         SET total_credits = $1, total_amount = $2, remaining_amount = $3, status = $4, updated_at = CURRENT_TIMESTAMP
-         WHERE id = $5
-         RETURNING *`,
-        [totalCredits, totalAmount, remainingAmount, status, existingFee.rows[0].id]
-      );
-      tuitionFee = updateResult.rows[0];
-    } else {
-      // Create new record
-      const dueDate = await pool.query(
-        'SELECT registration_end + INTERVAL \'30 days\' as due_date FROM semesters WHERE id = $1',
-        [semester_id]
-      );
-
-      const insertResult = await pool.query(
-        `INSERT INTO tuition_fees (student_id, semester_id, total_credits, total_amount, remaining_amount, due_date)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         RETURNING *`,
-        [student_id, semester_id, totalCredits, totalAmount, totalAmount, dueDate.rows[0]?.due_date]
-      );
-      tuitionFee = insertResult.rows[0];
+    if (phieuResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sinh viên chưa đăng ký môn học trong học kỳ này'
+      });
     }
+
+    const so_phieu = phieuResult.rows[0].so_phieu;
+
+    // Tính lại tổng tiền
+    const totalResult = await pool.query(
+      `SELECT COALESCE(SUM(so_tien), 0) as total
+       FROM chi_tiet_dang_ky
+       WHERE so_phieu = $1 AND trang_thai = 'Đã đăng ký'`,
+      [so_phieu]
+    );
+
+    const total = parseFloat(totalResult.rows[0].total);
+
+    // Cập nhật phiếu đăng ký
+    await pool.query(
+      'UPDATE phieu_dang_ky SET tong_tien_phai_dong = $1 WHERE so_phieu = $2',
+      [total, so_phieu]
+    );
 
     res.json({
       success: true,
       message: 'Tính học phí thành công',
-      data: tuitionFee
+      data: {
+        so_phieu,
+        tong_tien_phai_dong: total
+      }
     });
   } catch (error) {
-    console.error('Calculate tuition fee error:', error);
+    console.error('Calculate tuition error:', error);
     res.status(500).json({
       success: false,
       message: 'Lỗi server'
@@ -262,41 +298,63 @@ const calculateTuitionFee = async (req, res) => {
   }
 };
 
-// Get tuition statistics
+// Thống kê học phí
 const getTuitionStats = async (req, res) => {
   try {
-    const { semester_id } = req.query;
+    const { ma_hoc_ky } = req.query;
 
     let whereClause = '';
     let params = [];
-    if (semester_id) {
-      whereClause = 'WHERE tf.semester_id = $1';
-      params = [semester_id];
+
+    if (ma_hoc_ky) {
+      whereClause = 'WHERE pdk.ma_hoc_ky = $1';
+      params = [ma_hoc_ky];
     }
 
+    // Tổng tiền phải thu
     const totalResult = await pool.query(
-      `SELECT 
-       COUNT(*) as total_records,
-       COALESCE(SUM(total_amount), 0) as total_amount,
-       COALESCE(SUM(paid_amount), 0) as total_paid,
-       COALESCE(SUM(remaining_amount), 0) as total_remaining
-       FROM tuition_fees tf ${whereClause}`,
+      `SELECT COALESCE(SUM(tong_tien_phai_dong), 0) as total
+       FROM phieu_dang_ky pdk ${whereClause}`,
       params
     );
 
-    const byStatusResult = await pool.query(
-      `SELECT status, COUNT(*) as count, COALESCE(SUM(total_amount), 0) as total_amount
-       FROM tuition_fees tf
-       ${whereClause}
-       GROUP BY status`,
+    // Tổng tiền đã thu
+    const paidResult = await pool.query(
+      `SELECT COALESCE(SUM(pthp.so_tien_thu), 0) as total
+       FROM phieu_thu_hoc_phi pthp
+       JOIN phieu_dang_ky pdk ON pthp.so_phieu_dang_ky = pdk.so_phieu
+       WHERE pthp.trang_thai = 'Thành công'
+       ${ma_hoc_ky ? 'AND pdk.ma_hoc_ky = $1' : ''}`,
+      params
+    );
+
+    // Số sinh viên đã đóng đủ
+    const paidStudentsResult = await pool.query(
+      `SELECT COUNT(DISTINCT pdk.ma_sv) as count
+       FROM phieu_dang_ky pdk
+       WHERE pdk.tong_tien_da_dong >= pdk.tong_tien_phai_dong
+       ${ma_hoc_ky ? 'AND pdk.ma_hoc_ky = $1' : ''}`,
+      params
+    );
+
+    // Số sinh viên còn nợ
+    const owingStudentsResult = await pool.query(
+      `SELECT COUNT(DISTINCT pdk.ma_sv) as count
+       FROM phieu_dang_ky pdk
+       WHERE (pdk.tong_tien_da_dong < pdk.tong_tien_phai_dong OR pdk.tong_tien_da_dong IS NULL)
+       AND pdk.tong_tien_phai_dong > 0
+       ${ma_hoc_ky ? 'AND pdk.ma_hoc_ky = $1' : ''}`,
       params
     );
 
     res.json({
       success: true,
       data: {
-        summary: totalResult.rows[0],
-        byStatus: byStatusResult.rows
+        totalAmount: parseFloat(totalResult.rows[0].total),
+        paidAmount: parseFloat(paidResult.rows[0].total) || 0,
+        remainingAmount: parseFloat(totalResult.rows[0].total) - (parseFloat(paidResult.rows[0].total) || 0),
+        paidStudents: parseInt(paidStudentsResult.rows[0].count),
+        owingStudents: parseInt(owingStudentsResult.rows[0].count)
       }
     });
   } catch (error) {
@@ -308,10 +366,29 @@ const getTuitionStats = async (req, res) => {
   }
 };
 
+// Lấy đơn giá tín chỉ
+const getCreditPrices = async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM don_gia_tin_chi ORDER BY loai_mon, loai_hoc');
+    
+    res.json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error('Get credit prices error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server'
+    });
+  }
+};
+
 module.exports = {
-  getAllTuitionFees,
-  getTuitionFeeById,
-  getStudentTuitionFee,
-  calculateTuitionFee,
-  getTuitionStats
+  getAllTuition,
+  getTuitionById,
+  getStudentTuition,
+  calculateTuition,
+  getTuitionStats,
+  getCreditPrices
 };

@@ -18,8 +18,9 @@ const login = async (req, res) => {
       });
     }
 
+    // Query từ bảng tai_khoan (accounts)
     const result = await pool.query(
-      'SELECT * FROM users WHERE username = $1',
+      'SELECT * FROM tai_khoan WHERE ten_dang_nhap = $1',
       [username]
     );
 
@@ -31,7 +32,7 @@ const login = async (req, res) => {
     }
 
     const user = result.rows[0];
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await bcrypt.compare(password, user.mat_khau);
 
     if (!isValidPassword) {
       return res.status(401).json({
@@ -41,20 +42,59 @@ const login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role },
+      { 
+        id: user.ma_tai_khoan, 
+        ma_tai_khoan: user.ma_tai_khoan,
+        username: user.ten_dang_nhap, 
+        role: user.role 
+      },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
-    // Get student info if user is a student
+    // Lấy thông tin sinh viên nếu là sinh viên
     let studentInfo = null;
     if (user.role === 'student') {
       const studentResult = await pool.query(
-        'SELECT * FROM students WHERE user_id = $1',
-        [user.id]
+        `SELECT sv.*, nh.ten_nganh as ten_nganh, kh.ten_khoa
+         FROM sinh_vien sv
+         LEFT JOIN nganh_hoc nh ON sv.ma_nganh = nh.ma_nganh
+         LEFT JOIN khoa kh ON nh.ma_khoa = kh.ma_khoa
+         WHERE sv.ma_tai_khoan = $1`,
+        [user.ma_tai_khoan]
       );
       if (studentResult.rows.length > 0) {
-        studentInfo = studentResult.rows[0];
+        const sv = studentResult.rows[0];
+        studentInfo = {
+          id: sv.ma_sv,
+          ma_sv: sv.ma_sv,
+          student_code: sv.ma_sv,
+          ho_ten: sv.ho_ten,
+          full_name: sv.ho_ten,
+          ngay_sinh: sv.ngay_sinh,
+          gioi_tinh: sv.gioi_tinh,
+          email: sv.email,
+          so_dien_thoai: sv.so_dien_thoai,
+          dia_chi: sv.dia_chi,
+          ma_nganh: sv.ma_nganh,
+          ten_nganh: sv.ten_nganh,
+          ten_khoa: sv.ten_khoa,
+          nam_nhap_hoc: sv.nam_nhap_hoc,
+          trang_thai: sv.trang_thai,
+          avatar: sv.avatar
+        };
+      }
+    }
+
+    // Lấy thông tin admin nếu là admin
+    let adminInfo = null;
+    if (user.role === 'admin') {
+      const adminResult = await pool.query(
+        'SELECT * FROM quan_tri_vien WHERE ma_tai_khoan = $1',
+        [user.ma_tai_khoan]
+      );
+      if (adminResult.rows.length > 0) {
+        adminInfo = adminResult.rows[0];
       }
     }
 
@@ -64,11 +104,13 @@ const login = async (req, res) => {
       data: {
         token,
         user: {
-          id: user.id,
-          username: user.username,
+          id: user.ma_tai_khoan,
+          ma_tai_khoan: user.ma_tai_khoan,
+          username: user.ten_dang_nhap,
           role: user.role
         },
-        student: studentInfo
+        student: studentInfo,
+        admin: adminInfo
       }
     });
   } catch (error) {
@@ -92,9 +134,9 @@ const register = async (req, res) => {
       });
     }
 
-    // Check if username exists
+    // Kiểm tra tên đăng nhập đã tồn tại
     const existingUser = await pool.query(
-      'SELECT id FROM users WHERE username = $1',
+      'SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = $1',
       [username]
     );
 
@@ -109,16 +151,20 @@ const register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create user
+    // Tạo tài khoản
     const result = await pool.query(
-      'INSERT INTO users (username, password, role) VALUES ($1, $2, $3) RETURNING id, username, role',
+      'INSERT INTO tai_khoan (ten_dang_nhap, mat_khau, role) VALUES ($1, $2, $3) RETURNING ma_tai_khoan, ten_dang_nhap, role',
       [username, hashedPassword, role]
     );
 
     res.status(201).json({
       success: true,
       message: 'Đăng ký thành công',
-      data: result.rows[0]
+      data: {
+        id: result.rows[0].ma_tai_khoan,
+        username: result.rows[0].ten_dang_nhap,
+        role: result.rows[0].role
+      }
     });
   } catch (error) {
     console.error('Register error:', error);
@@ -132,9 +178,11 @@ const register = async (req, res) => {
 // Get current user info
 const getMe = async (req, res) => {
   try {
+    const userId = req.user.id || req.user.ma_tai_khoan;
+    
     const result = await pool.query(
-      'SELECT id, username, role, created_at FROM users WHERE id = $1',
-      [req.user.id]
+      'SELECT ma_tai_khoan, ten_dang_nhap, role, ngay_tao FROM tai_khoan WHERE ma_tai_khoan = $1',
+      [userId]
     );
 
     if (result.rows.length === 0) {
@@ -144,22 +192,62 @@ const getMe = async (req, res) => {
       });
     }
 
+    const user = result.rows[0];
     let studentInfo = null;
-    if (result.rows[0].role === 'student') {
+    let adminInfo = null;
+
+    if (user.role === 'student') {
       const studentResult = await pool.query(
-        'SELECT * FROM students WHERE user_id = $1',
-        [req.user.id]
+        `SELECT sv.*, nh.ten_nganh, kh.ten_khoa
+         FROM sinh_vien sv
+         LEFT JOIN nganh_hoc nh ON sv.ma_nganh = nh.ma_nganh
+         LEFT JOIN khoa kh ON nh.ma_khoa = kh.ma_khoa
+         WHERE sv.ma_tai_khoan = $1`,
+        [userId]
       );
       if (studentResult.rows.length > 0) {
-        studentInfo = studentResult.rows[0];
+        const sv = studentResult.rows[0];
+        studentInfo = {
+          id: sv.ma_sv,
+          ma_sv: sv.ma_sv,
+          student_code: sv.ma_sv,
+          ho_ten: sv.ho_ten,
+          full_name: sv.ho_ten,
+          ngay_sinh: sv.ngay_sinh,
+          gioi_tinh: sv.gioi_tinh,
+          email: sv.email,
+          so_dien_thoai: sv.so_dien_thoai,
+          dia_chi: sv.dia_chi,
+          ma_nganh: sv.ma_nganh,
+          ten_nganh: sv.ten_nganh,
+          ten_khoa: sv.ten_khoa,
+          nam_nhap_hoc: sv.nam_nhap_hoc,
+          trang_thai: sv.trang_thai,
+          avatar: sv.avatar
+        };
+      }
+    } else if (user.role === 'admin') {
+      const adminResult = await pool.query(
+        'SELECT * FROM quan_tri_vien WHERE ma_tai_khoan = $1',
+        [userId]
+      );
+      if (adminResult.rows.length > 0) {
+        adminInfo = adminResult.rows[0];
       }
     }
 
     res.json({
       success: true,
       data: {
-        user: result.rows[0],
-        student: studentInfo
+        user: {
+          id: user.ma_tai_khoan,
+          ma_tai_khoan: user.ma_tai_khoan,
+          username: user.ten_dang_nhap,
+          role: user.role,
+          created_at: user.ngay_tao
+        },
+        student: studentInfo,
+        admin: adminInfo
       }
     });
   } catch (error) {
@@ -175,6 +263,7 @@ const getMe = async (req, res) => {
 const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id || req.user.ma_tai_khoan;
 
     if (!currentPassword || !newPassword) {
       return res.status(400).json({
@@ -184,11 +273,18 @@ const changePassword = async (req, res) => {
     }
 
     const result = await pool.query(
-      'SELECT password FROM users WHERE id = $1',
-      [req.user.id]
+      'SELECT mat_khau FROM tai_khoan WHERE ma_tai_khoan = $1',
+      [userId]
     );
 
-    const isValidPassword = await bcrypt.compare(currentPassword, result.rows[0].password);
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy người dùng'
+      });
+    }
+
+    const isValidPassword = await bcrypt.compare(currentPassword, result.rows[0].mat_khau);
     if (!isValidPassword) {
       return res.status(400).json({
         success: false,
@@ -200,8 +296,8 @@ const changePassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
     await pool.query(
-      'UPDATE users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
-      [hashedPassword, req.user.id]
+      'UPDATE tai_khoan SET mat_khau = $1 WHERE ma_tai_khoan = $2',
+      [hashedPassword, userId]
     );
 
     res.json({

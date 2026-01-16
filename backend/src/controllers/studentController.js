@@ -1,44 +1,88 @@
 const pool = require('../config/database');
 const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
 
-// Generate a random password
-const generateRandomPassword = () => {
-  return crypto.randomBytes(4).toString('hex'); // 8 character random password
-};
-
-// Get all students with pagination and search
+// Lấy danh sách sinh viên với phân trang và filter
 const getAllStudents = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = '', sortBy = 'id', sortOrder = 'ASC' } = req.query;
+    const { 
+      page = 1, 
+      limit = 10, 
+      search = '', 
+      ma_nganh,
+      trang_thai,
+      sortBy = 'ma_sv', 
+      sortOrder = 'ASC' 
+    } = req.query;
     const offset = (page - 1) * limit;
 
-    const validSortFields = ['id', 'student_code', 'full_name', 'email', 'class_name', 'created_at'];
-    const sortField = validSortFields.includes(sortBy) ? sortBy : 'id';
+    const validSortFields = ['ma_sv', 'ho_ten', 'email', 'nam_nhap_hoc', 'ngay_tao'];
+    const sortField = validSortFields.includes(sortBy) ? sortBy : 'ma_sv';
     const order = sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 
-    // Count total
+    let whereClause = `WHERE (sv.ma_sv ILIKE $1 OR sv.ho_ten ILIKE $1 OR sv.email ILIKE $1)`;
+    let params = [`%${search}%`];
+    let paramIndex = 2;
+
+    if (ma_nganh) {
+      whereClause += ` AND sv.ma_nganh = $${paramIndex}`;
+      params.push(ma_nganh);
+      paramIndex++;
+    }
+
+    if (trang_thai) {
+      whereClause += ` AND sv.trang_thai = $${paramIndex}`;
+      params.push(trang_thai);
+      paramIndex++;
+    }
+
+    // Đếm tổng
     const countResult = await pool.query(
-      `SELECT COUNT(*) FROM students 
-       WHERE student_code ILIKE $1 OR full_name ILIKE $1 OR email ILIKE $1`,
-      [`%${search}%`]
+      `SELECT COUNT(*) FROM sinh_vien sv ${whereClause}`,
+      params
     );
     const total = parseInt(countResult.rows[0].count);
 
-    // Get students
+    // Lấy danh sách sinh viên
     const result = await pool.query(
-      `SELECT s.*, u.username 
-       FROM students s 
-       LEFT JOIN users u ON s.user_id = u.id
-       WHERE s.student_code ILIKE $1 OR s.full_name ILIKE $1 OR s.email ILIKE $1
-       ORDER BY s.${sortField} ${order}
-       LIMIT $2 OFFSET $3`,
-      [`%${search}%`, limit, offset]
+      `SELECT sv.*, nh.ten_nganh, kh.ten_khoa,
+       h.ten_huyen, t.ten_tinh
+       FROM sinh_vien sv
+       LEFT JOIN nganh_hoc nh ON sv.ma_nganh = nh.ma_nganh
+       LEFT JOIN khoa kh ON nh.ma_khoa = kh.ma_khoa
+       LEFT JOIN huyen h ON sv.ma_huyen = h.ma_huyen
+       LEFT JOIN tinh t ON h.ma_tinh = t.ma_tinh
+       ${whereClause}
+       ORDER BY sv.${sortField} ${order}
+       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+      [...params, limit, offset]
     );
+
+    // Map dữ liệu để tương thích với frontend
+    const students = result.rows.map(sv => ({
+      id: sv.ma_sv,
+      ma_sv: sv.ma_sv,
+      student_code: sv.ma_sv,
+      ho_ten: sv.ho_ten,
+      full_name: sv.ho_ten,
+      ngay_sinh: sv.ngay_sinh,
+      gioi_tinh: sv.gioi_tinh,
+      email: sv.email,
+      so_dien_thoai: sv.so_dien_thoai,
+      dia_chi: sv.dia_chi,
+      ma_nganh: sv.ma_nganh,
+      ten_nganh: sv.ten_nganh,
+      ten_khoa: sv.ten_khoa,
+      ten_huyen: sv.ten_huyen,
+      ten_tinh: sv.ten_tinh,
+      nam_nhap_hoc: sv.nam_nhap_hoc,
+      trang_thai: sv.trang_thai,
+      avatar: sv.avatar,
+      created_at: sv.ngay_tao
+    }));
 
     res.json({
       success: true,
-      data: result.rows,
+      data: students,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -55,16 +99,20 @@ const getAllStudents = async (req, res) => {
   }
 };
 
-// Get student by ID
+// Lấy thông tin sinh viên theo ID
 const getStudentById = async (req, res) => {
   try {
     const { id } = req.params;
     
     const result = await pool.query(
-      `SELECT s.*, u.username 
-       FROM students s 
-       LEFT JOIN users u ON s.user_id = u.id
-       WHERE s.id = $1`,
+      `SELECT sv.*, nh.ten_nganh, kh.ten_khoa,
+       h.ten_huyen, t.ten_tinh
+       FROM sinh_vien sv
+       LEFT JOIN nganh_hoc nh ON sv.ma_nganh = nh.ma_nganh
+       LEFT JOIN khoa kh ON nh.ma_khoa = kh.ma_khoa
+       LEFT JOIN huyen h ON sv.ma_huyen = h.ma_huyen
+       LEFT JOIN tinh t ON h.ma_tinh = t.ma_tinh
+       WHERE sv.ma_sv = $1`,
       [id]
     );
 
@@ -75,9 +123,30 @@ const getStudentById = async (req, res) => {
       });
     }
 
+    const sv = result.rows[0];
     res.json({
       success: true,
-      data: result.rows[0]
+      data: {
+        id: sv.ma_sv,
+        ma_sv: sv.ma_sv,
+        student_code: sv.ma_sv,
+        ho_ten: sv.ho_ten,
+        full_name: sv.ho_ten,
+        ngay_sinh: sv.ngay_sinh,
+        gioi_tinh: sv.gioi_tinh,
+        email: sv.email,
+        so_dien_thoai: sv.so_dien_thoai,
+        dia_chi: sv.dia_chi,
+        ma_nganh: sv.ma_nganh,
+        ten_nganh: sv.ten_nganh,
+        ten_khoa: sv.ten_khoa,
+        ten_huyen: sv.ten_huyen,
+        ten_tinh: sv.ten_tinh,
+        nam_nhap_hoc: sv.nam_nhap_hoc,
+        trang_thai: sv.trang_thai,
+        avatar: sv.avatar,
+        created_at: sv.ngay_tao
+      }
     });
   } catch (error) {
     console.error('Get student by ID error:', error);
@@ -88,75 +157,84 @@ const getStudentById = async (req, res) => {
   }
 };
 
-// Create new student
+// Tạo sinh viên mới
 const createStudent = async (req, res) => {
   const client = await pool.connect();
   try {
-    const {
-      student_code,
-      full_name,
-      email,
-      phone,
-      date_of_birth,
-      gender,
-      address,
-      class_name,
-      major,
-      enrollment_year,
-      password // optional: if not provided, will generate random password
+    const { 
+      ma_sv, 
+      ho_ten, 
+      ngay_sinh, 
+      gioi_tinh, 
+      email, 
+      so_dien_thoai, 
+      dia_chi, 
+      ma_huyen, 
+      ma_nganh, 
+      nam_nhap_hoc,
+      password = '123456' // Mật khẩu mặc định
     } = req.body;
 
-    // Generate random password if not provided
-    const actualPassword = password || generateRandomPassword();
-
-    if (!student_code || !full_name || !email) {
+    if (!ma_sv || !ho_ten || !ma_nganh) {
       return res.status(400).json({
         success: false,
-        message: 'Vui lòng nhập mã sinh viên, họ tên và email'
+        message: 'Vui lòng nhập đầy đủ thông tin bắt buộc (Mã SV, Họ tên, Ngành)'
       });
     }
 
-    // Check if student code or email exists
+    // Kiểm tra mã sinh viên đã tồn tại
     const existingStudent = await client.query(
-      'SELECT id FROM students WHERE student_code = $1 OR email = $2',
-      [student_code, email]
+      'SELECT ma_sv FROM sinh_vien WHERE ma_sv = $1',
+      [ma_sv]
     );
 
     if (existingStudent.rows.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'Mã sinh viên hoặc email đã tồn tại'
+        message: 'Mã sinh viên đã tồn tại'
       });
+    }
+
+    // Kiểm tra email đã tồn tại
+    if (email) {
+      const existingEmail = await client.query(
+        'SELECT ma_sv FROM sinh_vien WHERE email = $1',
+        [email]
+      );
+      if (existingEmail.rows.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email đã được sử dụng'
+        });
+      }
     }
 
     await client.query('BEGIN');
 
-    // Create user account for student
+    // Tạo tài khoản
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(actualPassword, salt);
+    const hashedPassword = await bcrypt.hash(password, salt);
     
-    const userResult = await client.query(
-      'INSERT INTO users (username, password, role) VALUES ($1, $2, $3) RETURNING id',
-      [student_code, hashedPassword, 'student']
+    const accountResult = await client.query(
+      'INSERT INTO tai_khoan (ten_dang_nhap, mat_khau, role) VALUES ($1, $2, $3) RETURNING ma_tai_khoan',
+      [ma_sv, hashedPassword, 'student']
     );
-    const userId = userResult.rows[0].id;
+    const ma_tai_khoan = accountResult.rows[0].ma_tai_khoan;
 
-    // Create student
-    const result = await client.query(
-      `INSERT INTO students 
-       (student_code, full_name, email, phone, date_of_birth, gender, address, class_name, major, enrollment_year, user_id)
+    // Tạo sinh viên
+    const studentResult = await client.query(
+      `INSERT INTO sinh_vien (ma_sv, ho_ten, ngay_sinh, gioi_tinh, email, so_dien_thoai, dia_chi, ma_huyen, ma_nganh, nam_nhap_hoc, ma_tai_khoan)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *`,
-      [student_code, full_name, email, phone, date_of_birth, gender, address, class_name, major, enrollment_year, userId]
+      [ma_sv, ho_ten, ngay_sinh, gioi_tinh, email, so_dien_thoai, dia_chi, ma_huyen, ma_nganh, nam_nhap_hoc, ma_tai_khoan]
     );
 
     await client.query('COMMIT');
 
     res.status(201).json({
       success: true,
-      message: 'Thêm sinh viên thành công',
-      data: result.rows[0],
-      generatedPassword: !password ? actualPassword : undefined // Only return if password was generated
+      message: 'Tạo sinh viên thành công',
+      data: studentResult.rows[0]
     });
   } catch (error) {
     await client.query('ROLLBACK');
@@ -170,25 +248,27 @@ const createStudent = async (req, res) => {
   }
 };
 
-// Update student
+// Cập nhật sinh viên
 const updateStudent = async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      full_name,
-      email,
-      phone,
-      date_of_birth,
-      gender,
-      address,
-      class_name,
-      major,
-      enrollment_year
+    const { 
+      ho_ten, 
+      ngay_sinh, 
+      gioi_tinh, 
+      email, 
+      so_dien_thoai, 
+      dia_chi, 
+      ma_huyen, 
+      ma_nganh, 
+      nam_nhap_hoc,
+      trang_thai,
+      avatar
     } = req.body;
 
-    // Check if student exists
+    // Kiểm tra sinh viên tồn tại
     const existingStudent = await pool.query(
-      'SELECT id FROM students WHERE id = $1',
+      'SELECT ma_sv FROM sinh_vien WHERE ma_sv = $1',
       [id]
     );
 
@@ -199,13 +279,13 @@ const updateStudent = async (req, res) => {
       });
     }
 
-    // Check email uniqueness
+    // Kiểm tra email trùng (nếu có thay đổi)
     if (email) {
-      const emailCheck = await pool.query(
-        'SELECT id FROM students WHERE email = $1 AND id != $2',
+      const existingEmail = await pool.query(
+        'SELECT ma_sv FROM sinh_vien WHERE email = $1 AND ma_sv != $2',
         [email, id]
       );
-      if (emailCheck.rows.length > 0) {
+      if (existingEmail.rows.length > 0) {
         return res.status(400).json({
           success: false,
           message: 'Email đã được sử dụng'
@@ -214,20 +294,21 @@ const updateStudent = async (req, res) => {
     }
 
     const result = await pool.query(
-      `UPDATE students SET 
-       full_name = COALESCE($1, full_name),
-       email = COALESCE($2, email),
-       phone = COALESCE($3, phone),
-       date_of_birth = COALESCE($4, date_of_birth),
-       gender = COALESCE($5, gender),
-       address = COALESCE($6, address),
-       class_name = COALESCE($7, class_name),
-       major = COALESCE($8, major),
-       enrollment_year = COALESCE($9, enrollment_year),
-       updated_at = CURRENT_TIMESTAMP
-       WHERE id = $10
+      `UPDATE sinh_vien SET 
+        ho_ten = COALESCE($1, ho_ten),
+        ngay_sinh = COALESCE($2, ngay_sinh),
+        gioi_tinh = COALESCE($3, gioi_tinh),
+        email = COALESCE($4, email),
+        so_dien_thoai = COALESCE($5, so_dien_thoai),
+        dia_chi = COALESCE($6, dia_chi),
+        ma_huyen = COALESCE($7, ma_huyen),
+        ma_nganh = COALESCE($8, ma_nganh),
+        nam_nhap_hoc = COALESCE($9, nam_nhap_hoc),
+        trang_thai = COALESCE($10, trang_thai),
+        avatar = COALESCE($11, avatar)
+       WHERE ma_sv = $12
        RETURNING *`,
-      [full_name, email, phone, date_of_birth, gender, address, class_name, major, enrollment_year, id]
+      [ho_ten, ngay_sinh, gioi_tinh, email, so_dien_thoai, dia_chi, ma_huyen, ma_nganh, nam_nhap_hoc, trang_thai, avatar, id]
     );
 
     res.json({
@@ -244,14 +325,15 @@ const updateStudent = async (req, res) => {
   }
 };
 
-// Delete student
+// Xóa sinh viên
 const deleteStudent = async (req, res) => {
   const client = await pool.connect();
   try {
     const { id } = req.params;
 
+    // Kiểm tra sinh viên tồn tại và lấy ma_tai_khoan
     const existingStudent = await client.query(
-      'SELECT id, user_id FROM students WHERE id = $1',
+      'SELECT ma_sv, ma_tai_khoan FROM sinh_vien WHERE ma_sv = $1',
       [id]
     );
 
@@ -262,14 +344,16 @@ const deleteStudent = async (req, res) => {
       });
     }
 
+    const ma_tai_khoan = existingStudent.rows[0].ma_tai_khoan;
+
     await client.query('BEGIN');
 
-    // Delete student
-    await client.query('DELETE FROM students WHERE id = $1', [id]);
+    // Xóa sinh viên (sẽ cascade xóa các bản ghi liên quan)
+    await client.query('DELETE FROM sinh_vien WHERE ma_sv = $1', [id]);
 
-    // Delete associated user account
-    if (existingStudent.rows[0].user_id) {
-      await client.query('DELETE FROM users WHERE id = $1', [existingStudent.rows[0].user_id]);
+    // Xóa tài khoản
+    if (ma_tai_khoan) {
+      await client.query('DELETE FROM tai_khoan WHERE ma_tai_khoan = $1', [ma_tai_khoan]);
     }
 
     await client.query('COMMIT');
@@ -290,36 +374,122 @@ const deleteStudent = async (req, res) => {
   }
 };
 
-// Get student statistics
+// Thống kê sinh viên
 const getStudentStats = async (req, res) => {
   try {
-    const totalResult = await pool.query('SELECT COUNT(*) FROM students');
-    const byClassResult = await pool.query(
-      `SELECT class_name, COUNT(*) as count 
-       FROM students 
-       WHERE class_name IS NOT NULL 
-       GROUP BY class_name 
-       ORDER BY count DESC 
-       LIMIT 10`
-    );
-    const byMajorResult = await pool.query(
-      `SELECT major, COUNT(*) as count 
-       FROM students 
-       WHERE major IS NOT NULL 
-       GROUP BY major 
-       ORDER BY count DESC`
-    );
+    // Tổng số sinh viên
+    const totalResult = await pool.query('SELECT COUNT(*) as total FROM sinh_vien');
+    
+    // Số sinh viên theo trạng thái
+    const statusResult = await pool.query(`
+      SELECT trang_thai, COUNT(*) as count 
+      FROM sinh_vien 
+      GROUP BY trang_thai
+    `);
+
+    // Số sinh viên theo ngành
+    const majorResult = await pool.query(`
+      SELECT nh.ten_nganh, COUNT(sv.ma_sv) as count 
+      FROM sinh_vien sv
+      JOIN nganh_hoc nh ON sv.ma_nganh = nh.ma_nganh
+      GROUP BY nh.ten_nganh
+      ORDER BY count DESC
+      LIMIT 5
+    `);
+
+    // Số sinh viên theo khoa
+    const facultyResult = await pool.query(`
+      SELECT kh.ten_khoa, COUNT(sv.ma_sv) as count 
+      FROM sinh_vien sv
+      JOIN nganh_hoc nh ON sv.ma_nganh = nh.ma_nganh
+      JOIN khoa kh ON nh.ma_khoa = kh.ma_khoa
+      GROUP BY kh.ten_khoa
+      ORDER BY count DESC
+    `);
+
+    // Số sinh viên theo năm nhập học
+    const yearResult = await pool.query(`
+      SELECT EXTRACT(YEAR FROM ngay_nhap_hoc)::integer as nam_nhap_hoc, COUNT(*) as count 
+      FROM sinh_vien 
+      WHERE ngay_nhap_hoc IS NOT NULL
+      GROUP BY EXTRACT(YEAR FROM ngay_nhap_hoc)
+      ORDER BY nam_nhap_hoc DESC
+      LIMIT 5
+    `);
 
     res.json({
       success: true,
       data: {
-        total: parseInt(totalResult.rows[0].count),
-        byClass: byClassResult.rows,
-        byMajor: byMajorResult.rows
+        total: parseInt(totalResult.rows[0].total),
+        byStatus: statusResult.rows,
+        byMajor: majorResult.rows,
+        byFaculty: facultyResult.rows,
+        byYear: yearResult.rows
       }
     });
   } catch (error) {
     console.error('Get student stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server'
+    });
+  }
+};
+
+// Lấy danh sách ngành học
+const getMajors = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT nh.*, kh.ten_khoa
+      FROM nganh_hoc nh
+      LEFT JOIN khoa kh ON nh.ma_khoa = kh.ma_khoa
+      ORDER BY kh.ten_khoa, nh.ten_nganh
+    `);
+
+    res.json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error('Get majors error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server'
+    });
+  }
+};
+
+// Lấy danh sách tỉnh/thành phố
+const getProvinces = async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM tinh ORDER BY ten_tinh');
+    res.json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error('Get provinces error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server'
+    });
+  }
+};
+
+// Lấy danh sách quận/huyện theo tỉnh
+const getDistrictsByProvince = async (req, res) => {
+  try {
+    const { provinceId } = req.params;
+    const result = await pool.query(
+      'SELECT * FROM huyen WHERE ma_tinh = $1 ORDER BY ten_huyen',
+      [provinceId]
+    );
+    res.json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error('Get districts error:', error);
     res.status(500).json({
       success: false,
       message: 'Lỗi server'
@@ -333,5 +503,8 @@ module.exports = {
   createStudent,
   updateStudent,
   deleteStudent,
-  getStudentStats
+  getStudentStats,
+  getMajors,
+  getProvinces,
+  getDistrictsByProvince
 };

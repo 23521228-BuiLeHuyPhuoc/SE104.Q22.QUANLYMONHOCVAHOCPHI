@@ -16,7 +16,7 @@ router.get('/stats', registrationController.getRegistrationStats);
 router.get('/available', registrationController.getAvailableCourses);
 
 // Get student's registered courses
-router.get('/student/:student_id', registrationController.getStudentCourses);
+router.get('/student/:studentId', registrationController.getStudentCourses);
 
 // Register course
 router.post('/', registrationController.registerCourse);

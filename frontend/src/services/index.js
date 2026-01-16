@@ -33,6 +33,16 @@ export const studentService = {
     return response.data;
   },
 
+  getStudentById: async (id) => {
+    const response = await api.get(`/students/${id}`);
+    return response.data;
+  },
+
+  updateStudent: async (id, data) => {
+    const response = await api.put(`/students/${id}`, data);
+    return response.data;
+  },
+
   create: async (data) => {
     const response = await api.post('/students', data);
     return response.data;
@@ -82,6 +92,54 @@ export const courseService = {
 
   getStats: async () => {
     const response = await api.get('/courses/stats');
+    return response.data;
+  },
+};
+
+// Class service for managing classes
+export const classService = {
+  getAll: async (params) => {
+    const response = await api.get('/classes', { params });
+    return response.data;
+  },
+
+  getById: async (id) => {
+    const response = await api.get(`/classes/${id}`);
+    return response.data;
+  },
+
+  create: async (data) => {
+    const response = await api.post('/classes', data);
+    return response.data;
+  },
+
+  update: async (id, data) => {
+    const response = await api.put(`/classes/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id) => {
+    const response = await api.delete(`/classes/${id}`);
+    return response.data;
+  },
+
+  getStats: async () => {
+    const response = await api.get('/classes/stats');
+    return response.data;
+  },
+
+  getOpenedClasses: async (params) => {
+    const response = await api.get('/classes/opened', { params });
+    return response.data;
+  },
+
+  openClass: async (data) => {
+    const response = await api.post('/classes/open', data);
+    return response.data;
+  },
+
+  closeClass: async (id) => {
+    const response = await api.delete(`/classes/opened/${id}`);
     return response.data;
   },
 };
@@ -202,4 +260,37 @@ export const semesterService = {
     const response = await api.delete(`/semesters/${id}`);
     return response.data;
   },
+};
+
+// Notification service for announcements
+export const notificationService = {
+  getAll: async (params) => {
+    const response = await api.get('/notifications', { params });
+    return response.data;
+  },
+
+  getNotifications: async () => {
+    const response = await api.get('/notifications');
+    return response.data;
+  },
+
+  getPublic: async () => {
+    const response = await api.get('/notifications/public');
+    return response.data;
+  },
+
+  getPersonal: async () => {
+    const response = await api.get('/notifications/personal');
+    return response.data;
+  },
+
+  markAsRead: async (id) => {
+    const response = await api.put(`/notifications/${id}/read`);
+    return response.data;
+  },
+
+  getUnreadCount: async () => {
+    const response = await api.get('/notifications/unread-count');
+    return response.data;
+  }
 };
