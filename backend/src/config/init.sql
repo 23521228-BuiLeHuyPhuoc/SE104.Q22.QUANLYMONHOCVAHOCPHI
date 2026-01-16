@@ -4,6 +4,50 @@
 -- Mã hóa: UTF-8
 -- =====================================================
 
+-- =====================================================
+-- HƯỚNG DẪN SỬ DỤNG:
+-- =====================================================
+-- Cách 1: Chạy từ terminal với psql (tạo database + khởi tạo schema + dữ liệu)
+--   psql -U postgres -f init.sql
+--
+-- Cách 2: Nếu database đã tồn tại, chỉ cần chạy phần schema + dữ liệu:
+--   psql -U postgres -d ql_dangky_hocphi -f init.sql
+--
+-- Cách 3: Sử dụng trong ứng dụng Node.js:
+--   Đọc nội dung file và thực thi qua pg client
+-- =====================================================
+
+-- =====================================================
+-- TẠO DATABASE (Chạy với quyền superuser/postgres)
+-- Lưu ý: Phần này cần chạy riêng nếu dùng psql -d <database>
+-- =====================================================
+
+-- Kết thúc tất cả connections đến database nếu tồn tại
+SELECT pg_terminate_backend(pg_stat_activity.pid)
+FROM pg_stat_activity
+WHERE pg_stat_activity.datname = 'ql_dangky_hocphi'
+  AND pid <> pg_backend_pid();
+
+-- Xóa database nếu tồn tại (sử dụng DROP DATABASE IF EXISTS)
+DROP DATABASE IF EXISTS ql_dangky_hocphi;
+
+-- Tạo database mới
+CREATE DATABASE ql_dangky_hocphi
+    WITH 
+    OWNER = postgres
+    ENCODING = 'UTF8'
+    LC_COLLATE = 'en_US.UTF-8'
+    LC_CTYPE = 'en_US.UTF-8'
+    TEMPLATE = template0
+    CONNECTION LIMIT = -1;
+
+-- Kết nối đến database vừa tạo
+\connect ql_dangky_hocphi
+
+-- =====================================================
+-- BẮT ĐẦU KHỞI TẠO SCHEMA VÀ DỮ LIỆU
+-- =====================================================
+
 -- Drop tables if exist (in correct order due to foreign keys)
 DROP TABLE IF EXISTS thong_bao_ca_nhan CASCADE;
 DROP TABLE IF EXISTS thong_bao CASCADE;
