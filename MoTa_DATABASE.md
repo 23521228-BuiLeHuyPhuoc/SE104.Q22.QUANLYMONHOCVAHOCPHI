@@ -11,7 +11,7 @@
 | Tên Database | `ql_dangky_hocphi` |
 | Hệ quản trị CSDL | PostgreSQL |
 | Phiên bản | 12+ |
-| Số lượng bảng | 22 bảng |
+| Số lượng bảng | 20 bảng |
 | Mã hóa | UTF-8 |
 
 ### 1.2. Danh sách các bảng theo nhóm chức năng
@@ -25,23 +25,19 @@
 | 5 | Tổ chức | `khoa` | Danh sách khoa |
 | 6 | Tổ chức | `nganh_hoc` | Danh sách ngành học |
 | 7 | Nhân sự | `sinh_vien` | Thông tin sinh viên |
-| 8 | Môn học | `mon_hoc` | Danh sách môn học |
-| 9 | Đào tạo | `chuong_trinh_hoc` | Chương trình đào tạo |
-| 10 | Thời gian | `nam_hoc` | Danh sách năm học |
-| 11 | Thời gian | `hoc_ky` | Danh sách học kỳ |
-| 12 | Đào tạo | `mon_hoc_mo` | Môn học mở trong học kỳ |
-| 13 | Đăng ký | `phieu_dang_ky` | Phiếu đăng ký học phần |
-| 14 | Đăng ký | `chi_tiet_dang_ky` | Chi tiết môn đăng ký |
-| 15 | Học phí | `phieu_thu_hoc_phi` | Phiếu thu học phí |
-| 16 | Cấu hình | `don_gia_tin_chi` | Đơn giá tín chỉ |
-| 17 | Tài khoản | `vai_tro` | Vai trò người dùng |
-| 18 | Tài khoản | `quyen` | Danh sách quyền |
-| 19 | Tài khoản | `phan_quyen` | Phân quyền cho vai trò |
-| 20 | Tài khoản | `tai_khoan` | Tài khoản đăng nhập |
-| 21 | Tài khoản | `lich_su_dang_nhap` | Lịch sử đăng nhập |
-| 22 | Thông báo | `thong_bao` | Thông báo chung |
-| 23 | Thông báo | `thong_bao_ca_nhan` | Thông báo cá nhân |
-| 24 | Hệ thống | `log_hoat_dong` | Log hoạt động |
+| 8 | Môn học | `mon_hoc` | Danh sách môn học (thuộc khoa quản lý) |
+| 9 | Môn học | `lop` | Danh sách lớp học (một môn có nhiều lớp) |
+| 10 | Đào tạo | `chuong_trinh_hoc` | Chương trình đào tạo |
+| 11 | Thời gian | `nam_hoc` | Danh sách năm học |
+| 12 | Thời gian | `hoc_ky` | Danh sách học kỳ |
+| 13 | Đào tạo | `lop_mo` | Lớp mở trong học kỳ (thay thế mon_hoc_mo) |
+| 14 | Đăng ký | `phieu_dang_ky` | Phiếu đăng ký học phần |
+| 15 | Đăng ký | `chi_tiet_dang_ky` | Chi tiết lớp đăng ký |
+| 16 | Học phí | `phieu_thu_hoc_phi` | Phiếu thu học phí |
+| 17 | Cấu hình | `don_gia_tin_chi` | Đơn giá tín chỉ theo loại học |
+| 18 | Tài khoản | `tai_khoan` | Tài khoản đăng nhập (phân quyền trực tiếp) |
+| 19 | Thông báo | `thong_bao` | Thông báo chung |
+| 20 | Thông báo | `thong_bao_ca_nhan` | Thông báo cá nhân |
 
 ---
 
@@ -266,7 +262,7 @@
 
 ### 2.8. BẢNG `mon_hoc` - Môn học
 
-**Mô tả:** Danh sách môn học (BM2, QĐ2)
+**Mô tả:** Danh sách môn học thuộc khoa quản lý (BM2, QĐ2)
 
 **Cấu trúc:**
 
@@ -274,6 +270,7 @@
 |---------|--------------|------|----------|-------|
 | `ma_mon_hoc` | VARCHAR(15) | NO | - | **PK** - Mã môn học (BM2) |
 | `ten_mon_hoc` | VARCHAR(150) | NO | - | Tên môn học (BM2) |
+| `ma_khoa` | VARCHAR(10) | NO | - | **FK** → `khoa.ma_khoa` (Khoa quản lý) |
 | `loai_mon` | VARCHAR(5) | NO | - | Loại môn:  'LT'/'TH' (BM2, QĐ2) |
 | `so_tiet` | INTEGER | NO | - | Số tiết (BM2, QĐ2) |
 | `so_tin_chi` | INTEGER | - | **Computed** | Số tín chỉ (QĐ2) |
@@ -282,6 +279,12 @@
 | `ngay_tao` | TIMESTAMP | YES | CURRENT_TIMESTAMP | Ngày tạo |
 
 **Khóa chính:** `ma_mon_hoc`
+
+**Khóa ngoại:**
+
+| Tên FK | Cột | Tham chiếu | Mô tả |
+|--------|-----|------------|-------|
+| `fk_monhoc_khoa` | `ma_khoa` | `khoa(ma_khoa)` | Khoa quản lý môn học |
 
 **Cột tính toán (Computed Column):**
 ```sql
@@ -298,7 +301,45 @@ END
 
 ---
 
-### 2.9. BẢNG `chuong_trinh_hoc` - Chương trình học
+### 2.9. BẢNG `lop` - Lớp học
+
+**Mô tả:** Danh sách các lớp học của môn học (một môn có thể có nhiều lớp)
+
+**Cấu trúc:**
+
+| Tên cột | Kiểu dữ liệu | Null | Mặc định | Mô tả |
+|---------|--------------|------|----------|-------|
+| `ma_lop` | VARCHAR(20) | NO | - | **PK** - Mã lớp |
+| `ten_lop` | VARCHAR(100) | NO | - | Tên lớp (VD: "CSDL_01", "CSDL_02") |
+| `ma_mon_hoc` | VARCHAR(15) | NO | - | **FK** → `mon_hoc.ma_mon_hoc` |
+| `giang_vien` | VARCHAR(100) | YES | - | Giảng viên phụ trách |
+| `lich_hoc` | VARCHAR(200) | YES | - | Lịch học (VD: "Thứ 2, Tiết 1-3") |
+| `phong_hoc` | VARCHAR(50) | YES | - | Phòng học |
+| `so_luong_toi_da` | INTEGER | YES | 50 | Số lượng SV tối đa |
+| `mo_ta` | VARCHAR(300) | YES | - | Mô tả |
+| `trang_thai` | BOOLEAN | YES | TRUE | Trạng thái |
+| `ngay_tao` | TIMESTAMP | YES | CURRENT_TIMESTAMP | Ngày tạo |
+
+**Khóa chính:** `ma_lop`
+
+**Khóa ngoại:**
+
+| Tên FK | Cột | Tham chiếu | Mô tả |
+|--------|-----|------------|-------|
+| `fk_lop_monhoc` | `ma_mon_hoc` | `mon_hoc(ma_mon_hoc)` | Lớp thuộc môn học |
+
+**Ví dụ dữ liệu:**
+```sql
+| ma_lop     | ten_lop    | ma_mon_hoc | giang_vien     | lich_hoc              |
+|------------|------------|------------|----------------|----------------------|
+| CSDL01     | CSDL_01    | LT005      | Nguyễn Văn A   | Thứ 2, Tiết 1-3      |
+| CSDL02     | CSDL_02    | LT005      | Trần Thị B     | Thứ 4, Tiết 6-8      |
+| LTW01      | LTW_01     | LT006      | Lê Văn C       | Thứ 3, Tiết 1-3      |
+```
+
+---
+
+### 2.10. BẢNG `chuong_trinh_hoc` - Chương trình học
 
 **Mô tả:** Chương trình đào tạo theo ngành (BM3, QĐ3)
 
@@ -330,7 +371,7 @@ END
 
 ---
 
-### 2.10. BẢNG `nam_hoc` - Năm học
+### 2.11. BẢNG `nam_hoc` - Năm học
 
 **Mô tả:** Danh sách năm học (BM4)
 
@@ -349,7 +390,7 @@ END
 
 ---
 
-### 2.11. BẢNG `hoc_ky` - Học kỳ
+### 2.12. BẢNG `hoc_ky` - Học kỳ
 
 **Mô tả:** Danh sách học kỳ (BM4, QĐ4, QĐ6)
 
@@ -385,9 +426,9 @@ END
 
 ---
 
-### 2.12. BẢNG `mon_hoc_mo` - Môn học mở trong học kỳ
+### 2.13. BẢNG `lop_mo` - Lớp mở trong học kỳ
 
-**Mô tả:** Danh sách môn học mở đăng ký trong học kỳ (BM4, QĐ4, QĐ5)
+**Mô tả:** Danh sách lớp học mở đăng ký trong học kỳ (BM4, QĐ4, QĐ5)
 
 **Cấu trúc:**
 
@@ -395,8 +436,7 @@ END
 |---------|--------------|------|----------|-------|
 | `id` | SERIAL | NO | Auto | **PK** - ID tự tăng |
 | `ma_hoc_ky` | VARCHAR(15) | NO | - | **FK** → `hoc_ky.ma_hoc_ky` (BM4) |
-| `ma_mon_hoc` | VARCHAR(15) | NO | - | **FK** → `mon_hoc.ma_mon_hoc` (BM4) |
-| `so_luong_toi_da` | INTEGER | YES | 100 | Số lượng SV tối đa |
+| `ma_lop` | VARCHAR(20) | NO | - | **FK** → `lop.ma_lop` |
 | `so_luong_da_dang_ky` | INTEGER | YES | 0 | Số SV đã đăng ký |
 | `ghi_chu` | VARCHAR(200) | YES | - | Ghi chú |
 | `trang_thai` | BOOLEAN | YES | TRUE | Trạng thái |
@@ -408,15 +448,15 @@ END
 
 | Tên FK | Cột | Tham chiếu | Mô tả |
 |--------|-----|------------|-------|
-| `fk_mhm_hocky` | `ma_hoc_ky` | `hoc_ky(ma_hoc_ky)` | Học kỳ |
-| `fk_mhm_mon` | `ma_mon_hoc` | `mon_hoc(ma_mon_hoc)` | Môn học |
+| `fk_lopmo_hocky` | `ma_hoc_ky` | `hoc_ky(ma_hoc_ky)` | Học kỳ |
+| `fk_lopmo_lop` | `ma_lop` | `lop(ma_lop)` | Lớp học |
 
 **Ràng buộc:**
-- UNIQUE `(ma_hoc_ky, ma_mon_hoc)` - Mỗi môn chỉ mở 1 lần trong 1 học kỳ
+- UNIQUE `(ma_hoc_ky, ma_lop)` - Mỗi lớp chỉ mở 1 lần trong 1 học kỳ
 
 ---
 
-### 2.13. BẢNG `phieu_dang_ky` - Phiếu đăng ký học phần
+### 2.14. BẢNG `phieu_dang_ky` - Phiếu đăng ký học phần
 
 **Mô tả:** Phiếu đăng ký học phần của sinh viên (BM5, QĐ5, QĐ7)
 
@@ -459,9 +499,9 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
 
 ---
 
-### 2.14. BẢNG `chi_tiet_dang_ky` - Chi tiết đăng ký
+### 2.15. BẢNG `chi_tiet_dang_ky` - Chi tiết đăng ký
 
-**Mô tả:** Chi tiết các môn học đăng ký trong phiếu (BM5, QĐ5)
+**Mô tả:** Chi tiết các lớp học đăng ký trong phiếu (BM5, QĐ5)
 
 **Cấu trúc:**
 
@@ -469,7 +509,8 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
 |---------|--------------|------|----------|-------|
 | `id` | SERIAL | NO | Auto | **PK** - ID tự tăng |
 | `so_phieu` | INTEGER | NO | - | **FK** → `phieu_dang_ky.so_phieu` |
-| `ma_mon_hoc` | VARCHAR(15) | NO | - | **FK** → `mon_hoc.ma_mon_hoc` (BM5) |
+| `ma_lop` | VARCHAR(20) | NO | - | **FK** → `lop.ma_lop` |
+| `loai_dang_ky` | VARCHAR(20) | YES | 'hoc_moi' | Loại đăng ký: 'hoc_moi'/'hoc_lai'/'hoc_cai_thien' |
 | `so_tin_chi` | INTEGER | NO | - | Số tín chỉ (BM5) |
 | `loai_mon` | VARCHAR(5) | NO | - | Loại môn: 'LT'/'TH' |
 | `don_gia` | DECIMAL(12,0) | NO | - | Đơn giá/tín chỉ (QĐ5) |
@@ -486,21 +527,22 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
 | Tên FK | Cột | Tham chiếu | Mô tả |
 |--------|-----|------------|-------|
 | `fk_ctdk_phieu` | `so_phieu` | `phieu_dang_ky(so_phieu)` | Phiếu đăng ký |
-| `fk_ctdk_mon` | `ma_mon_hoc` | `mon_hoc(ma_mon_hoc)` | Môn học |
+| `fk_ctdk_lop` | `ma_lop` | `lop(ma_lop)` | Lớp học |
 
 **Ràng buộc:**
-- UNIQUE `(so_phieu, ma_mon_hoc)` - Mỗi môn chỉ đăng ký 1 lần/phiếu
+- UNIQUE `(so_phieu, ma_lop)` - Mỗi lớp chỉ đăng ký 1 lần/phiếu
 - `trang_thai` IN ('Đã đăng ký', 'Đã hủy')
+- `loai_dang_ky` IN ('hoc_moi', 'hoc_lai', 'hoc_cai_thien')
 
-**Đơn giá theo QĐ5:**
-```
-LT (Lý thuyết): 27,000 đ/tín chỉ
-TH (Thực hành): 37,000 đ/tín chỉ
-```
+**Đơn giá theo loại đăng ký (xem bảng don_gia_tin_chi):**
+- Học mới (kỳ chính): Đơn giá cơ bản
+- Học lại: Đơn giá theo cấu hình (thường cao hơn)
+- Học cải thiện: Đơn giá theo cấu hình
+- Học hè: Đơn giá theo cấu hình (áp dụng khi loai_hoc_ky = 'Hè')
 
 ---
 
-### 2.15. BẢNG `phieu_thu_hoc_phi` - Phiếu thu học phí
+### 2.16. BẢNG `phieu_thu_hoc_phi` - Phiếu thu học phí
 
 **Mô tả:** Phiếu thu học phí (BM6, QĐ6: SV có thể đóng nhiều lần)
 
@@ -537,9 +579,9 @@ TH (Thực hành): 37,000 đ/tín chỉ
 
 ---
 
-### 2.16. BẢNG `don_gia_tin_chi` - Đơn giá tín chỉ
+### 2.17. BẢNG `don_gia_tin_chi` - Đơn giá tín chỉ
 
-**Mô tả:** Cấu hình đơn giá tín chỉ theo loại môn (QĐ5)
+**Mô tả:** Cấu hình đơn giá tín chỉ theo loại môn và loại học (QĐ5)
 
 **Cấu trúc:**
 
@@ -547,6 +589,7 @@ TH (Thực hành): 37,000 đ/tín chỉ
 |---------|--------------|------|----------|-------|
 | `id` | SERIAL | NO | Auto | **PK** - ID |
 | `loai_mon` | VARCHAR(5) | NO | - | Loại môn: 'LT'/'TH' |
+| `loai_hoc` | VARCHAR(20) | NO | 'hoc_moi' | Loại học: 'hoc_moi'/'hoc_lai'/'hoc_cai_thien'/'hoc_he' |
 | `don_gia` | DECIMAL(12,0) | NO | - | Đơn giá/tín chỉ |
 | `ma_hoc_ky` | VARCHAR(15) | YES | - | **FK** → `hoc_ky.ma_hoc_ky` |
 | `ngay_ap_dung` | DATE | YES | CURRENT_DATE | Ngày áp dụng |
@@ -561,76 +604,30 @@ TH (Thực hành): 37,000 đ/tín chỉ
 |--------|-----|------------|-------|
 | `fk_dgtc_hk` | `ma_hoc_ky` | `hoc_ky(ma_hoc_ky)` | Học kỳ (NULL = áp dụng chung) |
 
-**Giá trị mặc định theo QĐ5:**
+**Ràng buộc:**
+- `loai_mon` IN ('LT', 'TH')
+- `loai_hoc` IN ('hoc_moi', 'hoc_lai', 'hoc_cai_thien', 'hoc_he')
+- UNIQUE `(loai_mon, loai_hoc, ma_hoc_ky)` - Mỗi loại môn + loại học chỉ có 1 đơn giá/học kỳ
+
+**Giá trị mặc định theo QĐ5 (ví dụ):**
 ```sql
-| loai_mon | don_gia |
-|----------|---------|
-| LT       | 27000   |
-| TH       | 37000   |
+| loai_mon | loai_hoc       | don_gia | ghi_chu                           |
+|----------|----------------|---------|-----------------------------------|
+| LT       | hoc_moi        | 27000   | Đơn giá môn LT học trong kỳ chính |
+| TH       | hoc_moi        | 37000   | Đơn giá môn TH học trong kỳ chính |
+| LT       | hoc_lai        | 32000   | Đơn giá môn LT học lại            |
+| TH       | hoc_lai        | 42000   | Đơn giá môn TH học lại            |
+| LT       | hoc_cai_thien  | 30000   | Đơn giá môn LT học cải thiện      |
+| TH       | hoc_cai_thien  | 40000   | Đơn giá môn TH học cải thiện      |
+| LT       | hoc_he         | 35000   | Đơn giá môn LT học hè             |
+| TH       | hoc_he         | 45000   | Đơn giá môn TH học hè             |
 ```
 
 ---
 
-### 2.17. BẢNG `vai_tro` - Vai trò
+### 2.18. BẢNG `tai_khoan` - Tài khoản
 
-**Mô tả:** Danh sách vai trò người dùng (Admin, Sinh viên)
-
-**Cấu trúc:**
-
-| Tên cột | Kiểu dữ liệu | Null | Mặc định | Mô tả |
-|---------|--------------|------|----------|-------|
-| `ma_vai_tro` | SERIAL | NO | Auto | **PK** - Mã vai trò |
-| `ten_vai_tro` | VARCHAR(50) | NO | - | Tên vai trò (UNIQUE) |
-| `mo_ta` | VARCHAR(200) | YES | - | Mô tả |
-| `trang_thai` | BOOLEAN | YES | TRUE | Trạng thái |
-| `ngay_tao` | TIMESTAMP | YES | CURRENT_TIMESTAMP | Ngày tạo |
-
-**Khóa chính:** `ma_vai_tro`
-
----
-
-### 2.18. BẢNG `quyen` - Quyền
-
-**Mô tả:** Danh sách các quyền trong hệ thống
-
-**Cấu trúc:**
-
-| Tên cột | Kiểu dữ liệu | Null | Mặc định | Mô tả |
-|---------|--------------|------|----------|-------|
-| `ma_quyen` | SERIAL | NO | Auto | **PK** - Mã quyền |
-| `ten_quyen` | VARCHAR(100) | NO | - | Tên quyền (UNIQUE) |
-| `mo_ta` | VARCHAR(200) | YES | - | Mô tả |
-| `nhom_quyen` | VARCHAR(50) | YES | - | Nhóm quyền |
-
-**Khóa chính:** `ma_quyen`
-
----
-
-### 2.19. BẢNG `phan_quyen` - Phân quyền
-
-**Mô tả:** Gán quyền cho vai trò
-
-**Cấu trúc:**
-
-| Tên cột | Kiểu dữ liệu | Null | Mặc định | Mô tả |
-|---------|--------------|------|----------|-------|
-| `ma_vai_tro` | INTEGER | NO | - | **PK, FK** → `vai_tro.ma_vai_tro` |
-| `ma_quyen` | INTEGER | NO | - | **PK, FK** → `quyen.ma_quyen` |
-
-**Khóa chính:** `(ma_vai_tro, ma_quyen)` - Composite PK
-
-**Khóa ngoại:**
-
-| Tên FK | Cột | Tham chiếu | Mô tả |
-|--------|-----|------------|-------|
-| `fk_pq_vt` | `ma_vai_tro` | `vai_tro(ma_vai_tro)` | Vai trò |
-| `fk_pq_q` | `ma_quyen` | `quyen(ma_quyen)` | Quyền |
-
----
-
-### 2.20. BẢNG `tai_khoan` - Tài khoản
-
-**Mô tả:** Tài khoản đăng nhập hệ thống
+**Mô tả:** Tài khoản đăng nhập hệ thống. Phân quyền trực tiếp qua cột `role` thay vì dùng bảng riêng.
 
 **Cấu trúc:**
 
@@ -639,7 +636,7 @@ TH (Thực hành): 37,000 đ/tín chỉ
 | `ma_tai_khoan` | SERIAL | NO | Auto | **PK** - Mã tài khoản |
 | `ten_dang_nhap` | VARCHAR(50) | NO | - | Tên đăng nhập (UNIQUE) |
 | `mat_khau` | VARCHAR(255) | NO | - | Mật khẩu (BCrypt hash) |
-| `ma_vai_tro` | INTEGER | NO | - | **FK** → `vai_tro.ma_vai_tro` |
+| `role` | VARCHAR(20) | NO | 'sinh_vien' | Vai trò: 'admin'/'sinh_vien' |
 | `ma_sv` | VARCHAR(15) | YES | - | **FK** → `sinh_vien.ma_sv` (UNIQUE) |
 | `ho_ten` | VARCHAR(100) | YES | - | Họ tên (nếu là Admin) |
 | `email` | VARCHAR(100) | YES | - | Email |
@@ -657,42 +654,18 @@ TH (Thực hành): 37,000 đ/tín chỉ
 
 | Tên FK | Cột | Tham chiếu | Mô tả |
 |--------|-----|------------|-------|
-| `fk_tk_vt` | `ma_vai_tro` | `vai_tro(ma_vai_tro)` | Vai trò |
 | `fk_tk_sv` | `ma_sv` | `sinh_vien(ma_sv)` | Sinh viên (nếu là SV) |
 
 **Ràng buộc:**
 - `ten_dang_nhap` UNIQUE
 - `ma_sv` UNIQUE (mỗi SV chỉ có 1 tài khoản)
+- `role` IN ('admin', 'sinh_vien')
+
+**Lưu ý:** Phân quyền được thực hiện trực tiếp qua cột `role`. Không cần xây dựng giao diện phân quyền riêng.
 
 ---
 
-### 2.21. BẢNG `lich_su_dang_nhap` - Lịch sử đăng nhập
-
-**Mô tả:** Ghi log đăng nhập hệ thống
-
-**Cấu trúc:**
-
-| Tên cột | Kiểu dữ liệu | Null | Mặc định | Mô tả |
-|---------|--------------|------|----------|-------|
-| `id` | BIGSERIAL | NO | Auto | **PK** - ID |
-| `ma_tai_khoan` | INTEGER | NO | - | **FK** → `tai_khoan.ma_tai_khoan` |
-| `thoi_gian` | TIMESTAMP | YES | CURRENT_TIMESTAMP | Thời gian đăng nhập |
-| `ip_address` | VARCHAR(50) | YES | - | Địa chỉ IP |
-| `user_agent` | VARCHAR(500) | YES | - | User Agent |
-| `thanh_cong` | BOOLEAN | YES | TRUE | Đăng nhập thành công |
-| `ghi_chu` | VARCHAR(200) | YES | - | Ghi chú |
-
-**Khóa chính:** `id`
-
-**Khóa ngoại:**
-
-| Tên FK | Cột | Tham chiếu | Mô tả |
-|--------|-----|------------|-------|
-| `fk_lsdn_tk` | `ma_tai_khoan` | `tai_khoan(ma_tai_khoan)` | Tài khoản |
-
----
-
-### 2.22. BẢNG `thong_bao` - Thông báo chung
+### 2.19. BẢNG `thong_bao` - Thông báo chung
 
 **Mô tả:** Thông báo gửi đến người dùng
 
@@ -721,7 +694,7 @@ TH (Thực hành): 37,000 đ/tín chỉ
 
 ---
 
-### 2.23. BẢNG `thong_bao_ca_nhan` - Thông báo cá nhân
+### 2.20. BẢNG `thong_bao_ca_nhan` - Thông báo cá nhân
 
 **Mô tả:** Thông báo gửi đến từng người dùng
 
@@ -749,35 +722,6 @@ TH (Thực hành): 37,000 đ/tín chỉ
 
 ---
 
-### 2.24. BẢNG `log_hoat_dong` - Log hoạt động
-
-**Mô tả:** Ghi log các hoạt động trong hệ thống (Audit Trail)
-
-**Cấu trúc:**
-
-| Tên cột | Kiểu dữ liệu | Null | Mặc định | Mô tả |
-|---------|--------------|------|----------|-------|
-| `id` | BIGSERIAL | NO | Auto | **PK** - ID |
-| `thoi_gian` | TIMESTAMP | YES | CURRENT_TIMESTAMP | Thời gian |
-| `ma_tai_khoan` | INTEGER | YES | - | **FK** → `tai_khoan.ma_tai_khoan` |
-| `hanh_dong` | VARCHAR(100) | NO | - | Hành động (CREATE, UPDATE, DELETE.. .) |
-| `doi_tuong` | VARCHAR(50) | YES | - | Đối tượng (tên bảng) |
-| `ma_doi_tuong` | VARCHAR(50) | YES | - | Mã đối tượng |
-| `mo_ta` | VARCHAR(500) | YES | - | Mô tả |
-| `du_lieu_cu` | TEXT | YES | - | Dữ liệu cũ (JSON) |
-| `du_lieu_moi` | TEXT | YES | - | Dữ liệu mới (JSON) |
-| `ip_address` | VARCHAR(50) | YES | - | Địa chỉ IP |
-
-**Khóa chính:** `id`
-
-**Khóa ngoại:**
-
-| Tên FK | Cột | Tham chiếu | Mô tả |
-|--------|-----|------------|-------|
-| `fk_log_tk` | `ma_tai_khoan` | `tai_khoan(ma_tai_khoan)` | Người thực hiện |
-
----
-
 ## 3. SƠ ĐỒ QUAN HỆ (ERD)
 
 ### 3.1. Sơ đồ tổng quan
@@ -799,48 +743,39 @@ TH (Thực hành): 37,000 đ/tín chỉ
             └──────┬──────┘                │              └──────┬──────┘
                    │ 1                     │                     │ 1
                    │                       │                     │
-                   │ n                     │                     │ n
-            ┌──────┴──────┐                │       ┌─────────────┴─────────────┐
-            │  nganh_hoc  │                │       │   doi_tuong_sinh_vien     │
-            └──────┬──────┘                │       └─────────────┬─────────────┘
-                   │ 1                     │                     │ n
-                   │                       │                     │
-                   │ n            n        │        1            │
-            ┌──────┴──────────────┴────────┴────────┴────────────┘
-            │                     sinh_vien                      │
-            └────────────────────────┬───────────────────────────┘
-                                     │ 1
-                                     │
-                   ┌─────────────────┼─────────────────┐
-                   │                 │                 │
-                   │ n               │ n               │ 1
-            ┌──────┴──────┐   ┌──────┴──────┐   ┌──────┴──────┐
-            │ phieu_dang_ky│   │phieu_thu_hp │   │  tai_khoan  │
-            └──────┬──────┘   └─────────────┘   └─────────────┘
-                   │ 1
-                   │
-                   │ n
-            ┌──────┴──────┐
-            │chi_tiet_dk  │
-            └──────┬──────┘
-                   │ n
-                   │
-                   │ 1
-            ┌──────┴──────┐         ┌─────────────┐
-            │  mon_hoc    │◄────────┤ mon_hoc_mo  │
-            └─────────────┘         └──────┬──────┘
-                                           │ n
-                                           │
-                                           │ 1
-                                    ┌──────┴──────┐
-                                    │   hoc_ky    │
-                                    └──────┬──────┘
-                                           │ n
-                                           │
-                                           │ 1
-                                    ┌──────┴──────┐
-                                    │   nam_hoc   │
-                                    └─────────────┘
+       ┌───────────┼───────────┐           │                     │ n
+       │           │ n         │           │       ┌─────────────┴─────────────┐
+       │    ┌──────┴──────┐    │           │       │   doi_tuong_sinh_vien     │
+       │    │  nganh_hoc  │    │           │       └─────────────┬─────────────┘
+       │    └──────┬──────┘    │           │                     │ n
+       │ n         │ 1         │           │                     │
+  ┌────┴────┐      │           │           │                     │
+  │ mon_hoc │      │ n         │   n       │        1            │
+  └────┬────┘      └───────────┴───────────┴────────┴────────────┘
+       │ 1                     sinh_vien
+       │
+       │ n                    ┌────────────────────────┬───────────────────────────┐
+  ┌────┴────┐                 │ 1                      │ 1                         │
+  │   lop   │                 │                        │                           │
+  └────┬────┘                 │ n                      │ n                         │ 1
+       │ 1              ┌─────┴──────┐   ┌─────────────┴─────┐   ┌─────────────────┴───┐
+       │                │ phieu_dang_ky│   │phieu_thu_hoc_phi │   │      tai_khoan      │
+       │ n              └──────┬──────┘   └───────────────────┘   └─────────────────────┘
+  ┌────┴────┐                  │ 1
+  │  lop_mo │                  │
+  └────┬────┘                  │ n
+       │ n              ┌──────┴──────┐
+       │                │chi_tiet_dk  │
+       │ 1              └──────┬──────┘
+  ┌────┴────┐                  │ n
+  │  hoc_ky │◄─────────────────┘
+  └────┬────┘              (FK: ma_lop)
+       │ n
+       │
+       │ 1
+  ┌────┴────┐
+  │ nam_hoc │
+  └─────────┘
 ```
 
 ### 3.2. Chi tiết các mối quan hệ
@@ -850,30 +785,27 @@ TH (Thực hành): 37,000 đ/tín chỉ
 | 1 | `tinh` | `huyen` | 1 - n | Mỗi tỉnh có nhiều huyện |
 | 2 | `huyen` | `sinh_vien` | 1 - n | Mỗi huyện có nhiều SV (quê quán) |
 | 3 | `khoa` | `nganh_hoc` | 1 - n | Mỗi khoa có nhiều ngành |
-| 4 | `nganh_hoc` | `sinh_vien` | 1 - n | Mỗi ngành có nhiều SV |
-| 5 | `nganh_hoc` | `chuong_trinh_hoc` | 1 - n | Mỗi ngành có nhiều môn trong CTĐT |
-| 6 | `doi_tuong` | `doi_tuong_sinh_vien` | 1 - n | Mỗi đối tượng gán cho nhiều SV |
-| 7 | `sinh_vien` | `doi_tuong_sinh_vien` | 1 - n | Mỗi SV có thể thuộc nhiều đối tượng |
-| 8 | `sinh_vien` | `phieu_dang_ky` | 1 - n | Mỗi SV có nhiều phiếu ĐK (qua các HK) |
-| 9 | `sinh_vien` | `phieu_thu_hoc_phi` | 1 - n | Mỗi SV có nhiều phiếu thu |
-| 10 | `sinh_vien` | `tai_khoan` | 1 - 1 | Mỗi SV có 1 tài khoản |
-| 11 | `nam_hoc` | `hoc_ky` | 1 - n | Mỗi năm học có nhiều học kỳ |
-| 12 | `hoc_ky` | `mon_hoc_mo` | 1 - n | Mỗi HK mở nhiều môn |
-| 13 | `hoc_ky` | `phieu_dang_ky` | 1 - n | Mỗi HK có nhiều phiếu ĐK |
-| 14 | `mon_hoc` | `mon_hoc_mo` | 1 - n | Mỗi môn mở ở nhiều HK |
-| 15 | `mon_hoc` | `chuong_trinh_hoc` | 1 - n | Mỗi môn thuộc nhiều CTĐT |
-| 16 | `mon_hoc` | `chi_tiet_dang_ky` | 1 - n | Mỗi môn được ĐK nhiều lần |
-| 17 | `phieu_dang_ky` | `chi_tiet_dang_ky` | 1 - n | Mỗi phiếu ĐK có nhiều chi tiết |
-| 18 | `phieu_dang_ky` | `phieu_thu_hoc_phi` | 1 - n | Mỗi phiếu ĐK có nhiều phiếu thu (QĐ6) |
-| 19 | `vai_tro` | `tai_khoan` | 1 - n | Mỗi vai trò gán cho nhiều TK |
-| 20 | `vai_tro` | `phan_quyen` | 1 - n | Mỗi vai trò có nhiều quyền |
-| 21 | `quyen` | `phan_quyen` | 1 - n | Mỗi quyền gán cho nhiều vai trò |
-| 22 | `tai_khoan` | `lich_su_dang_nhap` | 1 - n | Mỗi TK có nhiều lịch sử ĐN |
-| 23 | `tai_khoan` | `thong_bao_ca_nhan` | 1 - n | Mỗi TK nhận nhiều thông báo |
-| 24 | `tai_khoan` | `log_hoat_dong` | 1 - n | Mỗi TK có nhiều log |
+| 4 | `khoa` | `mon_hoc` | 1 - n | Mỗi khoa quản lý nhiều môn học |
+| 5 | `nganh_hoc` | `sinh_vien` | 1 - n | Mỗi ngành có nhiều SV |
+| 6 | `nganh_hoc` | `chuong_trinh_hoc` | 1 - n | Mỗi ngành có nhiều môn trong CTĐT |
+| 7 | `doi_tuong` | `doi_tuong_sinh_vien` | 1 - n | Mỗi đối tượng gán cho nhiều SV |
+| 8 | `sinh_vien` | `doi_tuong_sinh_vien` | 1 - n | Mỗi SV có thể thuộc nhiều đối tượng |
+| 9 | `sinh_vien` | `phieu_dang_ky` | 1 - n | Mỗi SV có nhiều phiếu ĐK (qua các HK) |
+| 10 | `sinh_vien` | `phieu_thu_hoc_phi` | 1 - n | Mỗi SV có nhiều phiếu thu |
+| 11 | `sinh_vien` | `tai_khoan` | 1 - 1 | Mỗi SV có 1 tài khoản |
+| 12 | `nam_hoc` | `hoc_ky` | 1 - n | Mỗi năm học có nhiều học kỳ |
+| 13 | `hoc_ky` | `lop_mo` | 1 - n | Mỗi HK mở nhiều lớp |
+| 14 | `hoc_ky` | `phieu_dang_ky` | 1 - n | Mỗi HK có nhiều phiếu ĐK |
+| 15 | `mon_hoc` | `lop` | 1 - n | Mỗi môn có nhiều lớp |
+| 16 | `mon_hoc` | `chuong_trinh_hoc` | 1 - n | Mỗi môn thuộc nhiều CTĐT |
+| 17 | `lop` | `lop_mo` | 1 - n | Mỗi lớp có thể mở ở nhiều HK |
+| 18 | `lop` | `chi_tiet_dang_ky` | 1 - n | Mỗi lớp được ĐK nhiều lần |
+| 19 | `phieu_dang_ky` | `chi_tiet_dang_ky` | 1 - n | Mỗi phiếu ĐK có nhiều chi tiết (lớp) |
+| 20 | `phieu_dang_ky` | `phieu_thu_hoc_phi` | 1 - n | Mỗi phiếu ĐK có nhiều phiếu thu (QĐ6) |
+| 21 | `tai_khoan` | `thong_bao_ca_nhan` | 1 - n | Mỗi TK nhận nhiều thông báo |
 
 ---
-## 4. TỔNG HỢP KHÓA NGOẠI (Tiếp theo)
+## 4. TỔNG HỢP KHÓA NGOẠI
 
 | STT | Bảng | Tên FK | Cột | Tham chiếu | ON DELETE | ON UPDATE |
 |-----|------|--------|-----|------------|-----------|-----------|
@@ -883,26 +815,23 @@ TH (Thực hành): 37,000 đ/tín chỉ
 | 4 | `sinh_vien` | `fk_sv_nganh` | `ma_nganh` | `nganh_hoc(ma_nganh)` | RESTRICT | CASCADE |
 | 5 | `doi_tuong_sinh_vien` | `fk_dtsv_sv` | `ma_sv` | `sinh_vien(ma_sv)` | CASCADE | CASCADE |
 | 6 | `doi_tuong_sinh_vien` | `fk_dtsv_dt` | `ma_doi_tuong` | `doi_tuong(ma_doi_tuong)` | RESTRICT | CASCADE |
-| 7 | `chuong_trinh_hoc` | `fk_cth_nganh` | `ma_nganh` | `nganh_hoc(ma_nganh)` | CASCADE | CASCADE |
-| 8 | `chuong_trinh_hoc` | `fk_cth_mon` | `ma_mon_hoc` | `mon_hoc(ma_mon_hoc)` | CASCADE | CASCADE |
-| 9 | `hoc_ky` | `fk_hk_namhoc` | `ma_nam_hoc` | `nam_hoc(ma_nam_hoc)` | RESTRICT | CASCADE |
-| 10 | `mon_hoc_mo` | `fk_mhm_hocky` | `ma_hoc_ky` | `hoc_ky(ma_hoc_ky)` | CASCADE | CASCADE |
-| 11 | `mon_hoc_mo` | `fk_mhm_mon` | `ma_mon_hoc` | `mon_hoc(ma_mon_hoc)` | CASCADE | CASCADE |
-| 12 | `phieu_dang_ky` | `fk_pdk_sv` | `ma_sv` | `sinh_vien(ma_sv)` | RESTRICT | CASCADE |
-| 13 | `phieu_dang_ky` | `fk_pdk_hk` | `ma_hoc_ky` | `hoc_ky(ma_hoc_ky)` | RESTRICT | CASCADE |
-| 14 | `chi_tiet_dang_ky` | `fk_ctdk_phieu` | `so_phieu` | `phieu_dang_ky(so_phieu)` | CASCADE | CASCADE |
-| 15 | `chi_tiet_dang_ky` | `fk_ctdk_mon` | `ma_mon_hoc` | `mon_hoc(ma_mon_hoc)` | RESTRICT | CASCADE |
-| 16 | `phieu_thu_hoc_phi` | `fk_pthp_pdk` | `so_phieu_dang_ky` | `phieu_dang_ky(so_phieu)` | RESTRICT | CASCADE |
-| 17 | `phieu_thu_hoc_phi` | `fk_pthp_sv` | `ma_sv` | `sinh_vien(ma_sv)` | RESTRICT | CASCADE |
-| 18 | `don_gia_tin_chi` | `fk_dgtc_hk` | `ma_hoc_ky` | `hoc_ky(ma_hoc_ky)` | SET NULL | CASCADE |
-| 19 | `phan_quyen` | `fk_pq_vt` | `ma_vai_tro` | `vai_tro(ma_vai_tro)` | CASCADE | CASCADE |
-| 20 | `phan_quyen` | `fk_pq_q` | `ma_quyen` | `quyen(ma_quyen)` | CASCADE | CASCADE |
-| 21 | `tai_khoan` | `fk_tk_vt` | `ma_vai_tro` | `vai_tro(ma_vai_tro)` | RESTRICT | CASCADE |
-| 22 | `tai_khoan` | `fk_tk_sv` | `ma_sv` | `sinh_vien(ma_sv)` | SET NULL | CASCADE |
-| 23 | `lich_su_dang_nhap` | `fk_lsdn_tk` | `ma_tai_khoan` | `tai_khoan(ma_tai_khoan)` | CASCADE | CASCADE |
-| 24 | `thong_bao` | `fk_tb_nguoitao` | `nguoi_tao` | `tai_khoan(ma_tai_khoan)` | SET NULL | CASCADE |
-| 25 | `thong_bao_ca_nhan` | `fk_tbcn_tk` | `ma_tai_khoan` | `tai_khoan(ma_tai_khoan)` | CASCADE | CASCADE |
-| 26 | `log_hoat_dong` | `fk_log_tk` | `ma_tai_khoan` | `tai_khoan(ma_tai_khoan)` | SET NULL | CASCADE |
+| 7 | `mon_hoc` | `fk_monhoc_khoa` | `ma_khoa` | `khoa(ma_khoa)` | RESTRICT | CASCADE |
+| 8 | `lop` | `fk_lop_monhoc` | `ma_mon_hoc` | `mon_hoc(ma_mon_hoc)` | CASCADE | CASCADE |
+| 9 | `chuong_trinh_hoc` | `fk_cth_nganh` | `ma_nganh` | `nganh_hoc(ma_nganh)` | CASCADE | CASCADE |
+| 10 | `chuong_trinh_hoc` | `fk_cth_mon` | `ma_mon_hoc` | `mon_hoc(ma_mon_hoc)` | CASCADE | CASCADE |
+| 11 | `hoc_ky` | `fk_hk_namhoc` | `ma_nam_hoc` | `nam_hoc(ma_nam_hoc)` | RESTRICT | CASCADE |
+| 12 | `lop_mo` | `fk_lopmo_hocky` | `ma_hoc_ky` | `hoc_ky(ma_hoc_ky)` | CASCADE | CASCADE |
+| 13 | `lop_mo` | `fk_lopmo_lop` | `ma_lop` | `lop(ma_lop)` | CASCADE | CASCADE |
+| 14 | `phieu_dang_ky` | `fk_pdk_sv` | `ma_sv` | `sinh_vien(ma_sv)` | RESTRICT | CASCADE |
+| 15 | `phieu_dang_ky` | `fk_pdk_hk` | `ma_hoc_ky` | `hoc_ky(ma_hoc_ky)` | RESTRICT | CASCADE |
+| 16 | `chi_tiet_dang_ky` | `fk_ctdk_phieu` | `so_phieu` | `phieu_dang_ky(so_phieu)` | CASCADE | CASCADE |
+| 17 | `chi_tiet_dang_ky` | `fk_ctdk_lop` | `ma_lop` | `lop(ma_lop)` | RESTRICT | CASCADE |
+| 18 | `phieu_thu_hoc_phi` | `fk_pthp_pdk` | `so_phieu_dang_ky` | `phieu_dang_ky(so_phieu)` | RESTRICT | CASCADE |
+| 19 | `phieu_thu_hoc_phi` | `fk_pthp_sv` | `ma_sv` | `sinh_vien(ma_sv)` | RESTRICT | CASCADE |
+| 20 | `don_gia_tin_chi` | `fk_dgtc_hk` | `ma_hoc_ky` | `hoc_ky(ma_hoc_ky)` | SET NULL | CASCADE |
+| 21 | `tai_khoan` | `fk_tk_sv` | `ma_sv` | `sinh_vien(ma_sv)` | SET NULL | CASCADE |
+| 22 | `thong_bao` | `fk_tb_nguoitao` | `nguoi_tao` | `tai_khoan(ma_tai_khoan)` | SET NULL | CASCADE |
+| 23 | `thong_bao_ca_nhan` | `fk_tbcn_tk` | `ma_tai_khoan` | `tai_khoan(ma_tai_khoan)` | CASCADE | CASCADE |
 
 ---
 
@@ -920,22 +849,18 @@ TH (Thực hành): 37,000 đ/tín chỉ
 | 6 | `nganh_hoc` | `nganh_hoc_pkey` | `ma_nganh` | VARCHAR(10) |
 | 7 | `sinh_vien` | `sinh_vien_pkey` | `ma_sv` | VARCHAR(15) |
 | 8 | `mon_hoc` | `mon_hoc_pkey` | `ma_mon_hoc` | VARCHAR(15) |
-| 9 | `chuong_trinh_hoc` | `chuong_trinh_hoc_pkey` | `id` | SERIAL |
-| 10 | `nam_hoc` | `nam_hoc_pkey` | `ma_nam_hoc` | VARCHAR(15) |
-| 11 | `hoc_ky` | `hoc_ky_pkey` | `ma_hoc_ky` | VARCHAR(15) |
-| 12 | `mon_hoc_mo` | `mon_hoc_mo_pkey` | `id` | SERIAL |
-| 13 | `phieu_dang_ky` | `phieu_dang_ky_pkey` | `so_phieu` | SERIAL |
-| 14 | `chi_tiet_dang_ky` | `chi_tiet_dang_ky_pkey` | `id` | SERIAL |
-| 15 | `phieu_thu_hoc_phi` | `phieu_thu_hoc_phi_pkey` | `so_phieu_thu` | SERIAL |
-| 16 | `don_gia_tin_chi` | `don_gia_tin_chi_pkey` | `id` | SERIAL |
-| 17 | `vai_tro` | `vai_tro_pkey` | `ma_vai_tro` | SERIAL |
-| 18 | `quyen` | `quyen_pkey` | `ma_quyen` | SERIAL |
-| 19 | `phan_quyen` | `phan_quyen_pkey` | `(ma_vai_tro, ma_quyen)` | Composite |
-| 20 | `tai_khoan` | `tai_khoan_pkey` | `ma_tai_khoan` | SERIAL |
-| 21 | `lich_su_dang_nhap` | `lich_su_dang_nhap_pkey` | `id` | BIGSERIAL |
-| 22 | `thong_bao` | `thong_bao_pkey` | `ma_thong_bao` | SERIAL |
-| 23 | `thong_bao_ca_nhan` | `thong_bao_ca_nhan_pkey` | `id` | BIGSERIAL |
-| 24 | `log_hoat_dong` | `log_hoat_dong_pkey` | `id` | BIGSERIAL |
+| 9 | `lop` | `lop_pkey` | `ma_lop` | VARCHAR(20) |
+| 10 | `chuong_trinh_hoc` | `chuong_trinh_hoc_pkey` | `id` | SERIAL |
+| 11 | `nam_hoc` | `nam_hoc_pkey` | `ma_nam_hoc` | VARCHAR(15) |
+| 12 | `hoc_ky` | `hoc_ky_pkey` | `ma_hoc_ky` | VARCHAR(15) |
+| 13 | `lop_mo` | `lop_mo_pkey` | `id` | SERIAL |
+| 14 | `phieu_dang_ky` | `phieu_dang_ky_pkey` | `so_phieu` | SERIAL |
+| 15 | `chi_tiet_dang_ky` | `chi_tiet_dang_ky_pkey` | `id` | SERIAL |
+| 16 | `phieu_thu_hoc_phi` | `phieu_thu_hoc_phi_pkey` | `so_phieu_thu` | SERIAL |
+| 17 | `don_gia_tin_chi` | `don_gia_tin_chi_pkey` | `id` | SERIAL |
+| 18 | `tai_khoan` | `tai_khoan_pkey` | `ma_tai_khoan` | SERIAL |
+| 19 | `thong_bao` | `thong_bao_pkey` | `ma_thong_bao` | SERIAL |
+| 20 | `thong_bao_ca_nhan` | `thong_bao_ca_nhan_pkey` | `id` | BIGSERIAL |
 
 ### 5.2. Unique Constraints (Ràng buộc duy nhất)
 
@@ -944,13 +869,12 @@ TH (Thực hành): 37,000 đ/tín chỉ
 | 1 | `sinh_vien` | `sinh_vien_cccd_key` | `cccd` | Mỗi CCCD là duy nhất |
 | 2 | `doi_tuong_sinh_vien` | `uq_dtsv` | `(ma_sv, ma_doi_tuong)` | SV chỉ gán 1 lần/đối tượng |
 | 3 | `chuong_trinh_hoc` | `uq_cth` | `(ma_nganh, ma_mon_hoc)` | Môn chỉ xuất hiện 1 lần/ngành |
-| 4 | `mon_hoc_mo` | `uq_mhm` | `(ma_hoc_ky, ma_mon_hoc)` | Môn chỉ mở 1 lần/học kỳ |
+| 4 | `lop_mo` | `uq_lopmo` | `(ma_hoc_ky, ma_lop)` | Lớp chỉ mở 1 lần/học kỳ |
 | 5 | `phieu_dang_ky` | `uq_pdk` | `(ma_sv, ma_hoc_ky)` | SV chỉ có 1 phiếu ĐK/học kỳ |
-| 6 | `chi_tiet_dang_ky` | `uq_ctdk` | `(so_phieu, ma_mon_hoc)` | Môn chỉ ĐK 1 lần/phiếu |
-| 7 | `vai_tro` | `vai_tro_ten_vai_tro_key` | `ten_vai_tro` | Tên vai trò duy nhất |
-| 8 | `quyen` | `quyen_ten_quyen_key` | `ten_quyen` | Tên quyền duy nhất |
-| 9 | `tai_khoan` | `tai_khoan_ten_dang_nhap_key` | `ten_dang_nhap` | Tên đăng nhập duy nhất |
-| 10 | `tai_khoan` | `tai_khoan_ma_sv_key` | `ma_sv` | Mỗi SV chỉ có 1 tài khoản |
+| 6 | `chi_tiet_dang_ky` | `uq_ctdk` | `(so_phieu, ma_lop)` | Lớp chỉ ĐK 1 lần/phiếu |
+| 7 | `don_gia_tin_chi` | `uq_dongia` | `(loai_mon, loai_hoc, ma_hoc_ky)` | Mỗi loại môn + loại học chỉ có 1 đơn giá/HK |
+| 8 | `tai_khoan` | `tai_khoan_ten_dang_nhap_key` | `ten_dang_nhap` | Tên đăng nhập duy nhất |
+| 9 | `tai_khoan` | `tai_khoan_ma_sv_key` | `ma_sv` | Mỗi SV chỉ có 1 tài khoản |
 
 ### 5.3. Check Constraints (Ràng buộc kiểm tra)
 
@@ -964,13 +888,16 @@ TH (Thực hành): 37,000 đ/tín chỉ
 | 6 | `chuong_trinh_hoc` | `hoc_ky_du_kien` | `>= 1 AND <= 10` | Học kỳ dự kiến 1-10 |
 | 7 | `hoc_ky` | `loai_hoc_ky` | `IN ('Chính', 'Hè')` | Loại học kỳ |
 | 8 | `hoc_ky` | `trang_thai` | `IN ('Sắp diễn ra', 'Đang diễn ra', 'Đã kết thúc')` | Trạng thái HK |
-| 9 | `phieu_dang_ky` | `trang_thai` | `IN ('Đã đăng ký', 'Đã hủy')` | Trạng thái phiếu ĐK |
-| 10 | `chi_tiet_dang_ky` | `trang_thai` | `IN ('Đã đăng ký', 'Đã hủy')` | Trạng thái chi tiết |
-| 11 | `phieu_thu_hoc_phi` | `so_tien_thu` | `> 0` | Số tiền thu > 0 |
-| 12 | `phieu_thu_hoc_phi` | `hinh_thuc_thu` | `IN ('Tiền mặt', 'Chuyển khoản', 'Thẻ', 'Ví điện tử')` | Hình thức thanh toán |
-| 13 | `phieu_thu_hoc_phi` | `trang_thai` | `IN ('Thành công', 'Đã hủy')` | Trạng thái phiếu thu |
-| 14 | `don_gia_tin_chi` | `loai_mon` | `IN ('LT', 'TH')` | Loại môn |
-| 15 | `thong_bao` | `doi_tuong` | `IN ('Tất cả', 'Sinh viên', 'Admin')` | Đối tượng nhận TB |
+| 9 | `chi_tiet_dang_ky` | `loai_dang_ky` | `IN ('hoc_moi', 'hoc_lai', 'hoc_cai_thien')` | Loại đăng ký |
+| 10 | `phieu_dang_ky` | `trang_thai` | `IN ('Đã đăng ký', 'Đã hủy')` | Trạng thái phiếu ĐK |
+| 11 | `chi_tiet_dang_ky` | `trang_thai` | `IN ('Đã đăng ký', 'Đã hủy')` | Trạng thái chi tiết |
+| 12 | `phieu_thu_hoc_phi` | `so_tien_thu` | `> 0` | Số tiền thu > 0 |
+| 13 | `phieu_thu_hoc_phi` | `hinh_thuc_thu` | `IN ('Tiền mặt', 'Chuyển khoản', 'Thẻ', 'Ví điện tử')` | Hình thức thanh toán |
+| 14 | `phieu_thu_hoc_phi` | `trang_thai` | `IN ('Thành công', 'Đã hủy')` | Trạng thái phiếu thu |
+| 15 | `don_gia_tin_chi` | `loai_mon` | `IN ('LT', 'TH')` | Loại môn |
+| 16 | `don_gia_tin_chi` | `loai_hoc` | `IN ('hoc_moi', 'hoc_lai', 'hoc_cai_thien', 'hoc_he')` | Loại học |
+| 17 | `tai_khoan` | `role` | `IN ('admin', 'sinh_vien')` | Vai trò người dùng |
+| 18 | `thong_bao` | `doi_tuong` | `IN ('Tất cả', 'Sinh viên', 'Admin')` | Đối tượng nhận TB |
 
 ---
 
@@ -983,15 +910,18 @@ TH (Thực hành): 37,000 đ/tín chỉ
 | 3 | `idx_sv_trang_thai` | `sinh_vien` | `trang_thai` | Lọc SV theo trạng thái |
 | 4 | `idx_dtsv_ma_sv` | `doi_tuong_sinh_vien` | `ma_sv` | Tìm đối tượng của SV |
 | 5 | `idx_cth_ma_nganh` | `chuong_trinh_hoc` | `ma_nganh` | Tìm CTĐT theo ngành |
-| 6 | `idx_mhm_ma_hoc_ky` | `mon_hoc_mo` | `ma_hoc_ky` | Tìm môn mở theo HK |
-| 7 | `idx_pdk_ma_sv` | `phieu_dang_ky` | `ma_sv` | Tìm phiếu ĐK theo SV |
-| 8 | `idx_pdk_ma_hoc_ky` | `phieu_dang_ky` | `ma_hoc_ky` | Tìm phiếu ĐK theo HK |
-| 9 | `idx_ctdk_so_phieu` | `chi_tiet_dang_ky` | `so_phieu` | Tìm chi tiết theo phiếu |
-| 10 | `idx_pthp_so_phieu_dk` | `phieu_thu_hoc_phi` | `so_phieu_dang_ky` | Tìm phiếu thu theo phiếu ĐK |
-| 11 | `idx_pthp_ma_sv` | `phieu_thu_hoc_phi` | `ma_sv` | Tìm phiếu thu theo SV |
-| 12 | `idx_tk_ma_sv` | `tai_khoan` | `ma_sv` | Tìm TK theo SV |
-| 13 | `idx_tbcn_ma_tk` | `thong_bao_ca_nhan` | `ma_tai_khoan` | Tìm TB theo TK |
-| 14 | `idx_tbcn_da_doc` | `thong_bao_ca_nhan` | `da_doc` | Lọc TB chưa đọc |
+| 6 | `idx_monhoc_ma_khoa` | `mon_hoc` | `ma_khoa` | Tìm môn học theo khoa |
+| 7 | `idx_lop_ma_mon` | `lop` | `ma_mon_hoc` | Tìm lớp theo môn học |
+| 8 | `idx_lopmo_ma_hoc_ky` | `lop_mo` | `ma_hoc_ky` | Tìm lớp mở theo HK |
+| 9 | `idx_pdk_ma_sv` | `phieu_dang_ky` | `ma_sv` | Tìm phiếu ĐK theo SV |
+| 10 | `idx_pdk_ma_hoc_ky` | `phieu_dang_ky` | `ma_hoc_ky` | Tìm phiếu ĐK theo HK |
+| 11 | `idx_ctdk_so_phieu` | `chi_tiet_dang_ky` | `so_phieu` | Tìm chi tiết theo phiếu |
+| 12 | `idx_ctdk_ma_lop` | `chi_tiet_dang_ky` | `ma_lop` | Tìm chi tiết theo lớp |
+| 13 | `idx_pthp_so_phieu_dk` | `phieu_thu_hoc_phi` | `so_phieu_dang_ky` | Tìm phiếu thu theo phiếu ĐK |
+| 14 | `idx_pthp_ma_sv` | `phieu_thu_hoc_phi` | `ma_sv` | Tìm phiếu thu theo SV |
+| 15 | `idx_tk_ma_sv` | `tai_khoan` | `ma_sv` | Tìm TK theo SV |
+| 16 | `idx_tbcn_ma_tk` | `thong_bao_ca_nhan` | `ma_tai_khoan` | Tìm TB theo TK |
+| 17 | `idx_tbcn_da_doc` | `thong_bao_ca_nhan` | `da_doc` | Lọc TB chưa đọc |
 
 ---
 
@@ -1002,9 +932,9 @@ TH (Thực hành): 37,000 đ/tín chỉ
 | STT | Tên View | Mô tả | Biểu mẫu liên quan |
 |-----|----------|-------|-------------------|
 | 1 | `v_ho_so_sinh_vien` | Hồ sơ sinh viên đầy đủ | BM1 |
-| 2 | `v_danh_sach_mon_hoc` | Danh sách môn học | BM2 |
+| 2 | `v_danh_sach_mon_hoc` | Danh sách môn học (theo khoa) | BM2 |
 | 3 | `v_chuong_trinh_hoc` | Chương trình học theo ngành | BM3 |
-| 4 | `v_mon_hoc_mo` | Danh sách môn học mở | BM4 |
+| 4 | `v_lop_mo` | Danh sách lớp học mở | BM4 |
 | 5 | `v_phieu_dang_ky` | Phiếu đăng ký học phần chi tiết | BM5 |
 | 6 | `v_phieu_thu_hoc_phi` | Phiếu thu học phí | BM6 |
 | 7 | `v_tinh_hinh_hoc_phi` | Tình hình đóng học phí | - |
@@ -1028,7 +958,7 @@ SELECT
      FROM doi_tuong_sinh_vien dtsv 
      JOIN doi_tuong dt ON dtsv.ma_doi_tuong = dt.ma_doi_tuong
      WHERE dtsv.ma_sv = sv.ma_sv AND dt.trang_thai = TRUE
-     ORDER BY dt. do_uu_tien
+     ORDER BY dt.do_uu_tien
      LIMIT 1) AS doi_tuong,
     -- Tỷ lệ giảm học phí
     COALESCE((SELECT dt.ti_le_giam_hoc_phi 
@@ -1118,26 +1048,34 @@ WHERE cth.trang_thai = TRUE;
 
 ---
 
-#### View 4: `v_mon_hoc_mo` (BM4)
+#### View 4: `v_lop_mo` (BM4)
 
 ```sql
-CREATE OR REPLACE VIEW v_mon_hoc_mo AS
+CREATE OR REPLACE VIEW v_lop_mo AS
 SELECT 
     hk.ma_hoc_ky,
     hk.ten_hoc_ky AS hoc_ky,
     nh.ma_nam_hoc,
-    nh. ten_nam_hoc AS nam_hoc,
-    ROW_NUMBER() OVER (PARTITION BY hk.ma_hoc_ky ORDER BY mh.ma_mon_hoc) AS stt,
+    nh.ten_nam_hoc AS nam_hoc,
+    ROW_NUMBER() OVER (PARTITION BY hk.ma_hoc_ky ORDER BY l.ma_lop) AS stt,
     mh.ma_mon_hoc,
     mh.ten_mon_hoc AS mon_hoc,
+    k.ten_khoa AS khoa_quan_ly,
+    l.ma_lop,
+    l.ten_lop,
+    l.giang_vien,
+    l.lich_hoc,
+    l.phong_hoc,
     mh.so_tin_chi,
-    mhm.so_luong_toi_da,
-    mhm.so_luong_da_dang_ky
-FROM mon_hoc_mo mhm
-JOIN hoc_ky hk ON mhm.ma_hoc_ky = hk.ma_hoc_ky
+    l.so_luong_toi_da,
+    lm.so_luong_da_dang_ky
+FROM lop_mo lm
+JOIN hoc_ky hk ON lm.ma_hoc_ky = hk.ma_hoc_ky
 JOIN nam_hoc nh ON hk.ma_nam_hoc = nh.ma_nam_hoc
-JOIN mon_hoc mh ON mhm.ma_mon_hoc = mh.ma_mon_hoc
-WHERE mhm. trang_thai = TRUE;
+JOIN lop l ON lm.ma_lop = l.ma_lop
+JOIN mon_hoc mh ON l.ma_mon_hoc = mh.ma_mon_hoc
+JOIN khoa k ON mh.ma_khoa = k.ma_khoa
+WHERE lm.trang_thai = TRUE;
 ```
 
 ---
@@ -1155,11 +1093,13 @@ SELECT
     nh.ten_nam_hoc AS nam_hoc,
     ROW_NUMBER() OVER (PARTITION BY pdk.so_phieu ORDER BY ctdk.id) AS stt,
     mh.ten_mon_hoc AS mon_hoc,
+    l.ten_lop,
+    ctdk.loai_dang_ky,
     ctdk.so_tin_chi,
-    ctdk. don_gia,
+    ctdk.don_gia,
     ctdk.thanh_tien,
     pdk.tong_tin_chi,
-    pdk. tong_tien_dang_ky,
+    pdk.tong_tien_dang_ky,
     pdk.ti_le_giam,
     pdk.tien_mien_giam,
     pdk.tong_tien_phai_dong
@@ -1168,7 +1108,8 @@ JOIN sinh_vien sv ON pdk.ma_sv = sv.ma_sv
 JOIN hoc_ky hk ON pdk.ma_hoc_ky = hk.ma_hoc_ky
 JOIN nam_hoc nh ON hk.ma_nam_hoc = nh.ma_nam_hoc
 JOIN chi_tiet_dang_ky ctdk ON pdk.so_phieu = ctdk.so_phieu
-JOIN mon_hoc mh ON ctdk.ma_mon_hoc = mh.ma_mon_hoc
+JOIN lop l ON ctdk.ma_lop = l.ma_lop
+JOIN mon_hoc mh ON l.ma_mon_hoc = mh.ma_mon_hoc
 WHERE ctdk.trang_thai = 'Đã đăng ký' AND pdk.trang_thai = 'Đã đăng ký';
 ```
 
@@ -1271,9 +1212,9 @@ WHERE so_tien_con_lai > 0;
 | STT | Tên Function | Mô tả | Tham số | Trả về |
 |-----|--------------|-------|---------|--------|
 | 1 | `fn_lay_ti_le_giam_hoc_phi` | Lấy tỷ lệ giảm HP của SV (QĐ1) | `p_ma_sv` | `DECIMAL(5,2)` |
-| 2 | `fn_lay_don_gia` | Lấy đơn giá tín chỉ (QĐ5) | `p_loai_mon`, `p_ma_hoc_ky` | `DECIMAL(12,0)` |
-| 3 | `sp_dang_ky_mon_hoc` | Đăng ký môn học (BM5) | `p_ma_sv`, `p_ma_hoc_ky`, `p_ma_mon_hoc` | `TEXT` |
-| 4 | `sp_huy_dang_ky_mon_hoc` | Hủy đăng ký môn học | `p_ma_sv`, `p_ma_hoc_ky`, `p_ma_mon_hoc` | `TEXT` |
+| 2 | `fn_lay_don_gia` | Lấy đơn giá tín chỉ theo loại môn và loại học (QĐ5) | `p_loai_mon`, `p_loai_hoc`, `p_ma_hoc_ky` | `DECIMAL(12,0)` |
+| 3 | `sp_dang_ky_lop` | Đăng ký lớp học (BM5) | `p_ma_sv`, `p_ma_hoc_ky`, `p_ma_lop`, `p_loai_dang_ky` | `TEXT` |
+| 4 | `sp_huy_dang_ky_lop` | Hủy đăng ký lớp | `p_ma_sv`, `p_ma_hoc_ky`, `p_ma_lop` | `TEXT` |
 | 5 | `sp_thu_hoc_phi` | Thu học phí (BM6, QĐ6) | `p_ma_sv`, `p_ma_hoc_ky`, `p_so_tien_thu`, ...  | `TEXT` |
 
 ### 8.2. Chi tiết Functions
@@ -1292,7 +1233,7 @@ BEGIN
     FROM doi_tuong_sinh_vien dtsv
     JOIN doi_tuong dt ON dtsv.ma_doi_tuong = dt.ma_doi_tuong
     WHERE dtsv.ma_sv = p_ma_sv AND dt.trang_thai = TRUE
-    ORDER BY dt. do_uu_tien
+    ORDER BY dt.do_uu_tien
     LIMIT 1;
     
     -- Nếu chưa có, kiểm tra vùng sâu/vùng xa (QĐ1)
@@ -1328,26 +1269,56 @@ $$ LANGUAGE plpgsql;
 ```sql
 CREATE OR REPLACE FUNCTION fn_lay_don_gia(
     p_loai_mon VARCHAR, 
+    p_loai_hoc VARCHAR DEFAULT 'hoc_moi',
     p_ma_hoc_ky VARCHAR DEFAULT NULL
 )
 RETURNS DECIMAL(12,0) AS $$
 DECLARE
     v_don_gia DECIMAL(12,0);
+    v_loai_hoc_ky VARCHAR(20);
 BEGIN
-    -- Ưu tiên lấy đơn giá theo học kỳ, nếu không có thì lấy chung
-    SELECT don_gia INTO v_don_gia
-    FROM don_gia_tin_chi
-    WHERE loai_mon = p_loai_mon AND trang_thai = TRUE
-      AND (ma_hoc_ky = p_ma_hoc_ky OR ma_hoc_ky IS NULL)
-    ORDER BY ma_hoc_ky DESC NULLS LAST
-    LIMIT 1;
+    -- Xác định loại học: nếu học kỳ hè thì áp dụng giá học hè
+    IF p_ma_hoc_ky IS NOT NULL THEN
+        SELECT loai_hoc_ky INTO v_loai_hoc_ky
+        FROM hoc_ky WHERE ma_hoc_ky = p_ma_hoc_ky;
+        
+        IF v_loai_hoc_ky = 'Hè' AND p_loai_hoc = 'hoc_moi' THEN
+            -- Nếu là học kỳ hè, áp dụng giá học hè
+            SELECT don_gia INTO v_don_gia
+            FROM don_gia_tin_chi
+            WHERE loai_mon = p_loai_mon 
+              AND loai_hoc = 'hoc_he' 
+              AND trang_thai = TRUE
+              AND (ma_hoc_ky = p_ma_hoc_ky OR ma_hoc_ky IS NULL)
+            ORDER BY ma_hoc_ky DESC NULLS LAST
+            LIMIT 1;
+        END IF;
+    END IF;
     
-    -- Mặc định theo QĐ5: LT = 27,000đ, TH = 37,000đ
+    -- Nếu chưa có giá, lấy theo loại học cụ thể
     IF v_don_gia IS NULL THEN
-        v_don_gia := CASE p_loai_mon 
-            WHEN 'LT' THEN 27000 
-            WHEN 'TH' THEN 37000 
-            ELSE 0 
+        SELECT don_gia INTO v_don_gia
+        FROM don_gia_tin_chi
+        WHERE loai_mon = p_loai_mon 
+          AND loai_hoc = p_loai_hoc 
+          AND trang_thai = TRUE
+          AND (ma_hoc_ky = p_ma_hoc_ky OR ma_hoc_ky IS NULL)
+        ORDER BY ma_hoc_ky DESC NULLS LAST
+        LIMIT 1;
+    END IF;
+    
+    -- Mặc định theo QĐ5 (học mới)
+    IF v_don_gia IS NULL THEN
+        v_don_gia := CASE 
+            WHEN p_loai_mon = 'LT' AND p_loai_hoc = 'hoc_moi' THEN 27000
+            WHEN p_loai_mon = 'TH' AND p_loai_hoc = 'hoc_moi' THEN 37000
+            WHEN p_loai_mon = 'LT' AND p_loai_hoc = 'hoc_lai' THEN 32000
+            WHEN p_loai_mon = 'TH' AND p_loai_hoc = 'hoc_lai' THEN 42000
+            WHEN p_loai_mon = 'LT' AND p_loai_hoc = 'hoc_cai_thien' THEN 30000
+            WHEN p_loai_mon = 'TH' AND p_loai_hoc = 'hoc_cai_thien' THEN 40000
+            WHEN p_loai_mon = 'LT' AND p_loai_hoc = 'hoc_he' THEN 35000
+            WHEN p_loai_mon = 'TH' AND p_loai_hoc = 'hoc_he' THEN 45000
+            ELSE 27000
         END;
     END IF;
     
@@ -1357,19 +1328,23 @@ $$ LANGUAGE plpgsql;
 ```
 
 **Mô tả:**
-- Lấy đơn giá 1 tín chỉ theo loại môn (QĐ5)
-- LT (Lý thuyết): 27,000 đ/tín chỉ
-- TH (Thực hành): 37,000 đ/tín chỉ
+- Lấy đơn giá 1 tín chỉ theo loại môn và loại học (QĐ5)
+- Hỗ trợ đơn giá khác nhau cho:
+  - **Học mới**: LT = 27,000đ, TH = 37,000đ
+  - **Học lại**: LT = 32,000đ, TH = 42,000đ
+  - **Học cải thiện**: LT = 30,000đ, TH = 40,000đ
+  - **Học hè**: LT = 35,000đ, TH = 45,000đ
 
 ---
 
-#### Function 3: `sp_dang_ky_mon_hoc` (BM5, QĐ5)
+#### Function 3: `sp_dang_ky_lop` (BM5, QĐ5)
 
 ```sql
-CREATE OR REPLACE FUNCTION sp_dang_ky_mon_hoc(
+CREATE OR REPLACE FUNCTION sp_dang_ky_lop(
     p_ma_sv VARCHAR,
     p_ma_hoc_ky VARCHAR,
-    p_ma_mon_hoc VARCHAR
+    p_ma_lop VARCHAR,
+    p_loai_dang_ky VARCHAR DEFAULT 'hoc_moi'  -- 'hoc_moi', 'hoc_lai', 'hoc_cai_thien'
 ) RETURNS TEXT AS $$
 DECLARE
     v_so_phieu INTEGER;
@@ -1378,23 +1353,38 @@ DECLARE
     v_don_gia DECIMAL(12,0);
     v_thanh_tien DECIMAL(15,0);
     v_ti_le_giam DECIMAL(5,2);
+    v_ma_mon_hoc VARCHAR(15);
 BEGIN
-    -- QĐ5: Kiểm tra môn có mở trong học kỳ không
+    -- Kiểm tra lớp có mở trong học kỳ không
     IF NOT EXISTS (
-        SELECT 1 FROM mon_hoc_mo 
+        SELECT 1 FROM lop_mo 
         WHERE ma_hoc_ky = p_ma_hoc_ky 
-          AND ma_mon_hoc = p_ma_mon_hoc 
+          AND ma_lop = p_ma_lop 
           AND trang_thai = TRUE
     ) THEN
-        RETURN 'Môn học không mở trong học kỳ này';
+        RETURN 'Lớp học không mở trong học kỳ này';
     END IF;
     
-    -- Lấy thông tin môn học
-    SELECT so_tin_chi, loai_mon INTO v_so_tin_chi, v_loai_mon
-    FROM mon_hoc WHERE ma_mon_hoc = p_ma_mon_hoc;
+    -- Kiểm tra sĩ số còn chỗ
+    IF EXISTS (
+        SELECT 1 FROM lop_mo lm
+        JOIN lop l ON lm.ma_lop = l.ma_lop
+        WHERE lm.ma_hoc_ky = p_ma_hoc_ky 
+          AND lm.ma_lop = p_ma_lop
+          AND lm.so_luong_da_dang_ky >= l.so_luong_toi_da
+    ) THEN
+        RETURN 'Lớp học đã đầy';
+    END IF;
     
-    -- Lấy đơn giá (QĐ5)
-    v_don_gia := fn_lay_don_gia(v_loai_mon, p_ma_hoc_ky);
+    -- Lấy thông tin lớp và môn học
+    SELECT mh.ma_mon_hoc, mh.so_tin_chi, mh.loai_mon 
+    INTO v_ma_mon_hoc, v_so_tin_chi, v_loai_mon
+    FROM lop l
+    JOIN mon_hoc mh ON l.ma_mon_hoc = mh.ma_mon_hoc
+    WHERE l.ma_lop = p_ma_lop;
+    
+    -- Lấy đơn giá theo loại học (QĐ5)
+    v_don_gia := fn_lay_don_gia(v_loai_mon, p_loai_dang_ky, p_ma_hoc_ky);
     v_thanh_tien := v_so_tin_chi * v_don_gia;
     
     -- Lấy tỷ lệ giảm (QĐ1)
@@ -1411,21 +1401,21 @@ BEGIN
         RETURNING so_phieu INTO v_so_phieu;
     END IF;
     
-    -- Kiểm tra đã đăng ký chưa
+    -- Kiểm tra đã đăng ký lớp này chưa
     IF EXISTS (
         SELECT 1 FROM chi_tiet_dang_ky 
         WHERE so_phieu = v_so_phieu 
-          AND ma_mon_hoc = p_ma_mon_hoc 
+          AND ma_lop = p_ma_lop 
           AND trang_thai = 'Đã đăng ký'
     ) THEN
-        RETURN 'Đã đăng ký môn học này';
+        RETURN 'Đã đăng ký lớp này';
     END IF;
     
     -- Thêm chi tiết đăng ký
     INSERT INTO chi_tiet_dang_ky (
-        so_phieu, ma_mon_hoc, so_tin_chi, loai_mon, don_gia, thanh_tien
+        so_phieu, ma_lop, loai_dang_ky, so_tin_chi, loai_mon, don_gia, thanh_tien
     ) VALUES (
-        v_so_phieu, p_ma_mon_hoc, v_so_tin_chi, v_loai_mon, v_don_gia, v_thanh_tien
+        v_so_phieu, p_ma_lop, p_loai_dang_ky, v_so_tin_chi, v_loai_mon, v_don_gia, v_thanh_tien
     );
     
     -- Cập nhật tổng tiền phiếu đăng ký
@@ -1453,10 +1443,10 @@ BEGIN
         ngay_cap_nhat = CURRENT_TIMESTAMP
     WHERE so_phieu = v_so_phieu;
     
-    -- Cập nhật số lượng đăng ký của môn học mở
-    UPDATE mon_hoc_mo 
+    -- Cập nhật số lượng đăng ký của lớp mở
+    UPDATE lop_mo 
     SET so_luong_da_dang_ky = so_luong_da_dang_ky + 1
-    WHERE ma_hoc_ky = p_ma_hoc_ky AND ma_mon_hoc = p_ma_mon_hoc;
+    WHERE ma_hoc_ky = p_ma_hoc_ky AND ma_lop = p_ma_lop;
     
     RETURN 'Đăng ký thành công';
 END;
@@ -1528,13 +1518,14 @@ $$ LANGUAGE plpgsql;
 
 | Mã | Quy định | Bảng liên quan | Cách triển khai |
 |----|----------|----------------|-----------------|
-| QĐ1 | Quê quán gồm Huyện và Tỉnh.  Huyện có thuộc vùng sâu/xa hay không. SV có thể thuộc nhiều đối tượng, lấy đối tượng ưu tiên cao nhất | `tinh`, `huyen`, `doi_tuong`, `doi_tuong_sinh_vien` | Cột `la_vung_sau_vung_xa` trong `huyen`. Function `fn_lay_ti_le_giam_hoc_phi` |
-| QĐ2 | Loại môn LT/TH.  Số tín chỉ = số tiết/15 (LT) hoặc /30 (TH) | `mon_hoc` | Computed column `so_tin_chi` |
-| QĐ3 | Chương trình học theo ngành để mở môn trong học kỳ | `chuong_trinh_hoc`, `mon_hoc_mo` | FK liên kết |
+| QĐ1 | Quê quán gồm Huyện và Tỉnh. Huyện có thuộc vùng sâu/xa hay không. SV có thể thuộc nhiều đối tượng, lấy đối tượng ưu tiên cao nhất | `tinh`, `huyen`, `doi_tuong`, `doi_tuong_sinh_vien` | Cột `la_vung_sau_vung_xa` trong `huyen`. Function `fn_lay_ti_le_giam_hoc_phi` |
+| QĐ2 | Loại môn LT/TH. Số tín chỉ = số tiết/15 (LT) hoặc /30 (TH). Môn học thuộc khoa quản lý | `mon_hoc`, `khoa` | Computed column `so_tin_chi`, FK `ma_khoa` |
+| QĐ3 | Chương trình học theo ngành để mở lớp trong học kỳ | `chuong_trinh_hoc`, `lop`, `lop_mo` | FK liên kết |
 | QĐ4 | Có HK I, HK II (chính) và có thể có HK Hè | `hoc_ky` | Cột `loai_hoc_ky` |
-| QĐ5 | Đơn giá:  LT = 27,000đ/TC, TH = 37,000đ/TC.  SV chỉ ĐK môn có mở trong HK | `don_gia_tin_chi`, `mon_hoc_mo` | Function `fn_lay_don_gia`, `sp_dang_ky_mon_hoc` |
-| QĐ6 | SV có thể đóng HP nhiều lần, phải hoàn thành trước hạn | `phieu_thu_hoc_phi`, `hoc_ky` | Cho phép nhiều phiếu thu/phiếu ĐK.  Cột `han_dong_hoc_phi` |
+| QĐ5 | Đơn giá khác nhau theo loại môn và loại học (học mới, học lại, học cải thiện, học hè). SV chỉ ĐK lớp có mở trong HK | `don_gia_tin_chi`, `lop_mo` | Function `fn_lay_don_gia`, `sp_dang_ky_lop` |
+| QĐ6 | SV có thể đóng HP nhiều lần, phải hoàn thành trước hạn | `phieu_thu_hoc_phi`, `hoc_ky` | Cho phép nhiều phiếu thu/phiếu ĐK. Cột `han_dong_hoc_phi` |
 | QĐ7 | Số tiền phải đóng <= Số tiền đăng ký (do miễn giảm) | `phieu_dang_ky` | Cột `tong_tien_phai_dong` = `tong_tien_dang_ky` - `tien_mien_giam` |
+| QĐ8 | Một môn học có thể có nhiều lớp | `mon_hoc`, `lop` | FK `ma_mon_hoc` trong bảng `lop` |
 
 ### 9.2. Công thức tính toán
 
@@ -1547,13 +1538,16 @@ $$ LANGUAGE plpgsql;
 │     - Môn LT: số_tín_chỉ = số_tiết / 15                        │
 │     - Môn TH: số_tín_chỉ = số_tiết / 30                        │
 │                                                                 │
-│  2. Thành tiền mỗi môn (QĐ5):                                  │
-│     thành_tiền = số_tín_chỉ × đơn_giá                          │
-│     - Môn LT: đơn_giá = 27,000 đ                               │
-│     - Môn TH: đơn_giá = 37,000 đ                               │
+│  2. Thành tiền mỗi lớp (QĐ5):                                  │
+│     thành_tiền = số_tín_chỉ × đơn_giá (theo loại học)          │
+│     Đơn giá theo loại học:                                     │
+│     - Học mới: LT = 27,000đ, TH = 37,000đ                      │
+│     - Học lại: LT = 32,000đ, TH = 42,000đ                      │
+│     - Học cải thiện: LT = 30,000đ, TH = 40,000đ                │
+│     - Học hè: LT = 35,000đ, TH = 45,000đ                       │
 │                                                                 │
 │  3. Tổng tiền đăng ký (BM7):                                   │
-│     tổng_tiền_đăng_ký = SUM(thành_tiền các môn)                │
+│     tổng_tiền_đăng_ký = SUM(thành_tiền các lớp)                │
 │                                                                 │
 │  4. Tiền miễn giảm (QĐ1, QĐ7):                                 │
 │     tiền_miễn_giảm = tổng_tiền_đăng_ký × tỉ_lệ_giảm / 100      │
@@ -1634,10 +1628,10 @@ $$ LANGUAGE plpgsql;
                     │ n                  │ n                  │ 1
           ┌─────────┴─────────┐ ┌────────┴────────┐ ┌─────────┴─────────┐
           │  phieu_dang_ky    │ │ phieu_thu_hp    │ │    tai_khoan      │
-          │───────────────────│ │─────────────────│ │───────────���───────│
+          │───────────────────│ │─────────────────│ │───────────────────│
           │ * so_phieu (PK)   │ │ * so_phieu_thu  │ │ * ma_tai_khoan(PK)│
           │ # ma_sv (FK)      │ │ # so_phieu_dk   │ │   ten_dang_nhap   │
-          │ # ma_hoc_ky (FK)  │ │ # ma_sv (FK)    │ │ # ma_vai_tro (FK) │
+          │ # ma_hoc_ky (FK)  │ │ # ma_sv (FK)    │ │   role            │
           │   ngay_lap        │ │   so_tien_thu   │ │ # ma_sv (FK)      │
           │   tong_tien_dk    │ │   hinh_thuc_thu │ └───────────────────┘
           │   ti_le_giam      │ └─────────────────┘
@@ -1651,7 +1645,8 @@ $$ LANGUAGE plpgsql;
           │───────────────────│
           │ * id (PK)         │
           │ # so_phieu (FK)   │
-          │ # ma_mon_hoc (FK) │
+          │ # ma_lop (FK)     │
+          │   loai_dang_ky    │
           │   so_tin_chi      │
           │   don_gia         │
           │   thanh_tien      │
@@ -1660,48 +1655,36 @@ $$ LANGUAGE plpgsql;
                     │
                     │ 1
           ┌─────────┴─────────┐
-          │     mon_hoc       │
+          │       lop         │
           │───────────────────│
-          │ * ma_mon_hoc (PK) │
-          │   ten_mon_hoc     │
-          │   loai_mon        │
-          │   so_tiet         │
-          │   so_tin_chi      │◄──────────────────┐
-          └─────────┬─────────┘                   │
-                    │ 1                           │
-                    │                             │
-                    │ n                           │
-          ┌─────────┴─────────┐                   │
-          │    mon_hoc_mo     │                   │
-          │───────────────────│          ┌────────┴────────┐
-          │ * id (PK)         │          │ chuong_trinh_hoc│
-          │ # ma_hoc_ky (FK)  │          │─────────────────│
-          │ # ma_mon_hoc (FK) │          │ * id (PK)       │
-          │   so_luong_toi_da │          │ # ma_nganh (FK) │
-          │   so_luong_da_dk  │          │ # ma_mon_hoc(FK)│
-          └─────────┬─────────┘          │   hoc_ky_du_kien│
-                    │ n                  └─────────────────┘
-                    │
-                    │ 1
-          ┌─────────┴─────────┐
-          │      hoc_ky       │
-          │───────────────────│
-          │ * ma_hoc_ky (PK)  │
-          │   ten_hoc_ky      │
-          │ # ma_nam_hoc (FK) │
-          │   loai_hoc_ky     │
-          │   han_dong_hp     │
+          │ * ma_lop (PK)     │
+          │ # ma_mon_hoc (FK) │
+          │   ten_lop         │
+          │   giang_vien      │
+          │   lich_hoc        │
+          │   so_luong_toi_da │
           └─────────┬─────────┘
+                    │ 1
+                    │
+                    │ n
+          ┌─────────┴─────────┐                   
+          │     mon_hoc       │                   
+          │───────────────────│          ┌────────────────┐
+          │ * ma_mon_hoc (PK) │          │chuong_trinh_hoc│
+          │ # ma_khoa (FK)    │          │────────────────│
+          │   ten_mon_hoc     │◄─────────│ * id (PK)      │
+          │   loai_mon        │          │ # ma_nganh (FK)│
+          │   so_tiet         │          │ # ma_mon_hoc   │
+          │   so_tin_chi      │          │   hoc_ky_du_kien│
+          └─────────┬─────────┘          └────────────────┘
                     │ n
                     │
                     │ 1
           ┌─────────┴─────────┐
-          │     nam_hoc       │
+          │       khoa        │
           │───────────────────│
-          │ * ma_nam_hoc (PK) │
-          │   ten_nam_hoc     │
-          │   nam_bat_dau     │
-          │   nam_ket_thuc    │
+          │ * ma_khoa (PK)    │
+          │   ten_khoa        │
           └───────────────────┘
 
 Chú thích:
@@ -1720,14 +1703,13 @@ Chú thích:
 | `khoa` | 5-10 | Các khoa trong trường |
 | `nganh_hoc` | 15-20 | Các ngành đào tạo |
 | `sinh_vien` | 100+ | Sinh viên mẫu |
-| `mon_hoc` | 50-100 | Các môn học |
+| `mon_hoc` | 50-100 | Các môn học (thuộc khoa quản lý) |
+| `lop` | 100+ | Các lớp học (một môn nhiều lớp) |
 | `chuong_trinh_hoc` | 200+ | CTĐT các ngành |
 | `nam_hoc` | 3-5 | Các năm học gần đây |
 | `hoc_ky` | 10-15 | Các học kỳ |
-| `mon_hoc_mo` | 50+ | Môn mở trong HK hiện tại |
-| `vai_tro` | 2 | Admin, Sinh viên |
-| `quyen` | 10-15 | Các quyền hệ thống |
-| `tai_khoan` | 100+ | Tài khoản người dùng |
+| `lop_mo` | 100+ | Lớp mở trong HK hiện tại |
+| `tai_khoan` | 100+ | Tài khoản người dùng (với role trực tiếp) |
 
 ### 10.3. Dữ liệu mẫu chi tiết
 
@@ -1781,48 +1763,25 @@ INSERT INTO mon_hoc (ma_mon_hoc, ten_mon_hoc, loai_mon, so_tiet) VALUES
 ('TH006', 'Đồ án tốt nghiệp',                'TH', 300); -- 10 TC
 ```
 
-#### 10.3.4. Vai trò và Quyền
+#### 10.3.4. Tài khoản người dùng
 
 ```sql
--- Vai trò
-INSERT INTO vai_tro (ten_vai_tro, mo_ta) VALUES 
-('Admin', 'Quản trị viên hệ thống - Toàn quyền'),
-('Sinh viên', 'Sinh viên - Đăng ký môn học và xem học phí');
+-- Tài khoản được phân quyền trực tiếp qua cột `role`
+-- Không cần bảng vai_tro, quyen, phan_quyen riêng
 
--- Quyền hệ thống
-INSERT INTO quyen (ten_quyen, mo_ta, nhom_quyen) VALUES 
--- Nhóm quản lý sinh viên
-('STUDENT_VIEW',        'Xem danh sách sinh viên',      'STUDENT'),
-('STUDENT_CREATE',      'Thêm mới sinh viên',           'STUDENT'),
-('STUDENT_EDIT',        'Chỉnh sửa thông tin sinh viên','STUDENT'),
-('STUDENT_DELETE',      'Xóa sinh viên',                'STUDENT'),
--- Nhóm quản lý môn học
-('COURSE_VIEW',         'Xem danh sách môn học',        'COURSE'),
-('COURSE_MANAGE',       'Quản lý môn học',              'COURSE'),
--- Nhóm đăng ký
-('REGISTRATION_VIEW',   'Xem đăng ký học phần',         'REGISTRATION'),
-('REGISTRATION_MANAGE', 'Quản lý đăng ký học phần',     'REGISTRATION'),
--- Nhóm học phí
-('PAYMENT_VIEW',        'Xem thông tin học phí',        'PAYMENT'),
-('PAYMENT_COLLECT',     'Thu học phí',                  'PAYMENT'),
--- Nhóm báo cáo
-('REPORT_VIEW',         'Xem báo cáo thống kê',         'REPORT'),
-('REPORT_EXPORT',       'Xuất báo cáo',                 'REPORT'),
--- Nhóm sinh viên tự phục vụ
-('MY_INFO_VIEW',        'Xem thông tin cá nhân',        'STUDENT_SELF'),
-('MY_REGISTRATION',     'Đăng ký môn học của tôi',      'STUDENT_SELF'),
-('MY_PAYMENT_VIEW',     'Xem học phí của tôi',          'STUDENT_SELF');
+-- Tạo tài khoản Admin
+INSERT INTO tai_khoan (ten_dang_nhap, mat_khau, role, ho_ten, email) VALUES 
+('admin', '$2a$10$...', 'admin', 'Quản trị viên', 'admin@school.edu.vn');
 
--- Phân quyền cho Admin (tất cả quyền quản lý)
-INSERT INTO phan_quyen (ma_vai_tro, ma_quyen)
-SELECT 1, ma_quyen FROM quyen 
-WHERE nhom_quyen IN ('STUDENT', 'COURSE', 'REGISTRATION', 'PAYMENT', 'REPORT');
-
--- Phân quyền cho Sinh viên (chỉ quyền tự phục vụ)
-INSERT INTO phan_quyen (ma_vai_tro, ma_quyen)
-SELECT 2, ma_quyen FROM quyen 
-WHERE nhom_quyen = 'STUDENT_SELF';
+-- Tạo tài khoản Sinh viên (liên kết với bảng sinh_vien qua ma_sv)
+INSERT INTO tai_khoan (ten_dang_nhap, mat_khau, role, ma_sv, email) VALUES 
+('SV001', '$2a$10$...', 'sinh_vien', 'SV001', 'sv001@student.edu.vn'),
+('SV002', '$2a$10$...', 'sinh_vien', 'SV002', 'sv002@student.edu.vn');
 ```
+
+**Lưu ý:** Phân quyền được thực hiện trực tiếp trong code backend dựa trên giá trị cột `role`:
+- `admin`: Toàn quyền quản lý
+- `sinh_vien`: Chỉ xem thông tin cá nhân, đăng ký lớp học, xem học phí
 
 ---
 
@@ -1862,24 +1821,36 @@ INSERT INTO sinh_vien (
 INSERT INTO doi_tuong_sinh_vien (ma_sv, ma_doi_tuong, ghi_chu)
 VALUES ('SV001', 'DT03', 'Sinh viên hộ nghèo');
 
--- Tạo tài khoản cho sinh viên
-INSERT INTO tai_khoan (ten_dang_nhap, mat_khau, ma_vai_tro, ma_sv, email)
-VALUES ('SV001', '$2a$10$... ', 2, 'SV001', 'an.nv@email. com');
+-- Tạo tài khoản cho sinh viên (phân quyền trực tiếp qua role)
+INSERT INTO tai_khoan (ten_dang_nhap, mat_khau, role, ma_sv, email)
+VALUES ('SV001', '$2a$10$...', 'sinh_vien', 'SV001', 'an.nv@email.com');
 ```
 
 #### 11.2.2. Thêm môn học (BM2)
 
 ```sql
 -- Thêm môn Lý thuyết (số tín chỉ tự động tính = 45/15 = 3)
-INSERT INTO mon_hoc (ma_mon_hoc, ten_mon_hoc, loai_mon, so_tiet)
-VALUES ('LT013', 'Trí tuệ nhân tạo', 'LT', 45);
+-- Môn thuộc khoa quản lý
+INSERT INTO mon_hoc (ma_mon_hoc, ten_mon_hoc, ma_khoa, loai_mon, so_tiet)
+VALUES ('LT013', 'Trí tuệ nhân tạo', 'CNTT', 'LT', 45);
 
 -- Thêm môn Thực hành (số tín chỉ tự động tính = 60/30 = 2)
-INSERT INTO mon_hoc (ma_mon_hoc, ten_mon_hoc, loai_mon, so_tiet)
-VALUES ('TH007', 'Thực hành AI', 'TH', 60);
+INSERT INTO mon_hoc (ma_mon_hoc, ten_mon_hoc, ma_khoa, loai_mon, so_tiet)
+VALUES ('TH007', 'Thực hành AI', 'CNTT', 'TH', 60);
 ```
 
-#### 11.2.3. Thiết lập chương trình học (BM3)
+#### 11.2.3. Tạo lớp học cho môn
+
+```sql
+-- Mỗi môn có thể có nhiều lớp
+INSERT INTO lop (ma_lop, ten_lop, ma_mon_hoc, giang_vien, lich_hoc, phong_hoc, so_luong_toi_da)
+VALUES 
+    ('LT013_01', 'LT013_Lớp 1', 'LT013', 'Nguyễn Văn A', 'Thứ 2, Tiết 1-3', 'A101', 50),
+    ('LT013_02', 'LT013_Lớp 2', 'LT013', 'Trần Thị B', 'Thứ 4, Tiết 1-3', 'A102', 50),
+    ('TH007_01', 'TH007_Lớp 1', 'TH007', 'Lê Văn C', 'Thứ 6, Tiết 1-3', 'Lab01', 30);
+```
+
+#### 11.2.4. Thiết lập chương trình học (BM3)
 
 ```sql
 -- Thêm môn vào chương trình đào tạo ngành KTPM
@@ -1891,34 +1862,38 @@ VALUES
     ('KTPM', 'LT006', 3, 'Môn chuyên ngành');
 ```
 
-#### 11.2.4. Mở môn học trong học kỳ (BM4)
+#### 11.2.5. Mở lớp trong học kỳ (BM4)
 
 ```sql
--- Mở các môn cho học kỳ 1 năm 2025-2026
-INSERT INTO mon_hoc_mo (ma_hoc_ky, ma_mon_hoc, so_luong_toi_da)
+-- Mở các lớp cho học kỳ 1 năm 2025-2026
+INSERT INTO lop_mo (ma_hoc_ky, ma_lop)
 VALUES 
-    ('HK1-2526', 'LT001', 100),
-    ('HK1-2526', 'LT005', 80),
-    ('HK1-2526', 'TH001', 40),
-    ('HK1-2526', 'LT006', 60);
+    ('HK1-2526', 'LT013_01'),
+    ('HK1-2526', 'LT013_02'),
+    ('HK1-2526', 'TH007_01');
 ```
 
-#### 11.2.5. Đăng ký môn học (BM5)
+#### 11.2.6. Đăng ký lớp học (BM5)
 
 ```sql
--- Sử dụng function đăng ký môn học
-SELECT sp_dang_ky_mon_hoc('SV001', 'HK1-2526', 'LT001');
-SELECT sp_dang_ky_mon_hoc('SV001', 'HK1-2526', 'LT005');
-SELECT sp_dang_ky_mon_hoc('SV001', 'HK1-2526', 'TH001');
+-- Sử dụng function đăng ký lớp học
+-- Đăng ký học mới
+SELECT sp_dang_ky_lop('SV001', 'HK1-2526', 'LT013_01', 'hoc_moi');
+
+-- Đăng ký học lại (đơn giá cao hơn)
+SELECT sp_dang_ky_lop('SV001', 'HK1-2526', 'TH007_01', 'hoc_lai');
+
+-- Đăng ký học cải thiện
+SELECT sp_dang_ky_lop('SV002', 'HK1-2526', 'LT013_02', 'hoc_cai_thien');
 
 -- Xem phiếu đăng ký
 SELECT * FROM v_phieu_dang_ky WHERE ma_so_sinh_vien = 'SV001';
 ```
 
-#### 11.2.6. Thu học phí (BM6)
+#### 11.2.7. Thu học phí (BM6)
 
 ```sql
--- Sinh viên đóng học phí lần 1 (QĐ6:  có thể đóng nhiều lần)
+-- Sinh viên đóng học phí lần 1 (QĐ6: có thể đóng nhiều lần)
 SELECT sp_thu_hoc_phi(
     'SV001',           -- Mã SV
     'HK1-2526',        -- Mã học kỳ
@@ -1935,7 +1910,7 @@ SELECT sp_thu_hoc_phi('SV001', 'HK1-2526', 150000, 'Chuyển khoản', NULL, 'Đ
 SELECT * FROM v_phieu_thu_hoc_phi WHERE ma_so_sinh_vien = 'SV001';
 ```
 
-#### 11.2.7. Xem báo cáo SV chưa đóng học phí (BM7)
+#### 11.2.8. Xem báo cáo SV chưa đóng học phí (BM7)
 
 ```sql
 -- Xem tất cả SV chưa đóng đủ học phí
@@ -1968,7 +1943,7 @@ GROUP BY k.ten_khoa, nh.ten_nganh
 ORDER BY k.ten_khoa, nh.ten_nganh;
 ```
 
-#### 11.3.2. Thống kê đăng ký môn học theo học kỳ
+#### 11.3.2. Thống kê đăng ký lớp theo học kỳ
 
 ```sql
 SELECT 
@@ -1976,15 +1951,19 @@ SELECT
     nh.ten_nam_hoc,
     mh.ma_mon_hoc,
     mh.ten_mon_hoc,
-    mhm.so_luong_toi_da,
-    mhm.so_luong_da_dang_ky,
-    mhm.so_luong_toi_da - mhm.so_luong_da_dang_ky AS con_trong
-FROM mon_hoc_mo mhm
-JOIN hoc_ky hk ON mhm.ma_hoc_ky = hk. ma_hoc_ky
+    l.ma_lop,
+    l.ten_lop,
+    l.giang_vien,
+    l.so_luong_toi_da,
+    lm.so_luong_da_dang_ky,
+    l.so_luong_toi_da - lm.so_luong_da_dang_ky AS con_trong
+FROM lop_mo lm
+JOIN hoc_ky hk ON lm.ma_hoc_ky = hk.ma_hoc_ky
 JOIN nam_hoc nh ON hk.ma_nam_hoc = nh.ma_nam_hoc
-JOIN mon_hoc mh ON mhm.ma_mon_hoc = mh.ma_mon_hoc
-WHERE mhm.trang_thai = TRUE
-ORDER BY hk.ma_hoc_ky, mh.ma_mon_hoc;
+JOIN lop l ON lm.ma_lop = l.ma_lop
+JOIN mon_hoc mh ON l.ma_mon_hoc = mh.ma_mon_hoc
+WHERE lm.trang_thai = TRUE
+ORDER BY hk.ma_hoc_ky, mh.ma_mon_hoc, l.ma_lop;
 ```
 
 #### 11.3.3. Thống kê thu học phí theo học kỳ
