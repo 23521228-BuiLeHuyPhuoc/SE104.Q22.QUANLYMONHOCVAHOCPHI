@@ -12,8 +12,8 @@
 --   (Lưu ý: Cách này sẽ XÓA database hiện tại và tạo lại từ đầu)
 --
 -- Cách 2: Chỉ khởi tạo schema và dữ liệu (database đã tồn tại):
---   Sử dụng file init_schema_only.sql hoặc copy phần từ dòng "BẮT ĐẦU KHỞI TẠO SCHEMA"
---   psql -U postgres -d ql_dangky_hocphi -f init_schema_only.sql
+--   Copy phần từ dòng "BẮT ĐẦU KHỞI TẠO SCHEMA" đến cuối file vào một file mới
+--   psql -U postgres -d ql_dangky_hocphi -f <file_moi>
 --
 -- Cách 3: Sử dụng trong ứng dụng Node.js:
 --   Đọc nội dung file và thực thi qua pg client (bỏ qua phần tạo database)
@@ -37,7 +37,9 @@ WHERE pg_stat_activity.datname = 'ql_dangky_hocphi'
 DROP DATABASE IF EXISTS ql_dangky_hocphi;
 
 -- Tạo database mới
--- Sử dụng locale 'C' để đảm bảo tương thích với tất cả hệ thống
+-- Lưu ý: Sử dụng locale 'C' để đảm bảo tương thích với tất cả hệ thống.
+-- Nếu cần sắp xếp tiếng Việt đúng cách, hãy thay đổi thành 'vi_VN.UTF-8'
+-- (yêu cầu locale này phải được cài đặt trên hệ thống)
 CREATE DATABASE ql_dangky_hocphi
     WITH 
     OWNER = postgres
