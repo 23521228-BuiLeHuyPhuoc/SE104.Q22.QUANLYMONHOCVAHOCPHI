@@ -43,21 +43,210 @@ Tài liệu này phân chia công việc chi tiết cho **4 thành viên** trong
 ### 📝 Chi tiết công việc:
 
 #### A. Backend Tasks:
-- [ ] Tạo API lấy danh sách Tỉnh/Thành phố
-- [ ] Tạo API lấy danh sách Huyện/Quận theo Tỉnh
-- [ ] Tạo API CRUD đối tượng ưu tiên (con liệt sĩ, thương binh, vùng sâu...)
-- [ ] Tạo API gán đối tượng cho sinh viên
-- [ ] Tạo API tính tỷ lệ giảm học phí theo đối tượng ưu tiên cao nhất
-- [ ] Cập nhật API tạo sinh viên (bao gồm quê quán, đối tượng)
-- [ ] Tạo API upload ảnh đại diện sinh viên
+
+##### 1. API Quản lý Tỉnh/Thành phố
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Lấy danh sách tỉnh | GET | `/api/locations/provinces` | Trả về danh sách tất cả tỉnh/thành phố, có phân trang và tìm kiếm |
+| Lấy chi tiết tỉnh | GET | `/api/locations/provinces/:id` | Trả về thông tin chi tiết 1 tỉnh kèm danh sách huyện |
+| Thêm tỉnh | POST | `/api/locations/provinces` | Yêu cầu: `{ma_tinh, ten_tinh}`. Kiểm tra mã không trùng |
+| Sửa tỉnh | PUT | `/api/locations/provinces/:id` | Cập nhật tên tỉnh, không cho sửa mã |
+| Xóa tỉnh | DELETE | `/api/locations/provinces/:id` | Kiểm tra không có huyện nào thuộc tỉnh trước khi xóa |
+
+**Request/Response mẫu:**
+```javascript
+// GET /api/locations/provinces
+// Response:
+{
+  "success": true,
+  "data": [
+    { "ma_tinh": "HCM", "ten_tinh": "TP. Hồ Chí Minh", "trang_thai": true, "so_huyen": 24 },
+    { "ma_tinh": "HN", "ten_tinh": "Hà Nội", "trang_thai": true, "so_huyen": 30 }
+  ],
+  "pagination": { "page": 1, "limit": 10, "total": 63 }
+}
+
+// POST /api/locations/provinces
+// Request:
+{ "ma_tinh": "DL", "ten_tinh": "Đắk Lắk" }
+// Response:
+{ "success": true, "message": "Thêm tỉnh thành công", "data": {...} }
+```
+
+##### 2. API Quản lý Huyện/Quận
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Lấy danh sách huyện | GET | `/api/locations/districts` | Trả về tất cả huyện, hỗ trợ filter theo tỉnh |
+| Lấy huyện theo tỉnh | GET | `/api/locations/districts/province/:id` | Lọc huyện theo mã tỉnh |
+| Lấy chi tiết huyện | GET | `/api/locations/districts/:id` | Thông tin huyện kèm tên tỉnh |
+| Thêm huyện | POST | `/api/locations/districts` | Yêu cầu: `{ma_huyen, ten_huyen, ma_tinh, la_vung_sau_vung_xa}` |
+| Sửa huyện | PUT | `/api/locations/districts/:id` | Cập nhật thông tin, đặc biệt flag vùng sâu/xa |
+| Xóa huyện | DELETE | `/api/locations/districts/:id` | Kiểm tra không có sinh viên nào thuộc huyện |
+
+**Business Logic quan trọng:**
+- Khi cập nhật `la_vung_sau_vung_xa` từ FALSE → TRUE: Cần trigger cập nhật tỷ lệ giảm HP cho các SV thuộc huyện này
+- Khi cập nhật từ TRUE → FALSE: Cần tính lại tỷ lệ giảm cho SV (có thể mất ưu đãi)
+
+##### 3. API Quản lý Đối tượng ưu tiên
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Lấy danh sách đối tượng | GET | `/api/priority-objects` | Danh sách đối tượng sắp xếp theo độ ưu tiên |
+| Lấy chi tiết đối tượng | GET | `/api/priority-objects/:id` | Thông tin chi tiết 1 đối tượng |
+| Thêm đối tượng | POST | `/api/priority-objects` | Yêu cầu: `{ma_doi_tuong, ten_doi_tuong, ti_le_giam_hoc_phi, do_uu_tien}` |
+| Sửa đối tượng | PUT | `/api/priority-objects/:id` | Cập nhật, khi sửa tỷ lệ giảm cần cập nhật phiếu ĐK |
+| Xóa đối tượng | DELETE | `/api/priority-objects/:id` | Kiểm tra không có SV nào đang được gán |
+
+##### 4. API Gán đối tượng cho Sinh viên
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Lấy đối tượng của SV | GET | `/api/priority-objects/student/:sv_id` | Danh sách đối tượng đã gán cho SV |
+| Gán đối tượng | POST | `/api/priority-objects/assign` | Body: `{ma_sv, ma_doi_tuong, file_minh_chung}` |
+| Xóa gán đối tượng | DELETE | `/api/priority-objects/student/:sv_id/:obj_id` | Hủy gán đối tượng |
+
+**Business Logic:**
+- Khi gán/xóa đối tượng: Gọi function `fn_lay_ti_le_giam_hoc_phi(ma_sv)` để tính lại tỷ lệ
+- Cập nhật tất cả phiếu đăng ký của SV trong các HK đang active
+
+##### 5. API Quản lý Sinh viên (cập nhật theo BM1)
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Lấy danh sách SV | GET | `/api/students` | Hỗ trợ filter: ngành, trạng thái, quê quán, đối tượng |
+| Lấy chi tiết SV | GET | `/api/students/:id` | Bao gồm: thông tin cá nhân, quê quán, đối tượng, tỷ lệ giảm |
+| Thêm SV | POST | `/api/students` | Theo BM1, tự động tạo tài khoản |
+| Sửa SV | PUT | `/api/students/:id` | Cập nhật thông tin cá nhân |
+| Xóa SV | DELETE | `/api/students/:id` | Soft delete (set trạng thái) |
+| Lấy tỷ lệ giảm HP | GET | `/api/students/:id/discount-rate` | Gọi function SQL |
+| Upload ảnh đại diện | POST | `/api/students/:id/avatar` | Upload file ảnh |
+
+**Request/Response mẫu cho POST /api/students:**
+```javascript
+// Request (theo BM1):
+{
+  "ma_sv": "SV001",
+  "ho_ten": "Nguyễn Văn An",
+  "ngay_sinh": "2003-05-15",
+  "gioi_tinh": "Nam",
+  "ma_huyen": "Q1",           // Quê quán
+  "ma_nganh": "KTPM",         // Ngành học
+  "ma_doi_tuong": "DT03",     // Đối tượng ưu tiên (optional)
+  "cccd": "001203012345",
+  "sdt": "0901234567",
+  "email": "an.nv@email.com"
+}
+
+// Response:
+{
+  "success": true,
+  "message": "Tạo sinh viên thành công",
+  "data": {
+    "ma_sv": "SV001",
+    "ho_ten": "Nguyễn Văn An",
+    "que_quan": {
+      "huyen": "Quận 1",
+      "tinh": "TP. Hồ Chí Minh",
+      "la_vung_sau_vung_xa": false
+    },
+    "nganh": { "ma_nganh": "KTPM", "ten_nganh": "Kỹ thuật Phần mềm" },
+    "doi_tuong": [{ "ma_doi_tuong": "DT03", "ten_doi_tuong": "Hộ nghèo", "ti_le_giam": 70 }],
+    "ti_le_giam_hoc_phi": 70,
+    "tai_khoan": { "ten_dang_nhap": "sv001", "mat_khau_mac_dinh": "sv001@2003-05-15" }
+  }
+}
+```
 
 #### B. Frontend Tasks:
-- [ ] Tạo form lập hồ sơ sinh viên theo BM1
-- [ ] Tạo dropdown chọn Tỉnh → Huyện (cascade)
-- [ ] Tạo giao diện quản lý đối tượng ưu tiên
-- [ ] Tạo giao diện gán đối tượng cho sinh viên
-- [ ] Hiển thị tỷ lệ giảm HP của sinh viên
-- [ ] Hiển thị thông tin vùng sâu/vùng xa
+
+##### 1. Form lập hồ sơ sinh viên (theo BM1)
+
+**Component:** `StudentForm.jsx`
+
+**State cần quản lý:**
+```javascript
+const [formData, setFormData] = useState({
+  ma_sv: '',
+  ho_ten: '',
+  ngay_sinh: '',
+  gioi_tinh: 'Nam',
+  ma_tinh: '',        // Dropdown tỉnh
+  ma_huyen: '',       // Dropdown huyện (load theo tỉnh)
+  ma_nganh: '',       // Dropdown ngành
+  ma_doi_tuong: '',   // Dropdown đối tượng (optional)
+  cccd: '',
+  sdt: '',
+  email: '',
+  anh_dai_dien: null
+});
+const [tinhList, setTinhList] = useState([]);
+const [huyenList, setHuyenList] = useState([]);
+const [nganhList, setNganhList] = useState([]);
+const [doiTuongList, setDoiTuongList] = useState([]);
+const [errors, setErrors] = useState({});
+```
+
+**Behavior:**
+- Khi chọn Tỉnh → Load danh sách Huyện tương ứng (cascade dropdown)
+- Hiển thị badge "Vùng sâu/xa" nếu huyện được chọn là vùng sâu/xa
+- Hiển thị tỷ lệ giảm HP dự kiến khi chọn đối tượng
+- Validation: Mã SV không trùng, email đúng format, ngày sinh hợp lệ
+
+##### 2. Trang quản lý Tỉnh/Huyện
+
+**Component:** `LocationManagement.jsx`
+
+**Features:**
+- Tab Tỉnh/Thành phố | Tab Huyện/Quận
+- Table với columns: Mã, Tên, Trạng thái, Số huyện (tab Tỉnh) / Vùng sâu xa (tab Huyện)
+- Modal thêm/sửa
+- Checkbox "Vùng sâu vùng xa" với cảnh báo khi thay đổi
+- Search và filter
+
+##### 3. Trang quản lý Đối tượng ưu tiên
+
+**Component:** `PriorityObjects.jsx`
+
+**Features:**
+- Table: Mã, Tên, Tỷ lệ giảm, Độ ưu tiên, Số SV được gán
+- Drag & drop để thay đổi độ ưu tiên
+- Modal thêm/sửa với slider cho tỷ lệ giảm (0-100%)
+- Tab phụ: Gán đối tượng cho SV (search SV, chọn đối tượng, upload minh chứng)
+
+##### 4. Hiển thị tỷ lệ giảm HP
+
+**Component:** `StudentDiscountBadge.jsx`
+```jsx
+// Hiển thị trong danh sách và chi tiết sinh viên
+<Badge color={discountRate > 0 ? 'green' : 'gray'}>
+  Giảm {discountRate}% học phí
+</Badge>
+{isVungSauXa && <Tag color="orange">Vùng sâu/xa</Tag>}
+```
+
+### ✅ Acceptance Criteria:
+
+1. **API Sinh viên:**
+   - [ ] Có thể tạo sinh viên với đầy đủ thông tin theo BM1
+   - [ ] Tự động tạo tài khoản đăng nhập sau khi tạo sinh viên
+   - [ ] API trả về tỷ lệ giảm HP chính xác theo đối tượng ưu tiên cao nhất
+
+2. **API Địa danh:**
+   - [ ] Dropdown Tỉnh → Huyện hoạt động đúng (cascade)
+   - [ ] Có thể đánh dấu huyện vùng sâu/xa
+   - [ ] Khi cập nhật vùng sâu/xa, tự động tính lại tỷ lệ giảm cho SV
+
+3. **API Đối tượng:**
+   - [ ] CRUD đối tượng ưu tiên hoạt động đúng
+   - [ ] Gán/xóa đối tượng cho SV hoạt động đúng
+   - [ ] Tỷ lệ giảm luôn lấy từ đối tượng có độ ưu tiên cao nhất
+
+4. **Frontend:**
+   - [ ] Form tạo SV theo đúng BM1
+   - [ ] Dropdown cascade Tỉnh → Huyện
+   - [ ] Hiển thị rõ ràng tỷ lệ giảm HP của từng sinh viên
 
 ---
 
@@ -100,81 +289,577 @@ Tài liệu này phân chia công việc chi tiết cho **4 thành viên** trong
 ### 📝 Chi tiết công việc:
 
 #### A. Backend Tasks:
-- [ ] Cập nhật API môn học: thêm trường loại môn (LT/TH), số tiết
-- [ ] Tự động tính số tín chỉ theo QĐ2 (LT: số tiết/15, TH: số tiết/30)
-- [ ] Tạo API CRUD Khoa
-- [ ] Tạo API CRUD Ngành học (thuộc Khoa)
-- [ ] Tạo API CRUD chương trình học (môn học theo ngành, học kỳ dự kiến)
-- [ ] Tạo API CRUD điều kiện môn học (tiên quyết, học trước)
-- [ ] Tạo API lấy chương trình học theo ngành
+
+##### 1. API Quản lý Khoa
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Lấy danh sách khoa | GET | `/api/departments` | Danh sách khoa kèm số ngành, số môn học |
+| Lấy chi tiết khoa | GET | `/api/departments/:id` | Thông tin khoa, danh sách ngành và môn |
+| Thêm khoa | POST | `/api/departments` | Body: `{ma_khoa, ten_khoa, ten_viet_tat, email, sdt}` |
+| Sửa khoa | PUT | `/api/departments/:id` | Cập nhật thông tin khoa |
+| Xóa khoa | DELETE | `/api/departments/:id` | Kiểm tra không có ngành/môn thuộc khoa |
+
+##### 2. API Quản lý Ngành học
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Lấy danh sách ngành | GET | `/api/majors` | Filter theo khoa, kèm số SV, số môn CTĐT |
+| Lấy ngành theo khoa | GET | `/api/majors/department/:id` | Lọc ngành theo mã khoa |
+| Lấy chi tiết ngành | GET | `/api/majors/:id` | Thông tin ngành, CTĐT, danh sách SV |
+| Thêm ngành | POST | `/api/majors` | Body: `{ma_nganh, ten_nganh, ma_khoa, so_tin_chi_toi_thieu, thoi_gian_dao_tao}` |
+| Sửa ngành | PUT | `/api/majors/:id` | Cập nhật thông tin ngành |
+| Xóa ngành | DELETE | `/api/majors/:id` | Kiểm tra không có SV nào thuộc ngành |
+
+##### 3. API Quản lý Môn học (theo BM2, QĐ2)
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Lấy danh sách môn | GET | `/api/courses` | Filter: khoa, loại môn, tìm kiếm theo tên/mã |
+| Lấy chi tiết môn | GET | `/api/courses/:id` | Kèm điều kiện tiên quyết, các lớp, CTĐT |
+| Thêm môn học | POST | `/api/courses` | Theo BM2, tự động tính số tín chỉ theo QĐ2 |
+| Sửa môn học | PUT | `/api/courses/:id` | Khi sửa số tiết → tự động tính lại số TC |
+| Xóa môn học | DELETE | `/api/courses/:id` | Kiểm tra không có lớp mở, CTĐT |
+| Lấy điều kiện | GET | `/api/courses/:id/prerequisites` | Danh sách môn tiên quyết/học trước |
+| Thêm điều kiện | POST | `/api/courses/:id/prerequisites` | Body: `{ma_mon_dieu_kien, loai_dieu_kien}` |
+| Xóa điều kiện | DELETE | `/api/courses/:id/prerequisites/:prereq_id` | Xóa điều kiện môn |
+
+**Request/Response mẫu cho POST /api/courses (theo BM2):**
+```javascript
+// Request:
+{
+  "ma_mon_hoc": "CS106",
+  "ten_mon_hoc": "Trí tuệ nhân tạo",
+  "ma_khoa": "KHMT",
+  "loai_mon": "LT",      // 'LT' hoặc 'TH' (QĐ2)
+  "so_tiet": 45,         // Số tiết (BM2)
+  "mo_ta": "Nhập môn về Trí tuệ nhân tạo"
+}
+
+// Response:
+{
+  "success": true,
+  "data": {
+    "ma_mon_hoc": "CS106",
+    "ten_mon_hoc": "Trí tuệ nhân tạo",
+    "loai_mon": "LT",
+    "so_tiet": 45,
+    "so_tin_chi": 3,     // Tự động tính: 45/15 = 3 (QĐ2)
+    "khoa": { "ma_khoa": "KHMT", "ten_khoa": "Khoa học Máy tính" },
+    "lop_mac_dinh": { "ma_lop": "CS106_01", "ten_lop": "Trí tuệ nhân tạo - Lớp 01" }
+  }
+}
+```
+
+**Business Logic quan trọng (QĐ2):**
+```javascript
+// Tính số tín chỉ tự động
+const tinhSoTinChi = (loai_mon, so_tiet) => {
+  if (loai_mon === 'LT') return Math.floor(so_tiet / 15);  // Lý thuyết: số tiết/15
+  if (loai_mon === 'TH') return Math.floor(so_tiet / 30);  // Thực hành: số tiết/30
+  throw new Error('Loại môn không hợp lệ');
+};
+```
+
+##### 4. API Quản lý Lớp học
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Lấy danh sách lớp | GET | `/api/classes` | Filter theo môn học, giảng viên |
+| Lấy lớp theo môn | GET | `/api/classes/course/:id` | Tất cả lớp của 1 môn |
+| Lấy chi tiết lớp | GET | `/api/classes/:id` | Thông tin lớp kèm danh sách SV đăng ký |
+| Thêm lớp | POST | `/api/classes` | Body: `{ma_lop, ma_mon_hoc, giang_vien, lich_hoc, phong_hoc, so_luong_toi_da}` |
+| Sửa lớp | PUT | `/api/classes/:id` | Cập nhật thông tin lớp |
+| Xóa lớp | DELETE | `/api/classes/:id` | Kiểm tra không có SV đăng ký |
+
+##### 5. API Chương trình học (theo BM3, QĐ3)
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Lấy CTĐT theo ngành | GET | `/api/curriculum/major/:id` | Danh sách môn sắp xếp theo học kỳ dự kiến |
+| Thêm môn vào CTĐT | POST | `/api/curriculum` | Body: `{ma_nganh, ma_mon_hoc, hoc_ky_du_kien, bat_buoc, ghi_chu}` |
+| Sửa CTĐT | PUT | `/api/curriculum/:id` | Cập nhật học kỳ dự kiến, bắt buộc |
+| Xóa môn khỏi CTĐT | DELETE | `/api/curriculum/:id` | Xóa môn khỏi chương trình |
+| Import CTĐT | POST | `/api/curriculum/import` | Import từ file Excel |
+
+**Request/Response mẫu cho GET /api/curriculum/major/:id (theo BM3):**
+```javascript
+// GET /api/curriculum/major/KTPM
+// Response:
+{
+  "success": true,
+  "data": {
+    "nganh": { "ma_nganh": "KTPM", "ten_nganh": "Kỹ thuật Phần mềm" },
+    "khoa": { "ma_khoa": "CNPM", "ten_khoa": "Công nghệ Phần mềm" },
+    "so_tin_chi_toi_thieu": 120,
+    "thoi_gian_dao_tao": "4 năm",
+    "chuong_trinh_hoc": [
+      {
+        "hoc_ky": 1,
+        "mon_hoc": [
+          { "ma_mon": "MA006", "ten_mon": "Giải tích", "so_tc": 4, "loai": "LT", "bat_buoc": true },
+          { "ma_mon": "IT001", "ten_mon": "Nhập môn lập trình", "so_tc": 4, "loai": "LT", "bat_buoc": true }
+        ],
+        "tong_tin_chi": 18
+      },
+      {
+        "hoc_ky": 2,
+        "mon_hoc": [
+          { "ma_mon": "IT003", "ten_mon": "CTDL&GT", "so_tc": 4, "loai": "LT", "bat_buoc": true },
+          { "ma_mon": "IT004", "ten_mon": "Cơ sở dữ liệu", "so_tc": 4, "loai": "LT", "bat_buoc": true }
+        ],
+        "tong_tin_chi": 17
+      }
+      // ... các học kỳ khác
+    ],
+    "tong_tin_chi_bat_buoc": 100,
+    "tong_tin_chi_tu_chon": 20
+  }
+}
+```
 
 #### B. Frontend Tasks:
-- [ ] Tạo form nhập môn học theo BM2 (Mã MH, Tên MH, Loại môn, Số tiết)
-- [ ] Hiển thị số tín chỉ tự động tính
-- [ ] Tạo giao diện quản lý Khoa/Ngành
-- [ ] Tạo form nhập chương trình học theo BM3 (Ngành, Khoa, Học kỳ, Môn học)
-- [ ] Tạo giao diện quản lý điều kiện tiên quyết/học trước
-- [ ] Hiển thị danh sách môn học theo ngành
+
+##### 1. Form nhập môn học (theo BM2)
+
+**Component:** `CourseForm.jsx`
+
+**State:**
+```javascript
+const [formData, setFormData] = useState({
+  ma_mon_hoc: '',
+  ten_mon_hoc: '',
+  ma_khoa: '',
+  loai_mon: 'LT',    // Radio: LT/TH
+  so_tiet: '',
+  mo_ta: ''
+});
+const [soTinChi, setSoTinChi] = useState(0);  // Tự động tính
+```
+
+**Behavior:**
+- Khi thay đổi `loai_mon` hoặc `so_tiet` → Tự động tính và hiển thị `soTinChi`
+- Hiển thị công thức: "Số tín chỉ = [số tiết] / [15 hoặc 30] = [kết quả]"
+- Validation: Mã môn không trùng, số tiết > 0
+
+**UI Elements:**
+```jsx
+<Form>
+  <Input label="Mã môn học" name="ma_mon_hoc" required />
+  <Input label="Tên môn học" name="ten_mon_hoc" required />
+  <Select label="Khoa quản lý" name="ma_khoa" options={khoaList} required />
+  
+  <RadioGroup label="Loại môn (QĐ2)" name="loai_mon">
+    <Radio value="LT">Lý thuyết (LT)</Radio>
+    <Radio value="TH">Thực hành (TH)</Radio>
+  </RadioGroup>
+  
+  <Input label="Số tiết" name="so_tiet" type="number" min="15" required />
+  
+  {/* Hiển thị số tín chỉ tự động */}
+  <InfoBox>
+    <strong>Số tín chỉ (QĐ2):</strong> {soTinChi} TC
+    <small>Công thức: {so_tiet} / {loai_mon === 'LT' ? 15 : 30} = {soTinChi}</small>
+  </InfoBox>
+  
+  <TextArea label="Mô tả" name="mo_ta" />
+  <Button type="submit">Thêm môn học</Button>
+</Form>
+```
+
+##### 2. Giao diện quản lý Khoa/Ngành
+
+**Component:** `Departments.jsx`
+
+**Features:**
+- 2 tabs: Quản lý Khoa | Quản lý Ngành
+- **Tab Khoa:** Table với columns: Mã, Tên, Viết tắt, Số ngành, Số môn, Trưởng khoa
+- **Tab Ngành:** Table với columns: Mã, Tên, Khoa, Số TC tối thiểu, Số SV, Số môn CTĐT
+- Nút thêm/sửa/xóa với modal form
+- Search và filter
+
+##### 3. Giao diện Chương trình học (theo BM3)
+
+**Component:** `Curriculum.jsx`
+
+**Features:**
+- Dropdown chọn Ngành học
+- Hiển thị CTĐT theo dạng timeline/kanban theo học kỳ
+- Mỗi học kỳ là 1 column, chứa danh sách môn học
+- Drag & drop môn học giữa các học kỳ
+- Badge "Bắt buộc" / "Tự chọn" cho mỗi môn
+- Tổng tín chỉ của từng học kỳ và toàn bộ CTĐT
+- Modal thêm môn vào CTĐT (chọn môn từ danh sách, chọn HK dự kiến)
+
+**UI mockup:**
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  Chương trình học: Kỹ thuật Phần mềm (KTPM) - 120 TC                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐│
+│ │  HK 1   │ │  HK 2   │ │  HK 3   │ │  HK 4   │ │  HK 5   │ │  HK 6   ││
+│ │ 18 TC   │ │ 17 TC   │ │ 18 TC   │ │ 17 TC   │ │ 16 TC   │ │ 16 TC   ││
+│ ├─────────┤ ├─────────┤ ├─────────┤ ├─────────┤ ├─────────┤ ├─────────┤│
+│ │ MA006   │ │ IT003   │ │ SE104   │ │ CS106   │ │ SE400   │ │ SE505   ││
+│ │ Giải    │ │ CTDL&GT │ │ Nhập    │ │ Trí tuệ │ │ Seminar │ │ Khóa    ││
+│ │ tích    │ │ 4TC [BB]│ │ môn     │ │ nhân    │ │ CNPM    │ │ luận    ││
+│ │ 4TC [BB]│ │         │ │ CNPM    │ │ tạo     │ │ 4TC [TC]│ │ 10TC[BB]││
+│ ├─────────┤ ├─────────┤ │ 3TC [BB]│ │ 4TC [TC]│ └─────────┘ └─────────┘│
+│ │ IT001   │ │ IT004   │ └─────────┘ └─────────┘                        │
+│ │ Nhập    │ │ Cơ sở   │                                                │
+│ │ môn LP  │ │ dữ liệu │                                                │
+│ │ 4TC [BB]│ │ 4TC [BB]│                                                │
+│ └─────────┘ └─────────┘                                                │
+│                                            [+ Thêm môn] [Import Excel] │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+##### 4. Giao diện quản lý Điều kiện môn học
+
+**Component:** `Prerequisites.jsx` (có thể tích hợp trong CourseDetail)
+
+**Features:**
+- Hiển thị graph/tree điều kiện của môn
+- Thêm môn tiên quyết hoặc môn học trước
+- Cảnh báo nếu phát hiện vòng lặp điều kiện
+- Hiển thị 2 loại:
+  - **Tiên quyết:** Phải đạt môn này trước
+  - **Học trước:** Phải đăng ký học môn này trước hoặc cùng lúc
+
+### ✅ Acceptance Criteria:
+
+1. **API Môn học (BM2, QĐ2):**
+   - [ ] Tạo môn học với loại môn LT/TH
+   - [ ] Số tín chỉ tự động tính: LT = số tiết/15, TH = số tiết/30
+   - [ ] Tự động tạo lớp mặc định khi tạo môn
+   - [ ] CRUD hoạt động đúng
+
+2. **API Chương trình học (BM3, QĐ3):**
+   - [ ] Lấy CTĐT theo ngành với danh sách môn theo học kỳ
+   - [ ] Thêm/sửa/xóa môn trong CTĐT
+   - [ ] Phân biệt môn bắt buộc và tự chọn
+
+3. **API Điều kiện môn học:**
+   - [ ] Thêm môn tiên quyết/học trước
+   - [ ] Phát hiện và ngăn chặn vòng lặp điều kiện
+
+4. **Frontend:**
+   - [ ] Form nhập môn học theo BM2 với số TC tự động tính
+   - [ ] Giao diện CTĐT hiển thị theo học kỳ
+   - [ ] Quản lý Khoa/Ngành hoạt động đúng
 
 ---
 
 ## 👤 THÀNH VIÊN 3: Quản lý Học kỳ & Đăng ký môn học
 
-### Phụ trách: BM4 - Nhập môn học mở trong học kỳ, BM5 - Lập phiếu đăng ký học phần, QĐ4 - Học kỳ chính/hè, QĐ5 - Đơn giá tín chỉ
+### Phụ trách: BM4 - Môn học mở trong học kỳ, BM5 - Phiếu đăng ký học phần, QĐ4 - Học kỳ chính/hè, QĐ5 - Đơn giá & Đăng ký lớp mở
 
 ### 📁 Files Backend cần thao tác:
 
 | STT | File | Công việc |
 |-----|------|-----------|
-| 1 | `backend/src/controllers/semesterController.js` | Cập nhật API học kỳ (loại học kỳ, hạn đóng HP) |
-| 2 | `backend/src/routes/semesterRoutes.js` | Cập nhật routes học kỳ |
-| 3 | `backend/src/controllers/registrationController.js` | Cập nhật API đăng ký môn học theo BM5 |
-| 4 | `backend/src/routes/registrationRoutes.js` | Cập nhật routes đăng ký |
-| 5 | `backend/src/controllers/openClassController.js` | **Tạo mới** - API lớp mở trong học kỳ (BM4) |
+| 1 | `backend/src/controllers/semesterController.js` | **Tạo mới** - API học kỳ (QĐ4) |
+| 2 | `backend/src/routes/semesterRoutes.js` | **Tạo mới** - Routes học kỳ |
+| 3 | `backend/src/controllers/academicYearController.js` | **Tạo mới** - API năm học |
+| 4 | `backend/src/routes/academicYearRoutes.js` | **Tạo mới** - Routes năm học |
+| 5 | `backend/src/controllers/openClassController.js` | **Tạo mới** - API lớp mở theo học kỳ (BM4) |
 | 6 | `backend/src/routes/openClassRoutes.js` | **Tạo mới** - Routes lớp mở |
-| 7 | `backend/src/controllers/priceController.js` | **Tạo mới** - API đơn giá tín chỉ (QĐ5) |
-| 8 | `backend/src/routes/priceRoutes.js` | **Tạo mới** - Routes đơn giá |
-| 9 | `backend/src/controllers/academicYearController.js` | **Tạo mới** - API năm học |
-| 10 | `backend/src/routes/academicYearRoutes.js` | **Tạo mới** - Routes năm học |
+| 7 | `backend/src/controllers/registrationController.js` | Cập nhật API đăng ký (BM5, QĐ5) |
+| 8 | `backend/src/routes/registrationRoutes.js` | Cập nhật routes đăng ký |
+| 9 | `backend/src/controllers/priceController.js` | **Tạo mới** - API đơn giá tín chỉ (QĐ5) |
+| 10 | `backend/src/routes/priceRoutes.js` | **Tạo mới** - Routes đơn giá |
 | 11 | `backend/src/index.js` | Đăng ký routes mới |
 
 ### 📁 Files Frontend cần thao tác:
 
 | STT | File | Công việc |
 |-----|------|-----------|
-| 1 | `frontend/src/pages/Semesters.jsx` | Cập nhật giao diện học kỳ (loại, hạn đóng HP) |
-| 2 | `frontend/src/pages/Semesters.css` | Styles cho trang học kỳ |
-| 3 | `frontend/src/pages/Registrations.jsx` | Cập nhật giao diện phiếu đăng ký theo BM5 |
-| 4 | `frontend/src/pages/Registrations.css` | Styles cho trang đăng ký |
-| 5 | `frontend/src/pages/CourseRegistration.jsx` | Cập nhật giao diện đăng ký môn cho SV |
-| 6 | `frontend/src/pages/CourseRegistration.css` | Styles |
-| 7 | `frontend/src/pages/admin/OpenClasses.jsx` | **Tạo mới** - Quản lý lớp mở theo BM4 |
-| 8 | `frontend/src/pages/admin/OpenClasses.css` | **Tạo mới** - Styles |
-| 9 | `frontend/src/pages/admin/UnitPrices.jsx` | **Tạo mới** - Quản lý đơn giá tín chỉ |
-| 10 | `frontend/src/pages/admin/UnitPrices.css` | **Tạo mới** - Styles |
-| 11 | `frontend/src/services/openClassService.js` | **Tạo mới** - API service lớp mở |
-| 12 | `frontend/src/services/priceService.js` | **Tạo mới** - API service đơn giá |
-| 13 | `frontend/src/App.jsx` | Thêm routes mới |
+| 1 | `frontend/src/pages/Semesters.jsx` | **Tạo mới** - Quản lý năm học và học kỳ |
+| 2 | `frontend/src/pages/Semesters.css` | **Tạo mới** - Styles |
+| 3 | `frontend/src/pages/admin/OpenClasses.jsx` | **Tạo mới** - Quản lý lớp mở theo BM4 |
+| 4 | `frontend/src/pages/admin/OpenClasses.css` | **Tạo mới** - Styles |
+| 5 | `frontend/src/pages/admin/UnitPrices.jsx` | **Tạo mới** - Quản lý đơn giá tín chỉ (QĐ5) |
+| 6 | `frontend/src/pages/admin/UnitPrices.css` | **Tạo mới** - Styles |
+| 7 | `frontend/src/pages/Registrations.jsx` | Cập nhật giao diện đăng ký (admin) |
+| 8 | `frontend/src/pages/Registrations.css` | Styles |
+| 9 | `frontend/src/pages/CourseRegistration.jsx` | Cập nhật giao diện đăng ký (sinh viên) |
+| 10 | `frontend/src/pages/CourseRegistration.css` | Styles |
+| 11 | `frontend/src/pages/MyCourses.jsx` | Cập nhật hiển thị môn đã đăng ký |
+| 12 | `frontend/src/services/openClassService.js` | **Tạo mới** - API service lớp mở |
+| 13 | `frontend/src/services/priceService.js` | **Tạo mới** - API service đơn giá |
+| 14 | `frontend/src/App.jsx` | Thêm routes mới |
 
 ### 📝 Chi tiết công việc:
 
 #### A. Backend Tasks:
-- [ ] Cập nhật API học kỳ: thêm loại học kỳ (Chính/Hè), hạn đóng HP
-- [ ] Tạo API CRUD năm học
-- [ ] Tạo API mở lớp trong học kỳ theo BM4
-- [ ] Tạo API lấy danh sách lớp mở trong học kỳ
-- [ ] Tạo API CRUD đơn giá tín chỉ (theo loại môn, loại học)
-- [ ] Cập nhật API đăng ký: kiểm tra lớp có mở không, tính tiền tự động
-- [ ] Tạo API lập phiếu đăng ký học phần theo BM5
-- [ ] Tạo API tính tiền đăng ký = số TC × đơn giá
+
+##### 1. API Quản lý Năm học
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Lấy danh sách năm học | GET | `/api/academic-years` | Danh sách năm học kèm số học kỳ |
+| Lấy chi tiết năm học | GET | `/api/academic-years/:id` | Thông tin năm học và các học kỳ |
+| Thêm năm học | POST | `/api/academic-years` | Body: `{ma_nam_hoc, ten_nam_hoc, ngay_bat_dau, ngay_ket_thuc}` |
+| Sửa năm học | PUT | `/api/academic-years/:id` | Cập nhật thông tin |
+| Xóa năm học | DELETE | `/api/academic-years/:id` | Kiểm tra không có học kỳ |
+
+##### 2. API Quản lý Học kỳ (theo QĐ4)
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Lấy danh sách học kỳ | GET | `/api/semesters` | Filter: năm học, loại HK, trạng thái |
+| Lấy HK đang diễn ra | GET | `/api/semesters/active` | HK có `trang_thai = 'Đang diễn ra'` |
+| Lấy HK đăng ký được | GET | `/api/semesters/available` | HK trong thời gian đăng ký |
+| Lấy chi tiết học kỳ | GET | `/api/semesters/:id` | Kèm danh sách lớp mở, thống kê đăng ký |
+| Thêm học kỳ | POST | `/api/semesters` | Phân loại: Chính (HKI, HKII) hoặc Hè |
+| Sửa học kỳ | PUT | `/api/semesters/:id` | Cập nhật ngày, hạn đăng ký, hạn đóng HP |
+| Xóa học kỳ | DELETE | `/api/semesters/:id` | Kiểm tra không có lớp mở/đăng ký |
+
+**Request/Response mẫu cho POST /api/semesters (theo QĐ4):**
+```javascript
+// Request:
+{
+  "ma_hoc_ky": "HK1-2526",
+  "ten_hoc_ky": "Học kỳ I - 2025-2026",
+  "ma_nam_hoc": "2025-2026",
+  "loai_hoc_ky": "Chính",     // 'Chính' hoặc 'Hè' (QĐ4)
+  "thu_tu": 1,                 // 1 = HK I, 2 = HK II, 3 = Hè
+  "ngay_bat_dau": "2025-09-01",
+  "ngay_ket_thuc": "2026-01-15",
+  "ngay_bat_dau_dang_ky": "2025-08-15",
+  "ngay_ket_thuc_dang_ky": "2025-08-30",
+  "han_dong_hoc_phi": "2025-10-31"
+}
+
+// Response:
+{
+  "success": true,
+  "data": {
+    "ma_hoc_ky": "HK1-2526",
+    "ten_hoc_ky": "Học kỳ I - 2025-2026",
+    "loai_hoc_ky": "Chính",
+    "trang_thai": "Sắp diễn ra",
+    "thoi_gian_dang_ky": {
+      "bat_dau": "2025-08-15",
+      "ket_thuc": "2025-08-30",
+      "dang_trong_thoi_gian": false
+    },
+    "han_dong_hoc_phi": "2025-10-31"
+  }
+}
+```
+
+##### 3. API Quản lý Lớp mở trong học kỳ (theo BM4)
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Lấy danh sách lớp mở | GET | `/api/open-classes` | Filter: học kỳ, môn học |
+| Lấy lớp mở theo HK | GET | `/api/open-classes/semester/:id` | Tất cả lớp mở của 1 HK (BM4) |
+| Lấy chi tiết lớp mở | GET | `/api/open-classes/:id` | Kèm sĩ số đã đăng ký |
+| Mở lớp trong HK | POST | `/api/open-classes` | Body: `{ma_hoc_ky, ma_lop, ghi_chu}` |
+| Sửa lớp mở | PUT | `/api/open-classes/:id` | Cập nhật ghi chú, trạng thái |
+| Đóng lớp | DELETE | `/api/open-classes/:id` | Soft delete, kiểm tra SV đã ĐK |
+| Mở nhiều lớp | POST | `/api/open-classes/bulk` | Mở nhiều lớp cùng lúc |
+| Mở lớp theo CTĐT | POST | `/api/open-classes/from-curriculum` | Tự động mở lớp dựa trên CTĐT ngành |
+
+**Request/Response mẫu cho GET /api/open-classes/semester/:id (theo BM4):**
+```javascript
+// GET /api/open-classes/semester/HK1-2526
+// Response:
+{
+  "success": true,
+  "data": {
+    "hoc_ky": {
+      "ma_hoc_ky": "HK1-2526",
+      "ten_hoc_ky": "Học kỳ I - 2025-2026",
+      "loai_hoc_ky": "Chính"
+    },
+    "lop_mo": [
+      {
+        "ma_lop_mo": 1,
+        "lop": { "ma_lop": "CS106_01", "giang_vien": "TS. Nguyễn Văn A", "phong": "A101" },
+        "mon_hoc": { "ma_mon": "CS106", "ten_mon": "Trí tuệ nhân tạo", "so_tc": 3, "loai_mon": "LT" },
+        "si_so": { "da_dang_ky": 35, "toi_da": 50, "con_trong": 15 },
+        "trang_thai": "Đang mở"
+      }
+    ],
+    "thong_ke": {
+      "tong_lop_mo": 50,
+      "tong_mon": 30,
+      "tong_sv_dang_ky": 1200
+    }
+  }
+}
+```
+
+##### 4. API Quản lý Đơn giá tín chỉ (theo QĐ5)
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Lấy danh sách đơn giá | GET | `/api/unit-prices` | Tất cả đơn giá theo loại môn, loại học |
+| Lấy chi tiết đơn giá | GET | `/api/unit-prices/:id` | Thông tin chi tiết |
+| Thêm đơn giá | POST | `/api/unit-prices` | Body: `{loai_mon, loai_hoc, don_gia, hieu_luc_tu}` |
+| Sửa đơn giá | PUT | `/api/unit-prices/:id` | Cập nhật đơn giá |
+| Xóa đơn giá | DELETE | `/api/unit-prices/:id` | Soft delete |
+| Tính giá | GET | `/api/unit-prices/calculate` | Query: `?loai_mon=LT&loai_hoc=hoc_moi&ma_hoc_ky=HK1-2526` |
+
+**Bảng đơn giá mặc định (theo QĐ5):**
+
+| Loại môn | Loại học | Đơn giá (VNĐ/TC) |
+|----------|----------|------------------|
+| LT | hoc_moi | 27,000 |
+| TH | hoc_moi | 37,000 |
+| LT | hoc_lai | 32,000 |
+| TH | hoc_lai | 42,000 |
+| LT | hoc_cai_thien | 30,000 |
+| TH | hoc_cai_thien | 40,000 |
+| LT | hoc_he | 35,000 |
+| TH | hoc_he | 45,000 |
+
+##### 5. API Đăng ký học phần (theo BM5, QĐ5)
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Lấy phiếu ĐK của SV | GET | `/api/registrations/student/:sv_id` | Danh sách phiếu ĐK của SV |
+| Lấy phiếu ĐK trong HK | GET | `/api/registrations/student/:sv_id/semester/:hk_id` | Phiếu ĐK cụ thể |
+| Lấy lớp có thể ĐK | GET | `/api/registrations/available` | Query: `?ma_sv=SV001&ma_hoc_ky=HK1-2526` |
+| Đăng ký lớp | POST | `/api/registrations` | Đăng ký 1 hoặc nhiều lớp (BM5, QĐ5) |
+| Hủy đăng ký | PUT | `/api/registrations/:id/cancel` | Hủy đăng ký lớp |
+| Lấy chi tiết phiếu | GET | `/api/registrations/:id` | Chi tiết phiếu ĐK (BM5) |
+
+**Request/Response mẫu cho POST /api/registrations (theo BM5):**
+```javascript
+// Request:
+{
+  "ma_sv": "SV001",
+  "ma_hoc_ky": "HK1-2526",
+  "lop_dang_ky": [
+    { "ma_lop": "CS106_01", "loai_dang_ky": "hoc_moi" },
+    { "ma_lop": "IT003_02", "loai_dang_ky": "hoc_lai" }
+  ]
+}
+
+// Response (theo BM5):
+{
+  "success": true,
+  "data": {
+    "so_phieu": 1,
+    "ma_sv": "SV001",
+    "ho_ten": "Nguyễn Văn An",
+    "ngay_lap": "2025-08-20T10:30:00",
+    "hoc_ky": { "ma_hoc_ky": "HK1-2526", "ten_hoc_ky": "HK I - 2025-2026" },
+    "chi_tiet": [
+      {
+        "ma_lop": "CS106_01",
+        "mon_hoc": { "ma_mon": "CS106", "ten_mon": "Trí tuệ nhân tạo" },
+        "loai_mon": "LT",
+        "so_tin_chi": 3,
+        "loai_dang_ky": "hoc_moi",
+        "don_gia": 27000,
+        "thanh_tien": 81000
+      },
+      {
+        "ma_lop": "IT003_02",
+        "mon_hoc": { "ma_mon": "IT003", "ten_mon": "CTDL&GT" },
+        "loai_mon": "LT",
+        "so_tin_chi": 4,
+        "loai_dang_ky": "hoc_lai",
+        "don_gia": 32000,
+        "thanh_tien": 128000
+      }
+    ],
+    "tong_ket": {
+      "tong_tin_chi": 7,
+      "tong_tien_dang_ky": 209000,
+      "ti_le_giam": 50,
+      "tien_mien_giam": 104500,
+      "tong_tien_phai_dong": 104500
+    }
+  }
+}
+```
 
 #### B. Frontend Tasks:
-- [ ] Cập nhật form học kỳ (thêm loại học kỳ, hạn đóng HP)
-- [ ] Tạo giao diện mở lớp trong học kỳ theo BM4
-- [ ] Tạo giao diện quản lý đơn giá tín chỉ
-- [ ] Cập nhật giao diện đăng ký môn cho sinh viên
-- [ ] Hiển thị phiếu đăng ký học phần theo BM5
-- [ ] Hiển thị thành tiền tự động khi chọn môn
+
+##### 1. Giao diện quản lý Năm học & Học kỳ (theo QĐ4)
+
+**Component:** `Semesters.jsx`
+
+**Features:**
+- Dropdown chọn năm học
+- Timeline hiển thị các học kỳ trong năm: HK I → HK II → (Hè)
+- Badge trạng thái: "Sắp diễn ra", "Đang diễn ra", "Đã kết thúc"
+- Hiển thị thời gian đăng ký, hạn đóng HP
+- Modal thêm/sửa học kỳ với validation ngày tháng
+
+##### 2. Giao diện Mở lớp trong học kỳ (theo BM4)
+
+**Component:** `OpenClasses.jsx`
+
+**Features:**
+- Dropdown chọn học kỳ
+- 2 panels: "Lớp chưa mở" | "Lớp đã mở"
+- Drag & drop từ "Chưa mở" sang "Đã mở" để mở lớp
+- Table lớp đã mở: Mã lớp, Môn học, Giảng viên, Phòng, Sĩ số, Trạng thái
+- Nút "Mở lớp từ CTĐT" - Tự động mở tất cả lớp theo CTĐT của các ngành
+
+##### 3. Giao diện quản lý Đơn giá tín chỉ (theo QĐ5)
+
+**Component:** `UnitPrices.jsx`
+
+**Features:**
+- Table hiển thị đơn giá theo ma trận: Rows = Loại học, Columns = Loại môn
+- Editable cells - click để sửa đơn giá trực tiếp
+- Lịch sử thay đổi đơn giá
+
+##### 4. Giao diện Đăng ký học phần (Sinh viên) theo BM5
+
+**Component:** `CourseRegistration.jsx`
+
+**Features:**
+- Hiển thị danh sách lớp có thể đăng ký (đã mở trong HK, còn chỗ)
+- Filter: Theo môn, theo khoa, tìm kiếm
+- Chọn lớp để thêm vào giỏ đăng ký
+- Chọn loại đăng ký: Học mới / Học lại / Cải thiện
+- Hiển thị tóm tắt: Tổng TC, Tổng tiền, Tỷ lệ giảm, Tiền phải đóng
+- Nút "Xác nhận đăng ký"
+
+##### 5. Giao diện Môn học đã đăng ký (theo BM5)
+
+**Component:** `MyCourses.jsx`
+
+**Features:**
+- Hiển thị phiếu đăng ký (BM5): Số phiếu, Ngày lập, Tổng TC, Tổng tiền
+- Table chi tiết: Môn học, Lớp, Loại ĐK, Số TC, Thành tiền
+- Trạng thái: "Đã đăng ký" / "Đã hủy"
+- Nút "Hủy đăng ký" cho từng môn (trong thời gian cho phép)
+
+### ✅ Acceptance Criteria:
+
+1. **API Học kỳ (QĐ4):**
+   - [ ] Tạo học kỳ với loại Chính (HKI, HKII) hoặc Hè
+   - [ ] Quản lý thời gian đăng ký và hạn đóng HP
+   - [ ] API lấy HK đang diễn ra hoạt động đúng
+
+2. **API Lớp mở (BM4):**
+   - [ ] Mở lớp trong học kỳ hoạt động đúng
+   - [ ] Kiểm tra sĩ số khi mở lớp
+   - [ ] API mở lớp theo CTĐT hoạt động đúng
+
+3. **API Đơn giá (QĐ5):**
+   - [ ] Quản lý đơn giá theo loại môn (LT/TH) và loại học
+   - [ ] API tính giá trả về đúng đơn giá
+
+4. **API Đăng ký (BM5, QĐ5):**
+   - [ ] Chỉ cho đăng ký lớp có mở trong HK
+   - [ ] Kiểm tra sĩ số trước khi đăng ký
+   - [ ] Tự động tính tiền theo đơn giá và tỷ lệ giảm
+   - [ ] Phiếu đăng ký có đầy đủ thông tin theo BM5
+
+5. **Frontend:**
+   - [ ] Giao diện học kỳ rõ ràng với timeline
+   - [ ] Giao diện mở lớp dễ sử dụng
+   - [ ] Giao diện đăng ký học phần hiển thị tóm tắt tiền
 
 ---
 
@@ -224,22 +909,326 @@ Tài liệu này phân chia công việc chi tiết cho **4 thành viên** trong
 ### 📝 Chi tiết công việc:
 
 #### A. Backend Tasks:
-- [ ] Cập nhật API học phí: tính miễn giảm theo đối tượng
-- [ ] Tính công thức: Tiền phải đóng = Tiền đăng ký - Tiền miễn giảm
-- [ ] Tạo API lập phiếu thu học phí theo BM6
-- [ ] Hỗ trợ sinh viên đóng nhiều lần (QĐ6)
-- [ ] Tạo API tính số tiền còn lại phải đóng
-- [ ] Tạo API lập báo cáo SV chưa đóng đủ HP theo BM7
-- [ ] Tạo API kiểm tra hạn đóng HP
-- [ ] Tạo API gửi thông báo nhắc đóng HP
+
+##### 1. API Quản lý Học phí (theo QĐ7)
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Lấy học phí của SV | GET | `/api/tuition/student/:sv_id` | Tất cả học phí theo học kỳ |
+| Lấy học phí theo HK | GET | `/api/tuition/student/:sv_id/semester/:hk_id` | Chi tiết học phí 1 HK |
+| Tính học phí | POST | `/api/tuition/calculate` | Body: `{ma_sv, ma_hoc_ky}` |
+| Lấy số tiền còn lại | GET | `/api/tuition/remaining/:sv_id/:hk_id` | Tiền còn phải đóng (QĐ7) |
+
+**Logic tính học phí (QĐ7):**
+```
+Tổng tiền đăng ký = SUM(số tín chỉ × đơn giá) cho tất cả môn đã đăng ký
+Tỷ lệ giảm = fn_lay_ti_le_giam_hoc_phi(ma_sv)  // Từ đối tượng ưu tiên
+Tiền miễn giảm = Tổng tiền đăng ký × Tỷ lệ giảm / 100
+Tiền phải đóng = Tổng tiền đăng ký - Tiền miễn giảm
+Tiền còn lại = Tiền phải đóng - Tổng tiền đã thu
+```
+
+**Request/Response mẫu cho GET /api/tuition/student/:sv_id/semester/:hk_id (theo QĐ7):**
+```javascript
+// GET /api/tuition/student/SV001/semester/HK1-2526
+// Response:
+{
+  "success": true,
+  "data": {
+    "sinh_vien": {
+      "ma_sv": "SV001",
+      "ho_ten": "Nguyễn Văn An",
+      "doi_tuong": [{ "ten": "Con thương binh", "ti_le_giam": 50 }]
+    },
+    "hoc_ky": { "ma_hoc_ky": "HK1-2526", "ten_hoc_ky": "HK I - 2025-2026" },
+    "phieu_dang_ky": {
+      "so_phieu": 1,
+      "ngay_lap": "2025-08-20",
+      "tong_tin_chi": 7
+    },
+    "hoc_phi": {
+      "tong_tien_dang_ky": 209000,      // Tổng tiền trước miễn giảm
+      "ti_le_giam": 50,                  // % giảm theo đối tượng (QĐ7)
+      "tien_mien_giam": 104500,          // Tiền được miễn giảm
+      "tong_tien_phai_dong": 104500,     // Tiền phải đóng sau miễn giảm
+      "tong_tien_da_dong": 50000,        // Tổng đã thanh toán
+      "so_tien_con_lai": 54500,          // Còn phải đóng
+      "trang_thai": "Còn nợ"             // 'Đã đóng đủ' / 'Còn nợ' / 'Quá hạn'
+    },
+    "han_dong": "2025-10-31",
+    "con_so_ngay": 45,                   // Số ngày còn lại đến hạn
+    "lich_su_dong": [
+      { "so_phieu_thu": 1, "ngay": "2025-09-01", "so_tien": 50000, "hinh_thuc": "Chuyển khoản" }
+    ]
+  }
+}
+```
+
+##### 2. API Lập phiếu thu học phí (theo BM6, QĐ6)
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Lấy danh sách phiếu thu | GET | `/api/payments` | Filter: học kỳ, ngày, sinh viên |
+| Lấy phiếu thu của SV | GET | `/api/payments/student/:sv_id` | Lịch sử thanh toán của SV |
+| Lấy chi tiết phiếu thu | GET | `/api/payments/:id` | Thông tin chi tiết phiếu thu |
+| Lập phiếu thu | POST | `/api/payments` | Thu tiền, hỗ trợ đóng nhiều lần (QĐ6) |
+| Sửa phiếu thu | PUT | `/api/payments/:id` | Cập nhật thông tin (chỉ admin) |
+| Hủy phiếu thu | DELETE | `/api/payments/:id` | Soft delete với lý do |
+
+**Request/Response mẫu cho POST /api/payments (theo BM6):**
+```javascript
+// Request:
+{
+  "ma_sv": "SV001",
+  "ma_hoc_ky": "HK1-2526",
+  "so_tien_thu": 54500,
+  "hinh_thuc_thu": "Tiền mặt",      // 'Tiền mặt', 'Chuyển khoản', 'Thẻ', 'Ví điện tử'
+  "nguoi_thu": "Nguyễn Thị B",
+  "ghi_chu": "Đóng đủ học phí",
+  "ma_giao_dich": null               // Nếu chuyển khoản thì có mã GD
+}
+
+// Response (theo BM6):
+{
+  "success": true,
+  "data": {
+    "phieu_thu": {
+      "so_phieu_thu": 2,
+      "ngay_lap": "2025-09-15T14:30:00",
+      "ma_sv": "SV001",
+      "ho_ten": "Nguyễn Văn An",
+      "so_tien_thu": 54500,
+      "hinh_thuc_thu": "Tiền mặt",
+      "nguoi_thu": "Nguyễn Thị B",
+      "trang_thai": "Thành công"
+    },
+    "cap_nhat_hoc_phi": {
+      "tong_da_dong": 104500,        // Sau khi thu
+      "con_lai": 0,                   // Không còn nợ
+      "trang_thai_moi": "Đã đóng đủ"
+    },
+    "message": "Sinh viên đã hoàn thành đóng học phí học kỳ HK I - 2025-2026"
+  }
+}
+```
+
+**Business Logic quan trọng (QĐ6 - Đóng nhiều lần):**
+```javascript
+// Kiểm tra số tiền thu
+const kiemTraSoTienThu = async (ma_sv, ma_hoc_ky, so_tien_thu) => {
+  const conLai = await tinhSoTienConLai(ma_sv, ma_hoc_ky);
+  
+  if (so_tien_thu > conLai) {
+    return { 
+      valid: true, 
+      warning: `Số tiền thu (${so_tien_thu}) > số tiền còn lại (${conLai}). Có thể thu dư.`
+    };
+  }
+  return { valid: true, warning: null };
+};
+
+// Kiểm tra đã đóng đủ chưa
+const kiemTraDaDongDu = async (so_phieu_dang_ky) => {
+  const tongDaThu = await tinhTongDaThu(so_phieu_dang_ky);
+  const tongPhaiDong = await layTongPhaiDong(so_phieu_dang_ky);
+  return tongDaThu >= tongPhaiDong;
+};
+```
+
+##### 3. API Báo cáo SV chưa đóng HP (theo BM7)
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Lấy báo cáo | GET | `/api/reports/unpaid-tuition/:semester_id` | Danh sách SV chưa đóng đủ HP |
+| Lấy thống kê báo cáo | GET | `/api/reports/unpaid-tuition/:semester_id/stats` | Tổng hợp số liệu |
+| Xuất báo cáo Excel | GET | `/api/reports/export/unpaid-tuition/:semester_id/excel` | Download file Excel |
+| Xuất báo cáo PDF | GET | `/api/reports/export/unpaid-tuition/:semester_id/pdf` | Download file PDF |
+
+**Request/Response mẫu cho GET /api/reports/unpaid-tuition/:semester_id (theo BM7):**
+```javascript
+// GET /api/reports/unpaid-tuition/HK1-2526
+// Response:
+{
+  "success": true,
+  "data": {
+    "tieu_de": "BÁO CÁO SINH VIÊN CHƯA HOÀN THÀNH ĐÓNG HỌC PHÍ",
+    "hoc_ky": { "ma_hoc_ky": "HK1-2526", "ten_hoc_ky": "HK I - 2025-2026" },
+    "han_dong_hoc_phi": "2025-10-31",
+    "ngay_lap_bao_cao": "2025-11-01T09:00:00",
+    "danh_sach": [
+      {
+        "stt": 1,
+        "ma_sv": "SV001",
+        "ho_ten": "Nguyễn Văn An",
+        "nganh": "Kỹ thuật Phần mềm",
+        "khoa": "Công nghệ Phần mềm",
+        "so_tien_dang_ky": 209000,           // BM7: Số tiền đăng ký
+        "so_tien_phai_dong": 104500,         // BM7: Số tiền phải đóng (sau giảm)
+        "so_tien_da_dong": 50000,            // Đã đóng
+        "so_tien_con_lai": 54500,            // BM7: Số tiền còn lại
+        "ti_le_giam": 50,                    // % giảm
+        "trang_thai": "Quá hạn",             // 'Còn nợ' / 'Quá hạn'
+        "so_ngay_qua_han": 1                 // Số ngày quá hạn
+      },
+      {
+        "stt": 2,
+        "ma_sv": "SV003",
+        "ho_ten": "Trần Thị Hoa",
+        "nganh": "Khoa học Máy tính",
+        "khoa": "Khoa học Máy tính",
+        "so_tien_dang_ky": 800000,
+        "so_tien_phai_dong": 800000,
+        "so_tien_da_dong": 0,
+        "so_tien_con_lai": 800000,
+        "ti_le_giam": 0,
+        "trang_thai": "Quá hạn",
+        "so_ngay_qua_han": 1
+      }
+    ],
+    "tong_ket": {
+      "tong_sinh_vien_chua_dong": 25,
+      "tong_tien_con_no": 15000000,
+      "sv_qua_han": 10,
+      "sv_chua_qua_han": 15
+    }
+  }
+}
+```
+
+##### 4. API Thống kê tổng hợp
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Thống kê đăng ký | GET | `/api/reports/registration-stats/:semester_id` | Thống kê số SV đăng ký, tổng TC |
+| Thống kê học phí | GET | `/api/reports/tuition-stats/:semester_id` | Thống kê thu chi học phí |
+| Dashboard | GET | `/api/statistics/dashboard` | Tổng hợp cho admin dashboard |
+
+##### 5. API Gửi thông báo nhắc HP
+
+| API | Method | Endpoint | Mô tả chi tiết |
+|-----|--------|----------|----------------|
+| Gửi nhắc nhở | POST | `/api/notifications/remind-tuition` | Gửi thông báo nhắc đóng HP |
+| Gửi cảnh báo | POST | `/api/notifications/warn-tuition` | Gửi cảnh báo quá hạn |
 
 #### B. Frontend Tasks:
-- [ ] Cập nhật giao diện học phí: hiển thị số tiền đăng ký, miễn giảm, phải đóng
-- [ ] Tạo form lập phiếu thu theo BM6
-- [ ] Hiển thị lịch sử thanh toán của từng phiếu đăng ký
-- [ ] Tạo báo cáo SV chưa đóng HP theo BM7
-- [ ] Hiển thị trạng thái: Đã đóng đủ / Còn nợ / Quá hạn
-- [ ] Xuất báo cáo ra Excel/PDF
+
+##### 1. Giao diện Học phí Admin
+
+**Component:** `Tuition.jsx`
+
+**Features:**
+- Dropdown chọn học kỳ
+- Table danh sách SV với các cột:
+  - MSSV, Họ tên, Ngành
+  - Tiền đăng ký, Tỷ lệ giảm, Tiền phải đóng, Đã đóng, Còn lại
+  - Trạng thái (badge màu)
+  - Action: Xem chi tiết, Lập phiếu thu
+- Filter: Trạng thái, Ngành, Tìm kiếm
+- Summary cards: Tổng SV, Đã đóng đủ, Còn nợ, Quá hạn
+
+##### 2. Form Lập phiếu thu (theo BM6)
+
+**Component:** `PaymentForm.jsx`
+
+**Features:**
+- Tìm kiếm sinh viên (autocomplete)
+- Hiển thị thông tin: Họ tên, Học kỳ, Tiền còn nợ
+- Input số tiền thu (với suggestion = số tiền còn nợ)
+- Select hình thức thu: Tiền mặt / Chuyển khoản / Thẻ / Ví điện tử
+- Input mã giao dịch (nếu chuyển khoản)
+- Input ghi chú
+- Preview phiếu thu trước khi xác nhận
+- Nút "Lập phiếu thu"
+
+##### 3. Giao diện Báo cáo (theo BM7)
+
+**Component:** `Reports.jsx`
+
+**Features:**
+- Dropdown chọn học kỳ
+- Bảng báo cáo theo đúng format BM7:
+  - STT, MSSV, Họ tên, Ngành
+  - Số tiền đăng ký, Số tiền phải đóng, Số tiền còn lại
+- Summary: Tổng SV, Tổng tiền còn nợ
+- Nút xuất Excel, xuất PDF
+- Nút "Gửi thông báo nhắc" cho tất cả SV trong danh sách
+
+##### 4. Giao diện Xem học phí (Sinh viên)
+
+**Component:** `MyTuition.jsx`
+
+**Features:**
+- Card tổng quan: Học kỳ hiện tại, Tiền phải đóng, Đã đóng, Còn lại
+- Progress bar hiển thị % đã đóng
+- Thông tin đối tượng ưu tiên và tỷ lệ giảm
+- Chi tiết từng môn đăng ký: Môn, Số TC, Đơn giá, Thành tiền
+- Hạn đóng HP (highlight nếu sắp đến hạn)
+- Lịch sử thanh toán
+
+**UI mockup:**
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  HỌC PHÍ - Học kỳ I (2025-2026)                                         │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌────────────────────────────────────────────────────────────────────┐│
+│  │  TỔNG QUAN HỌC PHÍ                                                  ││
+│  │  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━││
+│  │                                                                      ││
+│  │  Tiền đăng ký:       209,000 đ                                       ││
+│  │  Giảm 50% (Con TB):  -104,500 đ   ← [Đối tượng: Con thương binh]    ││
+│  │  ────────────────────────────────                                    ││
+│  │  Phải đóng:          104,500 đ                                       ││
+│  │                                                                      ││
+│  │  ████████████████░░░░░░░░░░░░░░░░░  48% (50,000 / 104,500 đ)        ││
+│  │                                                                      ││
+│  │  Đã đóng:             50,000 đ                                       ││
+│  │  CÒN LẠI:             54,500 đ                                       ││
+│  │                                                                      ││
+│  │  ⚠️ Hạn đóng: 31/10/2025 (còn 45 ngày)                              ││
+│  └────────────────────────────────────────────────────────────────────┘│
+│                                                                          │
+│  ┌─ CHI TIẾT MÔN HỌC ─────────────────────────────────────────────────┐│
+│  │ Môn học              │ Loại │ Số TC │ Đơn giá  │ Thành tiền        ││
+│  │──────────────────────┼──────┼───────┼──────────┼───────────────────││
+│  │ Trí tuệ nhân tạo     │ Mới  │   3   │  27,000  │      81,000       ││
+│  │ CTDL&GT              │ Lại  │   4   │  32,000  │     128,000       ││
+│  │──────────────────────┼──────┼───────┼──────────┼───────────────────││
+│  │                      │      │   7   │          │     209,000       ││
+│  └────────────────────────────────────────────────────────────────────┘│
+│                                                                          │
+│  ┌─ LỊCH SỬ THANH TOÁN ───────────────────────────────────────────────┐│
+│  │ #   │ Ngày       │ Số tiền   │ Hình thức      │ Trạng thái        ││
+│  │─────┼────────────┼───────────┼────────────────┼───────────────────││
+│  │ 1   │ 01/09/2025 │   50,000  │ Chuyển khoản   │ ✓ Thành công      ││
+│  └────────────────────────────────────────────────────────────────────┘│
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### ✅ Acceptance Criteria:
+
+1. **API Học phí (QĐ7):**
+   - [ ] Tính đúng tiền miễn giảm theo đối tượng ưu tiên
+   - [ ] Công thức: Tiền phải đóng = Tiền đăng ký - Tiền miễn giảm
+   - [ ] API trả về số tiền còn lại chính xác
+
+2. **API Phiếu thu (BM6, QĐ6):**
+   - [ ] Lập phiếu thu với đầy đủ thông tin theo BM6
+   - [ ] Hỗ trợ đóng nhiều lần cho 1 phiếu đăng ký (QĐ6)
+   - [ ] Cập nhật trạng thái khi đóng đủ
+   - [ ] Kiểm tra số tiền thu hợp lệ
+
+3. **API Báo cáo (BM7):**
+   - [ ] Báo cáo theo đúng format BM7: MSSV, Tiền đăng ký, Tiền phải đóng, Tiền còn lại
+   - [ ] Filter theo học kỳ
+   - [ ] Xuất Excel/PDF hoạt động đúng
+
+4. **Frontend:**
+   - [ ] Giao diện học phí hiển thị rõ ràng: đăng ký, giảm, phải đóng, đã đóng, còn lại
+   - [ ] Form lập phiếu thu dễ sử dụng
+   - [ ] Báo cáo SV chưa đóng HP theo BM7
+   - [ ] Sinh viên xem được học phí và lịch sử thanh toán
 
 ---
 
