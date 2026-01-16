@@ -2603,7 +2603,7 @@ INSERT INTO mon_hoc (ma_mon_hoc, ten_mon_hoc, ma_khoa, loai_mon, so_tiet) VALUES
 ('SS010', 'Lịch sử Đảng Cộng sản Việt Nam', 'CNTT', 'LT', 30),
 ('SSKL1', 'Kỹ năng mềm', 'CNTT', 'LT', 30),
 ('STA01', 'Xác suất thống kê', 'CNTT', 'LT', 45),
-('STAT11', 'Xác xuất thống kê', 'HTTT', 'LT', 45),
+('STAT11', 'Xác suất thống kê', 'HTTT', 'LT', 45),
 ('STAT3013', 'Phân tích thống kê', 'HTTT', 'LT', 45),
 ('STAT4033', 'Thống kê', 'HTTT', 'LT', 45),
 ('THU086', 'Đào tạo năng lực thông tin', 'CNTT', 'LT', 30),
