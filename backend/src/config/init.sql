@@ -1,69 +1,44 @@
 -- =====================================================
 -- Database: ql_dangky_hocphi (Quản lý Đăng ký Môn học và Thu Học phí)
--- PostgreSQL 12+
+-- PostgreSQL 18 - Tương thích pgAdmin Query Tool
 -- Mã hóa: UTF-8
 -- =====================================================
 
 -- =====================================================
--- HƯỚNG DẪN SỬ DỤNG:
+-- HƯỚNG DẪN SỬ DỤNG
 -- =====================================================
--- 
--- *** CÁCH 1: Chạy từ Terminal với psql (Đầy đủ) ***
---   psql -U postgres -f init.sql
---   (Lưu ý: Cách này sẽ XÓA database hiện tại và tạo lại từ đầu)
 --
--- *** CÁCH 2: Chạy từ pgAdmin 4, DBeaver hoặc GUI tools khác ***
---   Do file này chứa lệnh \connect (chỉ hoạt động trong psql), 
---   bạn cần sử dụng 2 file riêng biệt:
+-- *** CÁCH 1: Sử dụng pgAdmin 4 / DBeaver / DataGrip (GUI Tools) ***
 --
---   Bước 1: Chạy file 'create_database.sql'
---     - Kết nối vào bất kỳ database nào (ví dụ: postgres)
---     - Mở và chạy file 'create_database.sql'
+--   BƯỚC 1: Tạo database (Chạy trong database 'postgres')
+--     - Kết nối vào database 'postgres' (hoặc bất kỳ database nào khác)
+--     - Chạy lệnh sau:
 --
---   Bước 2: Chạy file 'init_schema.sql'
---     - Kết nối vào database 'ql_dangky_hocphi' (vừa tạo ở bước 1)
---     - Mở và chạy file 'init_schema.sql'
+--       CREATE DATABASE ql_dangky_hocphi
+--           WITH 
+--           OWNER = postgres
+--           ENCODING = 'UTF8'
+--           LC_COLLATE = 'C'
+--           LC_CTYPE = 'C'
+--           TEMPLATE = template0
+--           CONNECTION LIMIT = -1;
 --
--- *** CÁCH 3: Chỉ khởi tạo schema (database đã tồn tại) ***
---   psql -U postgres -d ql_dangky_hocphi -f init_schema.sql
+--   BƯỚC 2: Kết nối vào database 'ql_dangky_hocphi' và chạy file này
+--     - Trong pgAdmin: Click phải vào 'ql_dangky_hocphi' -> 'Query Tool'
+--     - Mở file init.sql và chạy (F5)
 --
--- *** CÁCH 4: Sử dụng trong ứng dụng Node.js ***
---   Đọc nội dung file init_schema.sql và thực thi qua pg client
--- =====================================================
-
--- =====================================================
--- TẠO DATABASE (Chạy với quyền superuser/postgres)
--- CẢNH BÁO: Phần này sẽ XÓA toàn bộ database hiện tại nếu tồn tại!
--- Mọi dữ liệu chưa được backup sẽ bị mất.
--- =====================================================
-
--- Kết thúc tất cả connections đến database nếu tồn tại
--- CẢNH BÁO: Lệnh này sẽ ngắt kết nối của tất cả người dùng đang truy cập database
--- Đảm bảo không có giao dịch quan trọng đang thực hiện trước khi chạy
-SELECT pg_terminate_backend(pg_stat_activity.pid)
-FROM pg_stat_activity
-WHERE pg_stat_activity.datname = 'ql_dangky_hocphi'
-  AND pid <> pg_backend_pid();
-
--- Xóa database nếu tồn tại (sử dụng DROP DATABASE IF EXISTS)
-DROP DATABASE IF EXISTS ql_dangky_hocphi;
-
--- Tạo database mới
--- Lưu ý: Sử dụng locale 'C' để đảm bảo tương thích với tất cả hệ thống.
--- Nếu cần sắp xếp tiếng Việt đúng cách, hãy thay đổi thành 'vi_VN.UTF-8'
--- (yêu cầu locale này phải được cài đặt trên hệ thống)
-CREATE DATABASE ql_dangky_hocphi
-    WITH 
-    OWNER = postgres
-    ENCODING = 'UTF8'
-    LC_COLLATE = 'C'
-    LC_CTYPE = 'C'
-    TEMPLATE = template0
-    CONNECTION LIMIT = -1;
-
--- Kết nối đến database vừa tạo
-\connect ql_dangky_hocphi
-
+-- *** CÁCH 2: Sử dụng Terminal với psql ***
+--
+--   Bước 1: Tạo database
+--     psql -U postgres -c "CREATE DATABASE ql_dangky_hocphi WITH ENCODING='UTF8' TEMPLATE=template0;"
+--
+--   Bước 2: Chạy file init.sql
+--     psql -U postgres -d ql_dangky_hocphi -f init.sql
+--
+-- *** CÁCH 3: Sử dụng trong ứng dụng Node.js ***
+--   Đọc nội dung file init.sql và thực thi qua pg client
+--   (Xem backend/src/config/database.js)
+--
 -- =====================================================
 -- BẮT ĐẦU KHỞI TẠO SCHEMA VÀ DỮ LIỆU
 -- =====================================================
