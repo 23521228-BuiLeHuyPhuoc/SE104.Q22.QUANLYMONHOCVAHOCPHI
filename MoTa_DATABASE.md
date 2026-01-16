@@ -958,7 +958,7 @@ SELECT
      FROM doi_tuong_sinh_vien dtsv 
      JOIN doi_tuong dt ON dtsv.ma_doi_tuong = dt.ma_doi_tuong
      WHERE dtsv.ma_sv = sv.ma_sv AND dt.trang_thai = TRUE
-     ORDER BY dt. do_uu_tien
+     ORDER BY dt.do_uu_tien
      LIMIT 1) AS doi_tuong,
     -- Tỷ lệ giảm học phí
     COALESCE((SELECT dt.ti_le_giam_hoc_phi 
