@@ -11,7 +11,7 @@
 | Tên Database | `ql_dangky_hocphi` |
 | Hệ quản trị CSDL | PostgreSQL |
 | Phiên bản | 12+ |
-| Số lượng bảng | 20 bảng |
+| Số lượng bảng | 21 bảng |
 | Mã hóa | UTF-8 |
 
 ### 1.2. Danh sách các bảng theo nhóm chức năng
@@ -36,8 +36,9 @@
 | 16 | Học phí | `phieu_thu_hoc_phi` | Phiếu thu học phí |
 | 17 | Cấu hình | `don_gia_tin_chi` | Đơn giá tín chỉ theo loại học |
 | 18 | Tài khoản | `tai_khoan` | Tài khoản đăng nhập (phân quyền trực tiếp) |
-| 19 | Thông báo | `thong_bao` | Thông báo chung |
-| 20 | Thông báo | `thong_bao_ca_nhan` | Thông báo cá nhân |
+| 19 | Quản trị | `quan_tri_vien` | Thông tin quản trị viên |
+| 20 | Thông báo | `thong_bao` | Thông báo chung |
+| 21 | Thông báo | `thong_bao_ca_nhan` | Thông báo cá nhân |
 
 ---
 
@@ -665,7 +666,55 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
 
 ---
 
-### 2.19. BẢNG `thong_bao` - Thông báo chung
+### 2.19. BẢNG `quan_tri_vien` - Quản trị viên
+
+**Mô tả:** Lưu trữ thông tin chi tiết của quản trị viên hệ thống
+
+**Cấu trúc:**
+
+| Tên cột | Kiểu dữ liệu | Null | Mặc định | Mô tả |
+|---------|--------------|------|----------|-------|
+| `ma_quan_tri_vien` | SERIAL | NO | Auto | **PK** - Mã quản trị viên |
+| `ma_tai_khoan` | INTEGER | NO | - | **FK** → `tai_khoan.ma_tai_khoan` (UNIQUE) |
+| `ho_ten` | VARCHAR(100) | NO | - | Họ tên quản trị viên |
+| `ngay_sinh` | DATE | YES | - | Ngày sinh |
+| `gioi_tinh` | VARCHAR(5) | YES | - | Giới tính: 'Nam'/'Nữ' |
+| `sdt` | VARCHAR(15) | YES | - | Số điện thoại |
+| `email` | VARCHAR(100) | YES | - | Email |
+| `dia_chi` | VARCHAR(200) | YES | - | Địa chỉ |
+| `chuc_vu` | VARCHAR(100) | YES | - | Chức vụ (VD: Quản trị viên hệ thống, Quản trị viên khoa) |
+| `phong_ban` | VARCHAR(100) | YES | - | Phòng ban |
+| `anh_dai_dien` | VARCHAR(255) | YES | - | Đường dẫn ảnh đại diện |
+| `ghi_chu` | VARCHAR(300) | YES | - | Ghi chú |
+| `trang_thai` | BOOLEAN | YES | TRUE | Trạng thái hoạt động |
+| `ngay_tao` | TIMESTAMP | YES | CURRENT_TIMESTAMP | Ngày tạo |
+| `ngay_cap_nhat` | TIMESTAMP | YES | - | Ngày cập nhật |
+
+**Khóa chính:** `ma_quan_tri_vien`
+
+**Khóa ngoại:**
+
+| Tên FK | Cột | Tham chiếu | Mô tả |
+|--------|-----|------------|-------|
+| `fk_qtv_tk` | `ma_tai_khoan` | `tai_khoan(ma_tai_khoan)` | Tài khoản của quản trị viên |
+
+**Ràng buộc:**
+- `ma_tai_khoan` UNIQUE (mỗi quản trị viên chỉ có 1 tài khoản)
+- `gioi_tinh` IN ('Nam', 'Nữ')
+
+**Lưu ý:** Bảng này lưu trữ thông tin chi tiết của quản trị viên. Mỗi quản trị viên phải có một tài khoản với `role = 'admin'` trong bảng `tai_khoan`. Ràng buộc này được kiểm soát ở mức ứng dụng (application-level constraint).
+
+**Ví dụ dữ liệu:**
+```sql
+| ma_quan_tri_vien | ma_tai_khoan | ho_ten           | email                    | chuc_vu                    | trang_thai |
+|------------------|--------------|------------------|--------------------------|----------------------------|------------|
+| 1                | 1            | Nguyễn Văn Admin | admin@school.edu.vn      | Quản trị viên hệ thống     | true       |
+| 2                | 2            | Trần Thị Quản Lý | quanly@school.edu.vn     | Quản trị viên đào tạo      | true       |
+```
+
+---
+
+### 2.20. BẢNG `thong_bao` - Thông báo chung
 
 **Mô tả:** Thông báo gửi đến người dùng
 
@@ -694,7 +743,7 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
 
 ---
 
-### 2.20. BẢNG `thong_bao_ca_nhan` - Thông báo cá nhân
+### 2.21. BẢNG `thong_bao_ca_nhan` - Thông báo cá nhân
 
 **Mô tả:** Thông báo gửi đến từng người dùng
 
@@ -803,6 +852,7 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
 | 19 | `phieu_dang_ky` | `chi_tiet_dang_ky` | 1 - n | Mỗi phiếu ĐK có nhiều chi tiết (lớp) |
 | 20 | `phieu_dang_ky` | `phieu_thu_hoc_phi` | 1 - n | Mỗi phiếu ĐK có nhiều phiếu thu (QĐ6) |
 | 21 | `tai_khoan` | `thong_bao_ca_nhan` | 1 - n | Mỗi TK nhận nhiều thông báo |
+| 22 | `tai_khoan` | `quan_tri_vien` | 1 - 1 | Mỗi TK admin có 1 thông tin quản trị viên |
 
 ---
 ## 4. TỔNG HỢP KHÓA NGOẠI
@@ -830,8 +880,9 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
 | 19 | `phieu_thu_hoc_phi` | `fk_pthp_sv` | `ma_sv` | `sinh_vien(ma_sv)` | RESTRICT | CASCADE |
 | 20 | `don_gia_tin_chi` | `fk_dgtc_hk` | `ma_hoc_ky` | `hoc_ky(ma_hoc_ky)` | SET NULL | CASCADE |
 | 21 | `tai_khoan` | `fk_tk_sv` | `ma_sv` | `sinh_vien(ma_sv)` | SET NULL | CASCADE |
-| 22 | `thong_bao` | `fk_tb_nguoitao` | `nguoi_tao` | `tai_khoan(ma_tai_khoan)` | SET NULL | CASCADE |
-| 23 | `thong_bao_ca_nhan` | `fk_tbcn_tk` | `ma_tai_khoan` | `tai_khoan(ma_tai_khoan)` | CASCADE | CASCADE |
+| 22 | `quan_tri_vien` | `fk_qtv_tk` | `ma_tai_khoan` | `tai_khoan(ma_tai_khoan)` | CASCADE | CASCADE |
+| 23 | `thong_bao` | `fk_tb_nguoitao` | `nguoi_tao` | `tai_khoan(ma_tai_khoan)` | SET NULL | CASCADE |
+| 24 | `thong_bao_ca_nhan` | `fk_tbcn_tk` | `ma_tai_khoan` | `tai_khoan(ma_tai_khoan)` | CASCADE | CASCADE |
 
 ---
 
@@ -859,8 +910,9 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
 | 16 | `phieu_thu_hoc_phi` | `phieu_thu_hoc_phi_pkey` | `so_phieu_thu` | SERIAL |
 | 17 | `don_gia_tin_chi` | `don_gia_tin_chi_pkey` | `id` | SERIAL |
 | 18 | `tai_khoan` | `tai_khoan_pkey` | `ma_tai_khoan` | SERIAL |
-| 19 | `thong_bao` | `thong_bao_pkey` | `ma_thong_bao` | SERIAL |
-| 20 | `thong_bao_ca_nhan` | `thong_bao_ca_nhan_pkey` | `id` | BIGSERIAL |
+| 19 | `quan_tri_vien` | `quan_tri_vien_pkey` | `ma_quan_tri_vien` | SERIAL |
+| 20 | `thong_bao` | `thong_bao_pkey` | `ma_thong_bao` | SERIAL |
+| 21 | `thong_bao_ca_nhan` | `thong_bao_ca_nhan_pkey` | `id` | BIGSERIAL |
 
 ### 5.2. Unique Constraints (Ràng buộc duy nhất)
 
@@ -875,6 +927,7 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
 | 7 | `don_gia_tin_chi` | `uq_dongia` | `(loai_mon, loai_hoc, ma_hoc_ky)` | Mỗi loại môn + loại học chỉ có 1 đơn giá/HK |
 | 8 | `tai_khoan` | `tai_khoan_ten_dang_nhap_key` | `ten_dang_nhap` | Tên đăng nhập duy nhất |
 | 9 | `tai_khoan` | `tai_khoan_ma_sv_key` | `ma_sv` | Mỗi SV chỉ có 1 tài khoản |
+| 10 | `quan_tri_vien` | `quan_tri_vien_ma_tai_khoan_key` | `ma_tai_khoan` | Mỗi quản trị viên chỉ có 1 tài khoản |
 
 ### 5.3. Check Constraints (Ràng buộc kiểm tra)
 
@@ -898,6 +951,7 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
 | 16 | `don_gia_tin_chi` | `loai_hoc` | `IN ('hoc_moi', 'hoc_lai', 'hoc_cai_thien', 'hoc_he')` | Loại học |
 | 17 | `tai_khoan` | `role` | `IN ('admin', 'sinh_vien')` | Vai trò người dùng |
 | 18 | `thong_bao` | `doi_tuong` | `IN ('Tất cả', 'Sinh viên', 'Admin')` | Đối tượng nhận TB |
+| 19 | `quan_tri_vien` | `gioi_tinh` | `IN ('Nam', 'Nữ')` | Giới tính hợp lệ |
 
 ---
 
@@ -922,6 +976,7 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
 | 15 | `idx_tk_ma_sv` | `tai_khoan` | `ma_sv` | Tìm TK theo SV |
 | 16 | `idx_tbcn_ma_tk` | `thong_bao_ca_nhan` | `ma_tai_khoan` | Tìm TB theo TK |
 | 17 | `idx_tbcn_da_doc` | `thong_bao_ca_nhan` | `da_doc` | Lọc TB chưa đọc |
+| 18 | `idx_qtv_ma_tk` | `quan_tri_vien` | `ma_tai_khoan` | Tìm quản trị viên theo TK |
 
 ---
 
