@@ -103,7 +103,7 @@ Lập và quản lý hồ sơ sinh viên bao gồm: họ tên, ngày sinh, giớ
 | **Frontend** | `frontend/src/pages/Students.jsx` | Giao diện quản lý SV |
 | **Frontend** | `frontend/src/pages/Students.css` | Styles |
 | **Frontend** | `frontend/src/context/AuthContext.jsx` | Context xác thực |
-| **Frontend** | `frontend/src/services/studentService.js` | API service (cần tạo) |
+| **Frontend** | `frontend/src/services/studentService.js` | **Tạo mới** - API service sinh viên |
 
 ### API Endpoints:
 ```
@@ -175,7 +175,7 @@ Quản lý danh sách môn học với: mã môn, tên môn, loại môn (LT/TH)
 | **Backend** | `backend/src/routes/prerequisiteRoutes.js` | Routes điều kiện |
 | **Frontend** | `frontend/src/pages/Courses.jsx` | Giao diện quản lý môn |
 | **Frontend** | `frontend/src/pages/Courses.css` | Styles |
-| **Frontend** | `frontend/src/services/courseService.js` | API service (cần tạo) |
+| **Frontend** | `frontend/src/services/courseService.js` | **Tạo mới** - API service môn học |
 
 ### API Endpoints:
 ```
@@ -599,7 +599,7 @@ Trang tổng quan hiển thị thống kê và trạng thái hệ thống.
 ## 📌 LƯU Ý
 
 1. **Dependency**: Các module có thể phụ thuộc lẫn nhau, cần triển khai theo thứ tự
-2. **API Versioning**: Sử dụng prefix `/api/v1/` cho các API mới
+2. **API Prefix**: Sử dụng prefix `/api/` cho các API (có thể nâng cấp lên `/api/v1/` trong tương lai nếu cần versioning)
 3. **Error Handling**: Mỗi module cần có xử lý lỗi riêng
 4. **Testing**: Viết test cho từng module trước khi tích hợp
 5. **Documentation**: Cập nhật API documentation khi thay đổi

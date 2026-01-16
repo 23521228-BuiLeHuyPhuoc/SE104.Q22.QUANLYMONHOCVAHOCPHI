@@ -194,7 +194,11 @@ Tài liệu này phân chia công việc chi tiết cho **4 thành viên** trong
 | 6 | `backend/src/routes/reportRoutes.js` | **Tạo mới** - Routes báo cáo |
 | 7 | `backend/src/controllers/notificationController.js` | Cập nhật API thông báo nhắc HP |
 | 8 | `backend/src/routes/notificationRoutes.js` | Cập nhật routes thông báo |
-| 9 | `backend/src/index.js` | Đăng ký routes mới |
+| 9 | `backend/src/controllers/statisticsController.js` | **Tạo mới** - API thống kê tổng hợp |
+| 10 | `backend/src/routes/statisticsRoutes.js` | **Tạo mới** - Routes thống kê |
+| 11 | `backend/src/controllers/exportController.js` | **Tạo mới** - API xuất báo cáo Excel/PDF |
+| 12 | `backend/src/routes/exportRoutes.js` | **Tạo mới** - Routes xuất báo cáo |
+| 13 | `backend/src/index.js` | Đăng ký routes mới |
 
 ### 📁 Files Frontend cần thao tác:
 
@@ -206,12 +210,16 @@ Tài liệu này phân chia công việc chi tiết cho **4 thành viên** trong
 | 4 | `frontend/src/pages/Payments.css` | Styles cho trang phiếu thu |
 | 5 | `frontend/src/pages/Reports.jsx` | Cập nhật giao diện báo cáo theo BM7 |
 | 6 | `frontend/src/pages/Reports.css` | Styles cho trang báo cáo |
-| 7 | `frontend/src/pages/student/MyTuition.jsx` | Cập nhật giao diện xem học phí của SV |
-| 8 | `frontend/src/pages/student/MyTuition.css` | Styles |
-| 9 | `frontend/src/pages/student/MyPayments.jsx` | Cập nhật giao diện lịch sử thanh toán |
-| 10 | `frontend/src/pages/student/MyPayments.css` | Styles |
-| 11 | `frontend/src/services/reportService.js` | **Tạo mới** - API service báo cáo |
-| 12 | `frontend/src/App.jsx` | Cập nhật routes nếu cần |
+| 7 | `frontend/src/pages/MyTuition.jsx` | Cập nhật giao diện xem học phí của SV |
+| 8 | `frontend/src/pages/MyTuition.css` | Styles |
+| 9 | `frontend/src/pages/MyPayments.jsx` | Cập nhật giao diện lịch sử thanh toán |
+| 10 | `frontend/src/pages/MyPayments.css` | Styles |
+| 11 | `frontend/src/pages/admin/Statistics.jsx` | **Tạo mới** - Giao diện thống kê tổng hợp |
+| 12 | `frontend/src/pages/admin/Statistics.css` | **Tạo mới** - Styles cho trang thống kê |
+| 13 | `frontend/src/services/reportService.js` | **Tạo mới** - API service báo cáo |
+| 14 | `frontend/src/services/statisticsService.js` | **Tạo mới** - API service thống kê |
+| 15 | `frontend/src/services/exportService.js` | **Tạo mới** - API service xuất báo cáo |
+| 16 | `frontend/src/App.jsx` | Cập nhật routes nếu cần |
 
 ### 📝 Chi tiết công việc:
 
@@ -242,7 +250,7 @@ Tài liệu này phân chia công việc chi tiết cho **4 thành viên** trong
 | **TV1** | 7 | 9 | 8 |
 | **TV2** | 11 | 11 | 10 |
 | **TV3** | 11 | 13 | 10 |
-| **TV4** | 9 | 12 | 2 |
+| **TV4** | 13 | 16 | 11 |
 
 ---
 
@@ -272,7 +280,9 @@ Tài liệu này phân chia công việc chi tiết cho **4 thành viên** trong
 │   │   │   ├── openClassController.js 🆕
 │   │   │   ├── priceController.js 🆕
 │   │   │   ├── academicYearController.js 🆕
-│   │   │   └── reportController.js 🆕
+│   │   │   ├── reportController.js 🆕
+│   │   │   ├── statisticsController.js 🆕
+│   │   │   └── exportController.js 🆕
 │   │   ├── routes/
 │   │   │   ├── authRoutes.js
 │   │   │   ├── studentRoutes.js ✏️
@@ -291,7 +301,9 @@ Tài liệu này phân chia công việc chi tiết cho **4 thành viên** trong
 │   │   │   ├── openClassRoutes.js 🆕
 │   │   │   ├── priceRoutes.js 🆕
 │   │   │   ├── academicYearRoutes.js 🆕
-│   │   │   └── reportRoutes.js 🆕
+│   │   │   ├── reportRoutes.js 🆕
+│   │   │   ├── statisticsRoutes.js 🆕
+│   │   │   └── exportRoutes.js 🆕
 │   │   └── index.js ✏️
 │
 ├── frontend/
@@ -306,16 +318,17 @@ Tài liệu này phân chia công việc chi tiết cho **4 thành viên** trong
 │   │   │   ├── Tuition.jsx ✏️
 │   │   │   ├── Payments.jsx ✏️
 │   │   │   ├── Reports.jsx ✏️
+│   │   │   ├── MyTuition.jsx ✏️
+│   │   │   ├── MyPayments.jsx ✏️
 │   │   │   ├── admin/
 │   │   │   │   ├── LocationManagement.jsx 🆕
 │   │   │   │   ├── PriorityObjects.jsx 🆕
 │   │   │   │   ├── Curriculum.jsx 🆕
 │   │   │   │   ├── Departments.jsx 🆕
 │   │   │   │   ├── OpenClasses.jsx 🆕
-│   │   │   │   └── UnitPrices.jsx 🆕
+│   │   │   │   ├── UnitPrices.jsx 🆕
+│   │   │   │   └── Statistics.jsx 🆕
 │   │   │   └── student/
-│   │   │       ├── MyTuition.jsx ✏️
-│   │   │       └── MyPayments.jsx ✏️
 │   │   ├── services/
 │   │   │   ├── locationService.js 🆕
 │   │   │   ├── priorityObjectService.js 🆕
@@ -323,7 +336,9 @@ Tài liệu này phân chia công việc chi tiết cho **4 thành viên** trong
 │   │   │   ├── departmentService.js 🆕
 │   │   │   ├── openClassService.js 🆕
 │   │   │   ├── priceService.js 🆕
-│   │   │   └── reportService.js 🆕
+│   │   │   ├── reportService.js 🆕
+│   │   │   ├── statisticsService.js 🆕
+│   │   │   └── exportService.js 🆕
 │   │   └── App.jsx ✏️
 ```
 
