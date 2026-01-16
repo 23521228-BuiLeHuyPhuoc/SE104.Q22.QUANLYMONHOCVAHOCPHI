@@ -2166,15 +2166,84 @@ ORDER BY pg_total_relation_size(relid) DESC;
 
 ---
 
-## 13. LỊCH SỬ PHIÊN BẢN
+## 13. CẤU TRÚC LƯU TRỮ FILE
+
+### 13.1. Tổng quan
+
+Hệ thống sử dụng thư mục `backend/uploads/` để lưu trữ các file tải lên từ người dùng, bao gồm avatar tài khoản và logo website.
+
+### 13.2. Cấu trúc thư mục
+
+```
+backend/
+└── uploads/
+    ├── avatars/          # Thư mục lưu avatar của tài khoản
+    │   ├── .gitkeep      # File giữ thư mục trong git
+    │   ├── user_1.jpg    # Ví dụ: avatar của tài khoản có ID = 1
+    │   └── user_2.png    # Ví dụ: avatar của tài khoản có ID = 2
+    │
+    └── logos/            # Thư mục lưu logo của website
+        ├── .gitkeep      # File giữ thư mục trong git
+        ├── logo.png      # Logo chính của website
+        └── favicon.ico   # Favicon của website
+```
+
+### 13.3. Quy tắc đặt tên file
+
+| Loại file | Quy tắc đặt tên | Ví dụ |
+|-----------|-----------------|-------|
+| Avatar tài khoản | `user_{ma_tai_khoan}.{ext}` | `user_1.jpg`, `user_2.png` |
+| Logo website | `logo.{ext}` hoặc `logo_{variant}.{ext}` | `logo.png`, `logo_dark.png` |
+| Favicon | `favicon.ico` hoặc `favicon.{ext}` | `favicon.ico`, `favicon.png` |
+
+**Lưu ý về quy tắc đặt tên avatar:** Tất cả người dùng (sinh viên, quản trị viên) đều sử dụng `ma_tai_khoan` từ bảng `tai_khoan` để đặt tên file avatar. Điều này đảm bảo tính nhất quán và dễ quản lý vì mỗi người dùng đều có một tài khoản duy nhất.
+
+### 13.4. Định dạng file hỗ trợ
+
+| Loại | Định dạng | Kích thước tối đa |
+|------|-----------|-------------------|
+| Avatar | JPG, JPEG, PNG, GIF, WEBP | 5 MB |
+| Logo | PNG, SVG, JPG | 2 MB |
+| Favicon | ICO, PNG | 1 MB |
+
+### 13.5. Liên kết với Database
+
+- Cột `anh_dai_dien` trong bảng `tai_khoan` lưu đường dẫn tương đối đến file avatar, ví dụ: `uploads/avatars/user_1.jpg`
+- Cột `anh_dai_dien` trong bảng `sinh_vien` và `quan_tri_vien` cũng có thể lưu đường dẫn avatar, nhưng khuyến nghị sử dụng cột `anh_dai_dien` trong bảng `tai_khoan` làm nguồn chính thức để đảm bảo tính nhất quán
+
+### 13.6. Ví dụ sử dụng
+
+```sql
+-- Cập nhật avatar cho tài khoản (cách khuyến nghị)
+UPDATE tai_khoan 
+SET anh_dai_dien = 'uploads/avatars/user_1.jpg',
+    ngay_cap_nhat = CURRENT_TIMESTAMP
+WHERE ma_tai_khoan = 1;
+
+-- Lấy đường dẫn avatar của tài khoản
+SELECT ten_dang_nhap, anh_dai_dien 
+FROM tai_khoan 
+WHERE ma_tai_khoan = 1;
+
+-- Lấy avatar của sinh viên thông qua tài khoản liên kết
+SELECT sv.ma_sv, sv.ho_ten, tk.anh_dai_dien
+FROM sinh_vien sv
+JOIN tai_khoan tk ON sv.ma_tai_khoan = tk.ma_tai_khoan
+WHERE sv.ma_sv = 'SV001';
+```
+
+---
+
+## 14. LỊCH SỬ PHIÊN BẢN
 
 | Phiên bản | Ngày | Mô tả thay đổi |
 |-----------|------|----------------|
 | 1.0 | 2026-01-16 | Phiên bản đầu tiên - Đáp ứng BM1-BM7, QĐ1-QĐ7 |
+| 1.1 | 2026-01-16 | Thêm mục 13 - Cấu trúc lưu trữ file (avatar, logo) |
 
 ---
 
-## 14. LIÊN HỆ VÀ HỖ TRỢ
+## 15. LIÊN HỆ VÀ HỖ TRỢ
 
 **Tác giả:** Copilot AI Assistant
 
