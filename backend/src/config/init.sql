@@ -3031,23 +3031,27 @@ INSERT INTO doi_tuong_sinh_vien (ma_sv, ma_doi_tuong, ghi_chu) VALUES
 
 -- =====================================================
 -- INSERT DATA - Phiếu đăng ký học phần (Course Registration Forms)
+-- Sử dụng giá trị so_phieu cụ thể để đảm bảo tính nhất quán với chi_tiet_dang_ky và phieu_thu_hoc_phi
 -- =====================================================
-INSERT INTO phieu_dang_ky (ma_sv, ma_hoc_ky, ngay_lap, tong_tin_chi, tong_tien_dang_ky, ti_le_giam, tien_mien_giam, tong_tien_phai_dong, trang_thai) VALUES
+INSERT INTO phieu_dang_ky (so_phieu, ma_sv, ma_hoc_ky, ngay_lap, tong_tin_chi, tong_tien_dang_ky, ti_le_giam, tien_mien_giam, tong_tien_phai_dong, trang_thai) VALUES
 -- Sinh viên 22520001 - Nguyễn Văn An (không có đối tượng ưu tiên)
-('22520001', 'HK2-2425', '2025-01-20 08:30:00', 18, 4860000, 0, 0, 4860000, 'Đã đăng ký'),
-('22520001', 'HK1-2425', '2024-09-15 09:00:00', 16, 4320000, 0, 0, 4320000, 'Đã đăng ký'),
+(1, '22520001', 'HK2-2425', '2025-01-20 08:30:00', 18, 4860000, 0, 0, 4860000, 'Đã đăng ký'),
+(2, '22520001', 'HK1-2425', '2024-09-15 09:00:00', 16, 4320000, 0, 0, 4320000, 'Đã đăng ký'),
 -- Sinh viên 22520002 - Trần Thị Bình (vùng sâu vùng xa - giảm 50%)
-('22520002', 'HK2-2425', '2025-01-21 10:15:00', 17, 4590000, 50, 2295000, 2295000, 'Đã đăng ký'),
-('22520002', 'HK1-2425', '2024-09-16 14:30:00', 15, 4050000, 50, 2025000, 2025000, 'Đã đăng ký'),
+(3, '22520002', 'HK2-2425', '2025-01-21 10:15:00', 17, 4590000, 50, 2295000, 2295000, 'Đã đăng ký'),
+(4, '22520002', 'HK1-2425', '2024-09-16 14:30:00', 15, 4050000, 50, 2025000, 2025000, 'Đã đăng ký'),
 -- Sinh viên 22520003 - Lê Văn Cường (hộ cận nghèo - giảm 50%)
-('22520003', 'HK2-2425', '2025-01-22 09:45:00', 19, 5130000, 50, 2565000, 2565000, 'Đã đăng ký'),
-('22520003', 'HK1-2425', '2024-09-17 11:20:00', 17, 4590000, 50, 2295000, 2295000, 'Đã đăng ký'),
+(5, '22520003', 'HK2-2425', '2025-01-22 09:45:00', 19, 5130000, 50, 2565000, 2565000, 'Đã đăng ký'),
+(6, '22520003', 'HK1-2425', '2024-09-17 11:20:00', 17, 4590000, 50, 2295000, 2295000, 'Đã đăng ký'),
 -- Sinh viên 22520004 - Phạm Thị Dung (không có đối tượng ưu tiên)
-('22520004', 'HK2-2425', '2025-01-20 15:00:00', 16, 4320000, 0, 0, 4320000, 'Đã đăng ký'),
-('22520004', 'HK1-2425', '2024-09-15 16:45:00', 18, 4860000, 0, 0, 4860000, 'Đã đăng ký'),
+(7, '22520004', 'HK2-2425', '2025-01-20 15:00:00', 16, 4320000, 0, 0, 4320000, 'Đã đăng ký'),
+(8, '22520004', 'HK1-2425', '2024-09-15 16:45:00', 18, 4860000, 0, 0, 4860000, 'Đã đăng ký'),
 -- Sinh viên 22520005 - Hoàng Minh Đức (dân tộc thiểu số - giảm 30%)
-('22520005', 'HK2-2425', '2025-01-23 08:00:00', 18, 4860000, 30, 1458000, 3402000, 'Đã đăng ký'),
-('22520005', 'HK1-2425', '2024-09-18 10:30:00', 16, 4320000, 30, 1296000, 3024000, 'Đã đăng ký');
+(9, '22520005', 'HK2-2425', '2025-01-23 08:00:00', 18, 4860000, 30, 1458000, 3402000, 'Đã đăng ký'),
+(10, '22520005', 'HK1-2425', '2024-09-18 10:30:00', 16, 4320000, 30, 1296000, 3024000, 'Đã đăng ký');
+
+-- Cập nhật sequence cho phieu_dang_ky để các INSERT tiếp theo bắt đầu từ giá trị đúng
+SELECT setval('phieu_dang_ky_so_phieu_seq', 10, true);
 
 -- =====================================================
 -- INSERT DATA - Chi tiết đăng ký (Registration Details)
@@ -3121,20 +3125,24 @@ INSERT INTO chi_tiet_dang_ky (so_phieu, ma_lop, loai_dang_ky, so_tin_chi, loai_m
 
 -- =====================================================
 -- INSERT DATA - Phiếu thu học phí (Tuition Payment Receipts)
+-- Sử dụng giá trị so_phieu_thu cụ thể để đảm bảo tính nhất quán
 -- =====================================================
-INSERT INTO phieu_thu_hoc_phi (so_phieu_dang_ky, ma_sv, ngay_lap, so_tien_thu, hinh_thuc_thu, ma_giao_dich, nguoi_thu, ghi_chu, trang_thai) VALUES
+INSERT INTO phieu_thu_hoc_phi (so_phieu_thu, so_phieu_dang_ky, ma_sv, ngay_lap, so_tien_thu, hinh_thuc_thu, ma_giao_dich, nguoi_thu, ghi_chu, trang_thai) VALUES
 -- Thanh toán đầy đủ cho HK1-2425
-(2, '22520001', '2024-09-20 09:30:00', 4320000, 'Chuyển khoản', 'GD20240920001', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025', 'Thành công'),
-(4, '22520002', '2024-09-21 10:15:00', 2025000, 'Tiền mặt', 'GD20240921001', 'Nguyễn Thị Thu', 'Thanh toán học phí HK1 2024-2025 (sau giảm 50%)', 'Thành công'),
-(6, '22520003', '2024-09-22 14:00:00', 2295000, 'Chuyển khoản', 'GD20240922001', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025 (sau giảm 50%)', 'Thành công'),
-(8, '22520004', '2024-09-20 16:30:00', 4860000, 'Ví điện tử', 'GD20240920002', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025 qua MoMo', 'Thành công'),
-(10, '22520005', '2024-09-23 11:00:00', 3024000, 'Chuyển khoản', 'GD20240923001', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025 (sau giảm 30%)', 'Thành công'),
+(1, 2, '22520001', '2024-09-20 09:30:00', 4320000, 'Chuyển khoản', 'GD20240920001', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025', 'Thành công'),
+(2, 4, '22520002', '2024-09-21 10:15:00', 2025000, 'Tiền mặt', 'GD20240921001', 'Nguyễn Thị Thu', 'Thanh toán học phí HK1 2024-2025 (sau giảm 50%)', 'Thành công'),
+(3, 6, '22520003', '2024-09-22 14:00:00', 2295000, 'Chuyển khoản', 'GD20240922001', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025 (sau giảm 50%)', 'Thành công'),
+(4, 8, '22520004', '2024-09-20 16:30:00', 4860000, 'Ví điện tử', 'GD20240920002', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025 qua MoMo', 'Thành công'),
+(5, 10, '22520005', '2024-09-23 11:00:00', 3024000, 'Chuyển khoản', 'GD20240923001', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025 (sau giảm 30%)', 'Thành công'),
 -- Thanh toán cho HK2-2425 (một số đã đóng, một số chưa đóng đủ)
-(1, '22520001', '2025-01-25 08:45:00', 4860000, 'Chuyển khoản', 'GD20250125001', 'Hệ thống', 'Thanh toán học phí HK2 2024-2025', 'Thành công'),
-(3, '22520002', '2025-01-26 09:30:00', 2295000, 'Tiền mặt', 'GD20250126001', 'Trần Văn Hùng', 'Thanh toán học phí HK2 2024-2025 (sau giảm 50%)', 'Thành công'),
-(5, '22520003', '2025-01-27 10:00:00', 1500000, 'Chuyển khoản', 'GD20250127001', 'Hệ thống', 'Thanh toán một phần học phí HK2 2024-2025', 'Thành công'),
-(7, '22520004', '2025-01-28 14:15:00', 2000000, 'Ví điện tử', 'GD20250128001', 'Hệ thống', 'Thanh toán một phần học phí HK2 2024-2025', 'Thành công'),
-(9, '22520005', '2025-01-29 11:30:00', 3402000, 'Chuyển khoản', 'GD20250129001', 'Hệ thống', 'Thanh toán học phí HK2 2024-2025 (sau giảm 30%)', 'Thành công');
+(6, 1, '22520001', '2025-01-25 08:45:00', 4860000, 'Chuyển khoản', 'GD20250125001', 'Hệ thống', 'Thanh toán học phí HK2 2024-2025', 'Thành công'),
+(7, 3, '22520002', '2025-01-26 09:30:00', 2295000, 'Tiền mặt', 'GD20250126001', 'Trần Văn Hùng', 'Thanh toán học phí HK2 2024-2025 (sau giảm 50%)', 'Thành công'),
+(8, 5, '22520003', '2025-01-27 10:00:00', 1500000, 'Chuyển khoản', 'GD20250127001', 'Hệ thống', 'Thanh toán một phần học phí HK2 2024-2025', 'Thành công'),
+(9, 7, '22520004', '2025-01-28 14:15:00', 2000000, 'Ví điện tử', 'GD20250128001', 'Hệ thống', 'Thanh toán một phần học phí HK2 2024-2025', 'Thành công'),
+(10, 9, '22520005', '2025-01-29 11:30:00', 3402000, 'Chuyển khoản', 'GD20250129001', 'Hệ thống', 'Thanh toán học phí HK2 2024-2025 (sau giảm 30%)', 'Thành công');
+
+-- Cập nhật sequence cho phieu_thu_hoc_phi để các INSERT tiếp theo bắt đầu từ giá trị đúng
+SELECT setval('phieu_thu_hoc_phi_so_phieu_thu_seq', 10, true);
 
 -- =====================================================
 -- INSERT DATA - Thông báo cá nhân (Personal Notifications)
