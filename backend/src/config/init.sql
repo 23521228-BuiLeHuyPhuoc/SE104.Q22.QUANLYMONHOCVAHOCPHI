@@ -2808,5 +2808,366 @@ UPDATE tai_khoan SET ma_sv = '22520004' WHERE ten_dang_nhap = '22520004';
 UPDATE tai_khoan SET ma_sv = '22520005' WHERE ten_dang_nhap = '22520005';
 
 -- =====================================================
+-- INSERT DATA - Lớp học (Classes)
+-- =====================================================
+INSERT INTO lop (ma_lop, ten_lop, ma_mon_hoc, giang_vien, lich_hoc, phong_hoc, so_luong_toi_da) VALUES
+-- Lớp cho các môn cơ bản
+('IT001.N01', 'Nhập môn Lập trình - N01', 'IT001', 'TS. Nguyễn Văn A', 'Thứ 2 (7h30-9h30)', 'B2.01', 50),
+('IT001.N02', 'Nhập môn Lập trình - N02', 'IT001', 'ThS. Trần Thị B', 'Thứ 3 (9h30-11h30)', 'B2.02', 50),
+('IT001.N03', 'Nhập môn Lập trình - N03', 'IT001', 'TS. Lê Văn C', 'Thứ 4 (13h30-15h30)', 'B2.03', 50),
+('IT002.N01', 'Cấu trúc dữ liệu và giải thuật - N01', 'IT002', 'PGS. TS. Phạm Văn D', 'Thứ 2 (13h30-15h30)', 'B3.01', 45),
+('IT002.N02', 'Cấu trúc dữ liệu và giải thuật - N02', 'IT002', 'TS. Hoàng Thị E', 'Thứ 5 (7h30-9h30)', 'B3.02', 45),
+('IT003.N01', 'Cấu trúc rời rạc - N01', 'IT003', 'TS. Đặng Văn F', 'Thứ 3 (13h30-15h30)', 'A1.01', 50),
+('IT003.N02', 'Cấu trúc rời rạc - N02', 'IT003', 'ThS. Vũ Thị G', 'Thứ 6 (7h30-9h30)', 'A1.02', 50),
+('IT004.N01', 'Cơ sở dữ liệu - N01', 'IT004', 'PGS. TS. Bùi Văn H', 'Thứ 4 (7h30-9h30)', 'B4.01', 50),
+('IT004.N02', 'Cơ sở dữ liệu - N02', 'IT004', 'TS. Ngô Thị I', 'Thứ 2 (9h30-11h30)', 'B4.02', 50),
+('IT005.N01', 'Nhập môn Mạng máy tính - N01', 'IT005', 'TS. Đinh Văn K', 'Thứ 5 (13h30-15h30)', 'C1.01', 45),
+('IT005.N02', 'Nhập môn Mạng máy tính - N02', 'IT005', 'ThS. Mai Văn L', 'Thứ 6 (9h30-11h30)', 'C1.02', 45),
+('IT006.N01', 'Kiến trúc máy tính - N01', 'IT006', 'TS. Phan Văn M', 'Thứ 3 (7h30-9h30)', 'B5.01', 50),
+('IT006.N02', 'Kiến trúc máy tính - N02', 'IT006', 'ThS. Lý Thị N', 'Thứ 4 (9h30-11h30)', 'B5.02', 50),
+('IT007.N01', 'Hệ điều hành - N01', 'IT007', 'PGS. TS. Trịnh Văn O', 'Thứ 2 (15h30-17h30)', 'B6.01', 45),
+('IT007.N02', 'Hệ điều hành - N02', 'IT007', 'TS. Đỗ Thị P', 'Thứ 5 (9h30-11h30)', 'B6.02', 45),
+('IT008.N01', 'Lập trình hướng đối tượng - N01', 'IT008', 'TS. Cao Văn Q', 'Thứ 6 (13h30-15h30)', 'B7.01', 50),
+('IT008.N02', 'Lập trình hướng đối tượng - N02', 'IT008', 'ThS. Lương Thị R', 'Thứ 4 (15h30-17h30)', 'B7.02', 50),
+-- Lớp cho môn chuyên ngành
+('SE104.N01', 'Nhập môn Công nghệ phần mềm - N01', 'SE104', 'TS. Trương Văn S', 'Thứ 2 (7h30-9h30)', 'E1.01', 40),
+('SE104.N02', 'Nhập môn Công nghệ phần mềm - N02', 'SE104', 'ThS. Hồ Thị T', 'Thứ 3 (13h30-15h30)', 'E1.02', 40),
+('CS106.N01', 'Trí tuệ nhân tạo - N01', 'CS106', 'PGS. TS. Lâm Văn U', 'Thứ 4 (7h30-9h30)', 'E2.01', 40),
+('CS106.N02', 'Trí tuệ nhân tạo - N02', 'CS106', 'TS. Tô Thị V', 'Thứ 5 (15h30-17h30)', 'E2.02', 40),
+('CS106_TH.N01', 'Trí tuệ nhân tạo (TH) - N01', 'CS106_TH', 'PGS. TS. Lâm Văn U', 'Thứ 6 (7h30-9h30)', 'PM.01', 30),
+('CS106_TH.N02', 'Trí tuệ nhân tạo (TH) - N02', 'CS106_TH', 'TS. Tô Thị V', 'Thứ 6 (13h30-15h30)', 'PM.02', 30),
+('IS207.N01', 'Phát triển ứng dụng Web - N01', 'IS207', 'TS. Dương Văn X', 'Thứ 2 (9h30-11h30)', 'E3.01', 35),
+('IS207.N02', 'Phát triển ứng dụng Web - N02', 'IS207', 'ThS. Châu Thị Y', 'Thứ 4 (13h30-15h30)', 'E3.02', 35),
+('IS207_TH.N01', 'Phát triển ứng dụng Web (TH) - N01', 'IS207_TH', 'TS. Dương Văn X', 'Thứ 3 (7h30-9h30)', 'PM.03', 30),
+('IS207_TH.N02', 'Phát triển ứng dụng Web (TH) - N02', 'IS207_TH', 'ThS. Châu Thị Y', 'Thứ 5 (9h30-11h30)', 'PM.04', 30),
+('NT101.N01', 'Nhập môn An toàn thông tin - N01', 'NT101', 'TS. Kiều Văn Z', 'Thứ 3 (9h30-11h30)', 'E4.01', 40),
+('NT101.N02', 'Nhập môn An toàn thông tin - N02', 'NT101', 'ThS. Quách Văn AA', 'Thứ 6 (15h30-17h30)', 'E4.02', 40),
+('CE103.N01', 'Vi xử lý-vi điều khiển - N01', 'CE103', 'TS. Mạc Văn BB', 'Thứ 4 (9h30-11h30)', 'E5.01', 35),
+('CE103.N02', 'Vi xử lý-vi điều khiển - N02', 'CE103', 'ThS. La Thị CC', 'Thứ 2 (13h30-15h30)', 'E5.02', 35),
+('CE103_TH.N01', 'Vi xử lý-vi điều khiển (TH) - N01', 'CE103_TH', 'TS. Mạc Văn BB', 'Thứ 5 (7h30-9h30)', 'LAB.01', 25),
+('CE103_TH.N02', 'Vi xử lý-vi điều khiển (TH) - N02', 'CE103_TH', 'ThS. La Thị CC', 'Thứ 6 (9h30-11h30)', 'LAB.02', 25),
+-- Thêm các lớp môn Toán
+('MA001.N01', 'Giải tích 1 - N01', 'MA001', 'PGS. TS. Nguyễn Minh A', 'Thứ 2 (7h30-9h30)', 'A2.01', 60),
+('MA001.N02', 'Giải tích 1 - N02', 'MA001', 'TS. Trần Anh B', 'Thứ 4 (7h30-9h30)', 'A2.02', 60),
+('MA002.N01', 'Giải tích 2 - N01', 'MA002', 'TS. Lê Quang C', 'Thứ 3 (9h30-11h30)', 'A3.01', 55),
+('MA002.N02', 'Giải tích 2 - N02', 'MA002', 'ThS. Phạm Thu D', 'Thứ 5 (13h30-15h30)', 'A3.02', 55),
+('MA003.N01', 'Đại số tuyến tính - N01', 'MA003', 'PGS. TS. Hoàng Văn E', 'Thứ 2 (9h30-11h30)', 'A4.01', 60),
+('MA003.N02', 'Đại số tuyến tính - N02', 'MA003', 'TS. Đinh Thị F', 'Thứ 6 (7h30-9h30)', 'A4.02', 60),
+('MA005.N01', 'Xác suất thống kê - N01', 'MA005', 'TS. Vũ Minh G', 'Thứ 4 (13h30-15h30)', 'A5.01', 55),
+('MA005.N02', 'Xác suất thống kê - N02', 'MA005', 'ThS. Bùi Lan H', 'Thứ 3 (7h30-9h30)', 'A5.02', 55),
+-- Thêm các lớp môn Tiếng Anh
+('ENG03.N01', 'Tiếng Anh 3 - N01', 'ENG03', 'ThS. Emily Johnson', 'Thứ 2 (13h30-15h30)', 'NN.01', 35),
+('ENG03.N02', 'Tiếng Anh 3 - N02', 'ENG03', 'ThS. David Smith', 'Thứ 4 (9h30-11h30)', 'NN.02', 35),
+('ENG04.N01', 'Tiếng Anh 4 - N01', 'ENG04', 'ThS. Sarah Wilson', 'Thứ 3 (15h30-17h30)', 'NN.03', 35),
+('ENG04.N02', 'Tiếng Anh 4 - N02', 'ENG04', 'ThS. Michael Brown', 'Thứ 5 (7h30-9h30)', 'NN.04', 35);
+
+-- =====================================================
+-- INSERT DATA - Chương trình học (Curriculum)
+-- =====================================================
+INSERT INTO chuong_trinh_hoc (ma_nganh, ma_mon_hoc, hoc_ky_du_kien, bat_buoc) VALUES
+-- Chương trình học ngành Kỹ thuật Phần mềm (KTPM)
+('KTPM', 'IT001', 1, TRUE),
+('KTPM', 'MA001', 1, TRUE),
+('KTPM', 'SS007', 1, TRUE),
+('KTPM', 'ENG03', 1, TRUE),
+('KTPM', 'IT002', 2, TRUE),
+('KTPM', 'IT003', 2, TRUE),
+('KTPM', 'MA002', 2, TRUE),
+('KTPM', 'ENG04', 2, TRUE),
+('KTPM', 'IT004', 3, TRUE),
+('KTPM', 'MA003', 3, TRUE),
+('KTPM', 'IT006', 3, TRUE),
+('KTPM', 'IT007', 4, TRUE),
+('KTPM', 'IT008', 4, TRUE),
+('KTPM', 'MA005', 4, TRUE),
+('KTPM', 'SE104', 5, TRUE),
+('KTPM', 'SE207', 5, TRUE),
+('KTPM', 'SE113', 6, TRUE),
+('KTPM', 'SE210', 6, TRUE),
+('KTPM', 'SE310', 7, FALSE),
+('KTPM', 'SE311', 7, FALSE),
+('KTPM', 'SE505', 8, TRUE),
+-- Chương trình học ngành Khoa học Máy tính (KHMT)
+('KHMT', 'IT001', 1, TRUE),
+('KHMT', 'MA001', 1, TRUE),
+('KHMT', 'SS007', 1, TRUE),
+('KHMT', 'ENG03', 1, TRUE),
+('KHMT', 'IT002', 2, TRUE),
+('KHMT', 'IT003', 2, TRUE),
+('KHMT', 'MA002', 2, TRUE),
+('KHMT', 'ENG04', 2, TRUE),
+('KHMT', 'IT004', 3, TRUE),
+('KHMT', 'MA003', 3, TRUE),
+('KHMT', 'IT006', 3, TRUE),
+('KHMT', 'IT007', 4, TRUE),
+('KHMT', 'MA005', 4, TRUE),
+('KHMT', 'CS106', 5, TRUE),
+('KHMT', 'CS106_TH', 5, TRUE),
+('KHMT', 'CS110', 5, TRUE),
+('KHMT', 'CS110_TH', 5, TRUE),
+('KHMT', 'CS212', 6, TRUE),
+('KHMT', 'CS212_TH', 6, TRUE),
+('KHMT', 'CS231', 6, TRUE),
+('KHMT', 'CS231_TH', 6, TRUE),
+('KHMT', 'CS228', 7, FALSE),
+('KHMT', 'CS228_TH', 7, FALSE),
+-- Chương trình học ngành Hệ thống Thông tin (HTTT)
+('HTTT', 'IT001', 1, TRUE),
+('HTTT', 'MA001', 1, TRUE),
+('HTTT', 'SS007', 1, TRUE),
+('HTTT', 'ENG03', 1, TRUE),
+('HTTT', 'IT002', 2, TRUE),
+('HTTT', 'IT003', 2, TRUE),
+('HTTT', 'MA002', 2, TRUE),
+('HTTT', 'ENG04', 2, TRUE),
+('HTTT', 'IT004', 3, TRUE),
+('HTTT', 'MA003', 3, TRUE),
+('HTTT', 'IT005', 3, TRUE),
+('HTTT', 'IT007', 4, TRUE),
+('HTTT', 'MA005', 4, TRUE),
+('HTTT', 'IS207', 5, TRUE),
+('HTTT', 'IS207_TH', 5, TRUE),
+('HTTT', 'IS251', 5, TRUE),
+('HTTT', 'IS336', 6, TRUE),
+('HTTT', 'IS351', 6, TRUE),
+('HTTT', 'IS405', 7, FALSE),
+-- Chương trình học ngành Mạng máy tính và Truyền thông (MMT)
+('MMT', 'IT001', 1, TRUE),
+('MMT', 'MA001', 1, TRUE),
+('MMT', 'SS007', 1, TRUE),
+('MMT', 'ENG03', 1, TRUE),
+('MMT', 'IT002', 2, TRUE),
+('MMT', 'IT003', 2, TRUE),
+('MMT', 'MA002', 2, TRUE),
+('MMT', 'ENG04', 2, TRUE),
+('MMT', 'IT004', 3, TRUE),
+('MMT', 'IT005', 3, TRUE),
+('MMT', 'IT006', 3, TRUE),
+('MMT', 'IT007', 4, TRUE),
+('MMT', 'MA005', 4, TRUE),
+('MMT', 'NT101', 5, TRUE),
+('MMT', 'NT132', 5, TRUE),
+('MMT', 'NT132_TH', 5, TRUE),
+('MMT', 'NT140', 6, TRUE),
+('MMT', 'NT140_TH', 6, TRUE),
+('MMT', 'NT205', 6, TRUE),
+('MMT', 'NT205_TH', 6, TRUE),
+('MMT', 'NT113', 7, FALSE),
+('MMT', 'NT113_TH', 7, FALSE);
+
+-- =====================================================
+-- INSERT DATA - Lớp mở trong học kỳ (Open Classes per Semester)
+-- =====================================================
+INSERT INTO lop_mo (ma_hoc_ky, ma_lop, so_luong_da_dang_ky) VALUES
+-- Học kỳ 2 năm 2024-2025 (đang diễn ra)
+('HK2-2425', 'IT001.N01', 45),
+('HK2-2425', 'IT001.N02', 48),
+('HK2-2425', 'IT001.N03', 42),
+('HK2-2425', 'IT002.N01', 40),
+('HK2-2425', 'IT002.N02', 43),
+('HK2-2425', 'IT003.N01', 38),
+('HK2-2425', 'IT003.N02', 41),
+('HK2-2425', 'IT004.N01', 47),
+('HK2-2425', 'IT004.N02', 44),
+('HK2-2425', 'IT005.N01', 35),
+('HK2-2425', 'IT005.N02', 38),
+('HK2-2425', 'IT006.N01', 42),
+('HK2-2425', 'IT006.N02', 39),
+('HK2-2425', 'IT007.N01', 40),
+('HK2-2425', 'IT007.N02', 37),
+('HK2-2425', 'IT008.N01', 45),
+('HK2-2425', 'IT008.N02', 43),
+('HK2-2425', 'SE104.N01', 35),
+('HK2-2425', 'SE104.N02', 38),
+('HK2-2425', 'CS106.N01', 36),
+('HK2-2425', 'CS106.N02', 34),
+('HK2-2425', 'CS106_TH.N01', 28),
+('HK2-2425', 'CS106_TH.N02', 26),
+('HK2-2425', 'IS207.N01', 32),
+('HK2-2425', 'IS207.N02', 30),
+('HK2-2425', 'IS207_TH.N01', 25),
+('HK2-2425', 'IS207_TH.N02', 27),
+('HK2-2425', 'NT101.N01', 35),
+('HK2-2425', 'NT101.N02', 33),
+('HK2-2425', 'CE103.N01', 30),
+('HK2-2425', 'CE103.N02', 28),
+('HK2-2425', 'CE103_TH.N01', 22),
+('HK2-2425', 'CE103_TH.N02', 20),
+('HK2-2425', 'MA001.N01', 55),
+('HK2-2425', 'MA001.N02', 52),
+('HK2-2425', 'MA002.N01', 48),
+('HK2-2425', 'MA002.N02', 50),
+('HK2-2425', 'MA003.N01', 53),
+('HK2-2425', 'MA003.N02', 49),
+('HK2-2425', 'MA005.N01', 46),
+('HK2-2425', 'MA005.N02', 44),
+('HK2-2425', 'ENG03.N01', 32),
+('HK2-2425', 'ENG03.N02', 30),
+('HK2-2425', 'ENG04.N01', 31),
+('HK2-2425', 'ENG04.N02', 29),
+-- Học kỳ 1 năm 2024-2025 (đã kết thúc)
+('HK1-2425', 'IT001.N01', 50),
+('HK1-2425', 'IT001.N02', 50),
+('HK1-2425', 'IT002.N01', 45),
+('HK1-2425', 'IT002.N02', 45),
+('HK1-2425', 'IT003.N01', 50),
+('HK1-2425', 'IT003.N02', 48),
+('HK1-2425', 'IT004.N01', 50),
+('HK1-2425', 'IT004.N02', 49),
+('HK1-2425', 'MA001.N01', 60),
+('HK1-2425', 'MA001.N02', 58),
+('HK1-2425', 'MA002.N01', 55),
+('HK1-2425', 'MA002.N02', 53),
+('HK1-2425', 'MA003.N01', 60),
+('HK1-2425', 'MA003.N02', 57);
+
+-- =====================================================
+-- INSERT DATA - Đối tượng của Sinh viên (Student Priority Objects)
+-- =====================================================
+INSERT INTO doi_tuong_sinh_vien (ma_sv, ma_doi_tuong, ghi_chu) VALUES
+('22520002', 'DT06', 'Sinh viên đến từ vùng sâu vùng xa (Quận 3)'),
+('22520003', 'DT07', 'Sinh viên thuộc hộ cận nghèo'),
+('22520005', 'DT09', 'Sinh viên dân tộc thiểu số');
+
+-- =====================================================
+-- INSERT DATA - Phiếu đăng ký học phần (Course Registration Forms)
+-- Sử dụng giá trị so_phieu cụ thể để đảm bảo tính nhất quán với chi_tiet_dang_ky và phieu_thu_hoc_phi
+-- =====================================================
+INSERT INTO phieu_dang_ky (so_phieu, ma_sv, ma_hoc_ky, ngay_lap, tong_tin_chi, tong_tien_dang_ky, ti_le_giam, tien_mien_giam, tong_tien_phai_dong, trang_thai) VALUES
+-- Sinh viên 22520001 - Nguyễn Văn An (không có đối tượng ưu tiên)
+(1, '22520001', 'HK2-2425', '2025-01-20 08:30:00', 18, 4860000, 0, 0, 4860000, 'Đã đăng ký'),
+(2, '22520001', 'HK1-2425', '2024-09-15 09:00:00', 16, 4320000, 0, 0, 4320000, 'Đã đăng ký'),
+-- Sinh viên 22520002 - Trần Thị Bình (vùng sâu vùng xa - giảm 50%)
+(3, '22520002', 'HK2-2425', '2025-01-21 10:15:00', 17, 4590000, 50, 2295000, 2295000, 'Đã đăng ký'),
+(4, '22520002', 'HK1-2425', '2024-09-16 14:30:00', 15, 4050000, 50, 2025000, 2025000, 'Đã đăng ký'),
+-- Sinh viên 22520003 - Lê Văn Cường (hộ cận nghèo - giảm 50%)
+(5, '22520003', 'HK2-2425', '2025-01-22 09:45:00', 19, 5130000, 50, 2565000, 2565000, 'Đã đăng ký'),
+(6, '22520003', 'HK1-2425', '2024-09-17 11:20:00', 17, 4590000, 50, 2295000, 2295000, 'Đã đăng ký'),
+-- Sinh viên 22520004 - Phạm Thị Dung (không có đối tượng ưu tiên)
+(7, '22520004', 'HK2-2425', '2025-01-20 15:00:00', 16, 4320000, 0, 0, 4320000, 'Đã đăng ký'),
+(8, '22520004', 'HK1-2425', '2024-09-15 16:45:00', 18, 4860000, 0, 0, 4860000, 'Đã đăng ký'),
+-- Sinh viên 22520005 - Hoàng Minh Đức (dân tộc thiểu số - giảm 30%)
+(9, '22520005', 'HK2-2425', '2025-01-23 08:00:00', 18, 4860000, 30, 1458000, 3402000, 'Đã đăng ký'),
+(10, '22520005', 'HK1-2425', '2024-09-18 10:30:00', 16, 4320000, 30, 1296000, 3024000, 'Đã đăng ký');
+
+-- Cập nhật sequence cho phieu_dang_ky để các INSERT tiếp theo bắt đầu từ giá trị đúng
+SELECT setval('phieu_dang_ky_so_phieu_seq', 10, true);
+
+-- =====================================================
+-- INSERT DATA - Chi tiết đăng ký (Registration Details)
+-- =====================================================
+INSERT INTO chi_tiet_dang_ky (so_phieu, ma_lop, loai_dang_ky, so_tin_chi, loai_mon, don_gia, thanh_tien, trang_thai) VALUES
+-- Chi tiết cho phiếu đăng ký 1 (SV 22520001 - HK2-2425)
+(1, 'IT002.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(1, 'IT003.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(1, 'MA002.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(1, 'IT004.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(1, 'ENG04.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(1, 'IT008.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+-- Chi tiết cho phiếu đăng ký 2 (SV 22520001 - HK1-2425)
+(2, 'IT001.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(2, 'MA001.N01', 'hoc_moi', 4, 'LT', 27000, 108000, 'Đã đăng ký'),
+(2, 'MA003.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(2, 'ENG03.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(2, 'IT006.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+-- Chi tiết cho phiếu đăng ký 3 (SV 22520002 - HK2-2425)
+(3, 'IT002.N02', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(3, 'IT003.N02', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(3, 'MA002.N02', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(3, 'CS106.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(3, 'CS106_TH.N01', 'hoc_moi', 1, 'TH', 37000, 37000, 'Đã đăng ký'),
+(3, 'ENG04.N02', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+-- Chi tiết cho phiếu đăng ký 4 (SV 22520002 - HK1-2425)
+(4, 'IT001.N02', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(4, 'MA001.N02', 'hoc_moi', 4, 'LT', 27000, 108000, 'Đã đăng ký'),
+(4, 'MA003.N02', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(4, 'ENG03.N02', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+-- Chi tiết cho phiếu đăng ký 5 (SV 22520003 - HK2-2425)
+(5, 'IT002.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(5, 'IT003.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(5, 'IS207.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(5, 'IS207_TH.N01', 'hoc_moi', 1, 'TH', 37000, 37000, 'Đã đăng ký'),
+(5, 'MA002.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(5, 'IT004.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(5, 'ENG04.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+-- Chi tiết cho phiếu đăng ký 6 (SV 22520003 - HK1-2425)
+(6, 'IT001.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(6, 'MA001.N01', 'hoc_moi', 4, 'LT', 27000, 108000, 'Đã đăng ký'),
+(6, 'MA003.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(6, 'IT005.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(6, 'ENG03.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+-- Chi tiết cho phiếu đăng ký 7 (SV 22520004 - HK2-2425)
+(7, 'IT002.N02', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(7, 'IT003.N02', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(7, 'SE104.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(7, 'MA002.N02', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(7, 'ENG04.N02', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+-- Chi tiết cho phiếu đăng ký 8 (SV 22520004 - HK1-2425)
+(8, 'IT001.N02', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(8, 'MA001.N02', 'hoc_moi', 4, 'LT', 27000, 108000, 'Đã đăng ký'),
+(8, 'MA003.N02', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(8, 'IT006.N02', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(8, 'ENG03.N02', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(8, 'IT008.N02', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+-- Chi tiết cho phiếu đăng ký 9 (SV 22520005 - HK2-2425)
+(9, 'IT002.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(9, 'IT003.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(9, 'NT101.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(9, 'MA002.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(9, 'IT005.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(9, 'ENG04.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+-- Chi tiết cho phiếu đăng ký 10 (SV 22520005 - HK1-2425)
+(10, 'IT001.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(10, 'MA001.N01', 'hoc_moi', 4, 'LT', 27000, 108000, 'Đã đăng ký'),
+(10, 'MA003.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(10, 'IT006.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký'),
+(10, 'ENG03.N01', 'hoc_moi', 3, 'LT', 27000, 81000, 'Đã đăng ký');
+
+-- =====================================================
+-- INSERT DATA - Phiếu thu học phí (Tuition Payment Receipts)
+-- Sử dụng giá trị so_phieu_thu cụ thể để đảm bảo tính nhất quán
+-- =====================================================
+INSERT INTO phieu_thu_hoc_phi (so_phieu_thu, so_phieu_dang_ky, ma_sv, ngay_lap, so_tien_thu, hinh_thuc_thu, ma_giao_dich, nguoi_thu, ghi_chu, trang_thai) VALUES
+-- Thanh toán đầy đủ cho HK1-2425
+(1, 2, '22520001', '2024-09-20 09:30:00', 4320000, 'Chuyển khoản', 'GD20240920001', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025', 'Thành công'),
+(2, 4, '22520002', '2024-09-21 10:15:00', 2025000, 'Tiền mặt', 'GD20240921001', 'Nguyễn Thị Thu', 'Thanh toán học phí HK1 2024-2025 (sau giảm 50%)', 'Thành công'),
+(3, 6, '22520003', '2024-09-22 14:00:00', 2295000, 'Chuyển khoản', 'GD20240922001', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025 (sau giảm 50%)', 'Thành công'),
+(4, 8, '22520004', '2024-09-20 16:30:00', 4860000, 'Ví điện tử', 'GD20240920002', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025 qua MoMo', 'Thành công'),
+(5, 10, '22520005', '2024-09-23 11:00:00', 3024000, 'Chuyển khoản', 'GD20240923001', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025 (sau giảm 30%)', 'Thành công'),
+-- Thanh toán cho HK2-2425 (một số đã đóng, một số chưa đóng đủ)
+(6, 1, '22520001', '2025-01-25 08:45:00', 4860000, 'Chuyển khoản', 'GD20250125001', 'Hệ thống', 'Thanh toán học phí HK2 2024-2025', 'Thành công'),
+(7, 3, '22520002', '2025-01-26 09:30:00', 2295000, 'Tiền mặt', 'GD20250126001', 'Trần Văn Hùng', 'Thanh toán học phí HK2 2024-2025 (sau giảm 50%)', 'Thành công'),
+(8, 5, '22520003', '2025-01-27 10:00:00', 1500000, 'Chuyển khoản', 'GD20250127001', 'Hệ thống', 'Thanh toán một phần học phí HK2 2024-2025', 'Thành công'),
+(9, 7, '22520004', '2025-01-28 14:15:00', 2000000, 'Ví điện tử', 'GD20250128001', 'Hệ thống', 'Thanh toán một phần học phí HK2 2024-2025', 'Thành công'),
+(10, 9, '22520005', '2025-01-29 11:30:00', 3402000, 'Chuyển khoản', 'GD20250129001', 'Hệ thống', 'Thanh toán học phí HK2 2024-2025 (sau giảm 30%)', 'Thành công');
+
+-- Cập nhật sequence cho phieu_thu_hoc_phi để các INSERT tiếp theo bắt đầu từ giá trị đúng
+SELECT setval('phieu_thu_hoc_phi_so_phieu_thu_seq', 10, true);
+
+-- =====================================================
+-- INSERT DATA - Thông báo cá nhân (Personal Notifications)
+-- =====================================================
+INSERT INTO thong_bao_ca_nhan (ma_tai_khoan, tieu_de, noi_dung, loai_thong_bao, duong_dan, da_doc) VALUES
+-- Thông báo cho sinh viên 22520001 (ma_tai_khoan từ subquery)
+((SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520001'), 'Đăng ký môn học thành công', 'Bạn đã đăng ký thành công 6 môn học cho HK2 2024-2025. Tổng số tín chỉ: 18. Học phí: 4,860,000 VNĐ.', 'Đăng ký', '/phieu-dang-ky/1', TRUE),
+((SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520001'), 'Thanh toán học phí thành công', 'Bạn đã thanh toán thành công 4,860,000 VNĐ học phí HK2 2024-2025.', 'Học phí', '/phieu-thu/6', TRUE),
+((SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520001'), 'Nhắc nhở lịch học', 'Môn Cấu trúc dữ liệu và giải thuật sẽ bắt đầu vào thứ 2 tuần sau tại phòng B3.01.', 'Lịch học', '/lich-hoc', FALSE),
+-- Thông báo cho sinh viên 22520002
+((SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520002'), 'Đăng ký môn học thành công', 'Bạn đã đăng ký thành công 6 môn học cho HK2 2024-2025. Được giảm 50% học phí do thuộc đối tượng vùng sâu vùng xa.', 'Đăng ký', '/phieu-dang-ky/3', TRUE),
+((SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520002'), 'Thanh toán học phí thành công', 'Bạn đã thanh toán thành công 2,295,000 VNĐ học phí HK2 2024-2025 (sau giảm 50%).', 'Học phí', '/phieu-thu/7', TRUE),
+-- Thông báo cho sinh viên 22520003
+((SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520003'), 'Đăng ký môn học thành công', 'Bạn đã đăng ký thành công 7 môn học cho HK2 2024-2025. Được giảm 50% học phí do thuộc hộ cận nghèo.', 'Đăng ký', '/phieu-dang-ky/5', TRUE),
+((SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520003'), 'Nhắc nhở đóng học phí', 'Bạn còn nợ 1,065,000 VNĐ học phí HK2 2024-2025. Hạn đóng: 15/03/2025.', 'Học phí', '/cong-no', FALSE),
+-- Thông báo cho sinh viên 22520004
+((SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520004'), 'Đăng ký môn học thành công', 'Bạn đã đăng ký thành công 5 môn học cho HK2 2024-2025. Tổng số tín chỉ: 16.', 'Đăng ký', '/phieu-dang-ky/7', TRUE),
+((SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520004'), 'Nhắc nhở đóng học phí', 'Bạn còn nợ 2,320,000 VNĐ học phí HK2 2024-2025. Hạn đóng: 15/03/2025.', 'Học phí', '/cong-no', FALSE),
+-- Thông báo cho sinh viên 22520005
+((SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520005'), 'Đăng ký môn học thành công', 'Bạn đã đăng ký thành công 6 môn học cho HK2 2024-2025. Được giảm 30% học phí do thuộc dân tộc thiểu số.', 'Đăng ký', '/phieu-dang-ky/9', TRUE),
+((SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520005'), 'Thanh toán học phí thành công', 'Bạn đã thanh toán thành công 3,402,000 VNĐ học phí HK2 2024-2025 (sau giảm 30%).', 'Học phí', '/phieu-thu/10', TRUE),
+-- Thông báo cho Admin
+((SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = 'admin'), 'Báo cáo đăng ký HK2 2024-2025', 'Tổng số sinh viên đã đăng ký: 5. Tổng số lớp mở: 45. Tổng doanh thu dự kiến: 21,442,000 VNĐ.', 'Báo cáo', '/bao-cao/dang-ky', FALSE),
+((SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = 'admin'), 'Cảnh báo sinh viên nợ học phí', 'Có 2 sinh viên chưa đóng đủ học phí HK2 2024-2025. Vui lòng kiểm tra danh sách.', 'Cảnh báo', '/bao-cao/cong-no', FALSE);
+
+-- =====================================================
 -- END OF INIT.SQL
 -- =====================================================
