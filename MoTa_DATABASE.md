@@ -218,13 +218,14 @@
 
 ### 2.7. BẢNG `sinh_vien` - Sinh viên
 
-**Mô tả:** Thông tin sinh viên (BM1, QĐ1)
+**Mô tả:** Thông tin sinh viên (BM1, QĐ1). Mỗi sinh viên có thể liên kết với một tài khoản để đăng nhập hệ thống.
 
 **Cấu trúc:**
 
 | Tên cột | Kiểu dữ liệu | Null | Mặc định | Mô tả |
 |---------|--------------|------|----------|-------|
 | `ma_sv` | VARCHAR(15) | NO | - | **PK** - Mã sinh viên |
+| `ma_tai_khoan` | INTEGER | YES | - | **FK** → `tai_khoan.ma_tai_khoan` (UNIQUE) |
 | `ho_ten` | VARCHAR(100) | NO | - | Họ tên (BM1) |
 | `ngay_sinh` | DATE | NO | - | Ngày sinh (BM1) |
 | `gioi_tinh` | VARCHAR(5) | NO | - | Giới tính:  'Nam'/'Nữ' (BM1) |
@@ -253,11 +254,15 @@
 |--------|-----|------------|-------|
 | `fk_sv_huyen` | `ma_huyen` | `huyen(ma_huyen)` | Quê quán (QĐ1) |
 | `fk_sv_nganh` | `ma_nganh` | `nganh_hoc(ma_nganh)` | Ngành học (QĐ1) |
+| `fk_sv_tk` | `ma_tai_khoan` | `tai_khoan(ma_tai_khoan)` | Tài khoản đăng nhập của sinh viên |
 
 **Ràng buộc:**
 - `gioi_tinh` IN ('Nam', 'Nữ')
 - `trang_thai` IN ('Đang học', 'Bảo lưu', 'Nghỉ học', 'Tốt nghiệp')
 - `cccd` UNIQUE
+- `ma_tai_khoan` UNIQUE (mỗi sinh viên chỉ có 1 tài khoản)
+
+**Lưu ý:** Bảng `sinh_vien` có mối quan hệ 1-1 với bảng `tai_khoan` thông qua cột `ma_tai_khoan`. Mỗi sinh viên phải có một tài khoản với `role = 'sinh_vien'` trong bảng `tai_khoan`. Ràng buộc này được kiểm soát ở mức ứng dụng (application-level constraint).
 
 ---
 
@@ -802,20 +807,20 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
   │ mon_hoc │      │ n         │   n       │        1            │
   └────┬────┘      └───────────┴───────────┴────────┴────────────┘
        │ 1                     sinh_vien
-       │
-       │ n                    ┌────────────────────────┬───────────────────────────┐
-  ┌────┴────┐                 │ 1                      │ 1                         │
-  │   lop   │                 │                        │                           │
-  └────┬────┘                 │ n                      │ n                         │ 1
-       │ 1              ┌─────┴──────┐   ┌─────────────┴─────┐   ┌─────────────────┴───┐
-       │                │ phieu_dang_ky│   │phieu_thu_hoc_phi │   │      tai_khoan      │
-       │ n              └──────┬──────┘   └───────────────────┘   └─────────────────────┘
-  ┌────┴────┐                  │ 1
-  │  lop_mo │                  │
-  └────┬────┘                  │ n
-       │ n              ┌──────┴──────┐
-       │                │chi_tiet_dk  │
-       │ 1              └──────┬──────┘
+       │                           │
+       │ n                    ┌────┴────────────────┬───────────────────────────┐
+  ┌────┴────┐                 │ 1                   │ 1                         │
+  │   lop   │                 │                     │                           │
+  └────┬────┘                 │ n                   │ n                         │ 1
+       │ 1              ┌─────┴──────┐   ┌──────────┴──────┐   ┌────────────────┴────┐
+       │                │ phieu_dang_ky│   │phieu_thu_hoc_phi│   │      tai_khoan      │
+       │ n              └──────┬──────┘   └─────────────────┘   └──────────┬──────────┘
+  ┌────┴────┐                  │ 1                                        │
+  │  lop_mo │                  │                              ┌───────────┼───────────┐
+  └────┬────┘                  │ n                            │ 1         │           │ 1
+       │ n              ┌──────┴──────┐              ┌────────┴────┐  ┌───┴───────────┴───┐
+       │                │chi_tiet_dk  │              │quan_tri_vien│  │thong_bao_ca_nhan  │
+       │ 1              └──────┬──────┘              └─────────────┘  └───────────────────┘
   ┌────┴────┐                  │ n
   │  hoc_ky │◄─────────────────┘
   └────┬────┘              (FK: ma_lop)
@@ -825,6 +830,11 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
   ┌────┴────┐
   │ nam_hoc │
   └─────────┘
+
+Ghi chú mối quan hệ sinh_vien - tai_khoan:
+- sinh_vien.ma_tai_khoan → tai_khoan.ma_tai_khoan (FK: fk_sv_tk)
+- tai_khoan.ma_sv → sinh_vien.ma_sv (FK: fk_tk_sv)
+- Đây là mối quan hệ 1-1 hai chiều để dễ dàng truy vấn thông tin từ cả hai phía
 ```
 
 ### 3.2. Chi tiết các mối quan hệ
@@ -841,18 +851,19 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
 | 8 | `sinh_vien` | `doi_tuong_sinh_vien` | 1 - n | Mỗi SV có thể thuộc nhiều đối tượng |
 | 9 | `sinh_vien` | `phieu_dang_ky` | 1 - n | Mỗi SV có nhiều phiếu ĐK (qua các HK) |
 | 10 | `sinh_vien` | `phieu_thu_hoc_phi` | 1 - n | Mỗi SV có nhiều phiếu thu |
-| 11 | `sinh_vien` | `tai_khoan` | 1 - 1 | Mỗi SV có 1 tài khoản |
-| 12 | `nam_hoc` | `hoc_ky` | 1 - n | Mỗi năm học có nhiều học kỳ |
-| 13 | `hoc_ky` | `lop_mo` | 1 - n | Mỗi HK mở nhiều lớp |
-| 14 | `hoc_ky` | `phieu_dang_ky` | 1 - n | Mỗi HK có nhiều phiếu ĐK |
-| 15 | `mon_hoc` | `lop` | 1 - n | Mỗi môn có nhiều lớp |
-| 16 | `mon_hoc` | `chuong_trinh_hoc` | 1 - n | Mỗi môn thuộc nhiều CTĐT |
-| 17 | `lop` | `lop_mo` | 1 - n | Mỗi lớp có thể mở ở nhiều HK |
-| 18 | `lop` | `chi_tiet_dang_ky` | 1 - n | Mỗi lớp được ĐK nhiều lần |
-| 19 | `phieu_dang_ky` | `chi_tiet_dang_ky` | 1 - n | Mỗi phiếu ĐK có nhiều chi tiết (lớp) |
-| 20 | `phieu_dang_ky` | `phieu_thu_hoc_phi` | 1 - n | Mỗi phiếu ĐK có nhiều phiếu thu (QĐ6) |
-| 21 | `tai_khoan` | `thong_bao_ca_nhan` | 1 - n | Mỗi TK nhận nhiều thông báo |
-| 22 | `tai_khoan` | `quan_tri_vien` | 1 - 1 | Mỗi TK admin có 1 thông tin quản trị viên |
+| 11 | `tai_khoan` | `sinh_vien` | 1 - 1 | Mỗi tài khoản SV có 1 thông tin sinh viên (qua fk_sv_tk) |
+| 12 | `sinh_vien` | `tai_khoan` | 1 - 1 | Mỗi SV có 1 tài khoản (qua fk_tk_sv) |
+| 13 | `nam_hoc` | `hoc_ky` | 1 - n | Mỗi năm học có nhiều học kỳ |
+| 14 | `hoc_ky` | `lop_mo` | 1 - n | Mỗi HK mở nhiều lớp |
+| 15 | `hoc_ky` | `phieu_dang_ky` | 1 - n | Mỗi HK có nhiều phiếu ĐK |
+| 16 | `mon_hoc` | `lop` | 1 - n | Mỗi môn có nhiều lớp |
+| 17 | `mon_hoc` | `chuong_trinh_hoc` | 1 - n | Mỗi môn thuộc nhiều CTĐT |
+| 18 | `lop` | `lop_mo` | 1 - n | Mỗi lớp có thể mở ở nhiều HK |
+| 19 | `lop` | `chi_tiet_dang_ky` | 1 - n | Mỗi lớp được ĐK nhiều lần |
+| 20 | `phieu_dang_ky` | `chi_tiet_dang_ky` | 1 - n | Mỗi phiếu ĐK có nhiều chi tiết (lớp) |
+| 21 | `phieu_dang_ky` | `phieu_thu_hoc_phi` | 1 - n | Mỗi phiếu ĐK có nhiều phiếu thu (QĐ6) |
+| 22 | `tai_khoan` | `thong_bao_ca_nhan` | 1 - n | Mỗi TK nhận nhiều thông báo |
+| 23 | `tai_khoan` | `quan_tri_vien` | 1 - 1 | Mỗi TK admin có 1 thông tin quản trị viên |
 
 ---
 ## 4. TỔNG HỢP KHÓA NGOẠI
@@ -863,26 +874,27 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
 | 2 | `nganh_hoc` | `fk_nganh_khoa` | `ma_khoa` | `khoa(ma_khoa)` | RESTRICT | CASCADE |
 | 3 | `sinh_vien` | `fk_sv_huyen` | `ma_huyen` | `huyen(ma_huyen)` | RESTRICT | CASCADE |
 | 4 | `sinh_vien` | `fk_sv_nganh` | `ma_nganh` | `nganh_hoc(ma_nganh)` | RESTRICT | CASCADE |
-| 5 | `doi_tuong_sinh_vien` | `fk_dtsv_sv` | `ma_sv` | `sinh_vien(ma_sv)` | CASCADE | CASCADE |
-| 6 | `doi_tuong_sinh_vien` | `fk_dtsv_dt` | `ma_doi_tuong` | `doi_tuong(ma_doi_tuong)` | RESTRICT | CASCADE |
-| 7 | `mon_hoc` | `fk_monhoc_khoa` | `ma_khoa` | `khoa(ma_khoa)` | RESTRICT | CASCADE |
-| 8 | `lop` | `fk_lop_monhoc` | `ma_mon_hoc` | `mon_hoc(ma_mon_hoc)` | CASCADE | CASCADE |
-| 9 | `chuong_trinh_hoc` | `fk_cth_nganh` | `ma_nganh` | `nganh_hoc(ma_nganh)` | CASCADE | CASCADE |
-| 10 | `chuong_trinh_hoc` | `fk_cth_mon` | `ma_mon_hoc` | `mon_hoc(ma_mon_hoc)` | CASCADE | CASCADE |
-| 11 | `hoc_ky` | `fk_hk_namhoc` | `ma_nam_hoc` | `nam_hoc(ma_nam_hoc)` | RESTRICT | CASCADE |
-| 12 | `lop_mo` | `fk_lopmo_hocky` | `ma_hoc_ky` | `hoc_ky(ma_hoc_ky)` | CASCADE | CASCADE |
-| 13 | `lop_mo` | `fk_lopmo_lop` | `ma_lop` | `lop(ma_lop)` | CASCADE | CASCADE |
-| 14 | `phieu_dang_ky` | `fk_pdk_sv` | `ma_sv` | `sinh_vien(ma_sv)` | RESTRICT | CASCADE |
-| 15 | `phieu_dang_ky` | `fk_pdk_hk` | `ma_hoc_ky` | `hoc_ky(ma_hoc_ky)` | RESTRICT | CASCADE |
-| 16 | `chi_tiet_dang_ky` | `fk_ctdk_phieu` | `so_phieu` | `phieu_dang_ky(so_phieu)` | CASCADE | CASCADE |
-| 17 | `chi_tiet_dang_ky` | `fk_ctdk_lop` | `ma_lop` | `lop(ma_lop)` | RESTRICT | CASCADE |
-| 18 | `phieu_thu_hoc_phi` | `fk_pthp_pdk` | `so_phieu_dang_ky` | `phieu_dang_ky(so_phieu)` | RESTRICT | CASCADE |
-| 19 | `phieu_thu_hoc_phi` | `fk_pthp_sv` | `ma_sv` | `sinh_vien(ma_sv)` | RESTRICT | CASCADE |
-| 20 | `don_gia_tin_chi` | `fk_dgtc_hk` | `ma_hoc_ky` | `hoc_ky(ma_hoc_ky)` | SET NULL | CASCADE |
-| 21 | `tai_khoan` | `fk_tk_sv` | `ma_sv` | `sinh_vien(ma_sv)` | SET NULL | CASCADE |
-| 22 | `quan_tri_vien` | `fk_qtv_tk` | `ma_tai_khoan` | `tai_khoan(ma_tai_khoan)` | CASCADE | CASCADE |
-| 23 | `thong_bao` | `fk_tb_nguoitao` | `nguoi_tao` | `tai_khoan(ma_tai_khoan)` | SET NULL | CASCADE |
-| 24 | `thong_bao_ca_nhan` | `fk_tbcn_tk` | `ma_tai_khoan` | `tai_khoan(ma_tai_khoan)` | CASCADE | CASCADE |
+| 5 | `sinh_vien` | `fk_sv_tk` | `ma_tai_khoan` | `tai_khoan(ma_tai_khoan)` | SET NULL | CASCADE |
+| 6 | `doi_tuong_sinh_vien` | `fk_dtsv_sv` | `ma_sv` | `sinh_vien(ma_sv)` | CASCADE | CASCADE |
+| 7 | `doi_tuong_sinh_vien` | `fk_dtsv_dt` | `ma_doi_tuong` | `doi_tuong(ma_doi_tuong)` | RESTRICT | CASCADE |
+| 8 | `mon_hoc` | `fk_monhoc_khoa` | `ma_khoa` | `khoa(ma_khoa)` | RESTRICT | CASCADE |
+| 9 | `lop` | `fk_lop_monhoc` | `ma_mon_hoc` | `mon_hoc(ma_mon_hoc)` | CASCADE | CASCADE |
+| 10 | `chuong_trinh_hoc` | `fk_cth_nganh` | `ma_nganh` | `nganh_hoc(ma_nganh)` | CASCADE | CASCADE |
+| 11 | `chuong_trinh_hoc` | `fk_cth_mon` | `ma_mon_hoc` | `mon_hoc(ma_mon_hoc)` | CASCADE | CASCADE |
+| 12 | `hoc_ky` | `fk_hk_namhoc` | `ma_nam_hoc` | `nam_hoc(ma_nam_hoc)` | RESTRICT | CASCADE |
+| 13 | `lop_mo` | `fk_lopmo_hocky` | `ma_hoc_ky` | `hoc_ky(ma_hoc_ky)` | CASCADE | CASCADE |
+| 14 | `lop_mo` | `fk_lopmo_lop` | `ma_lop` | `lop(ma_lop)` | CASCADE | CASCADE |
+| 15 | `phieu_dang_ky` | `fk_pdk_sv` | `ma_sv` | `sinh_vien(ma_sv)` | RESTRICT | CASCADE |
+| 16 | `phieu_dang_ky` | `fk_pdk_hk` | `ma_hoc_ky` | `hoc_ky(ma_hoc_ky)` | RESTRICT | CASCADE |
+| 17 | `chi_tiet_dang_ky` | `fk_ctdk_phieu` | `so_phieu` | `phieu_dang_ky(so_phieu)` | CASCADE | CASCADE |
+| 18 | `chi_tiet_dang_ky` | `fk_ctdk_lop` | `ma_lop` | `lop(ma_lop)` | RESTRICT | CASCADE |
+| 19 | `phieu_thu_hoc_phi` | `fk_pthp_pdk` | `so_phieu_dang_ky` | `phieu_dang_ky(so_phieu)` | RESTRICT | CASCADE |
+| 20 | `phieu_thu_hoc_phi` | `fk_pthp_sv` | `ma_sv` | `sinh_vien(ma_sv)` | RESTRICT | CASCADE |
+| 21 | `don_gia_tin_chi` | `fk_dgtc_hk` | `ma_hoc_ky` | `hoc_ky(ma_hoc_ky)` | SET NULL | CASCADE |
+| 22 | `tai_khoan` | `fk_tk_sv` | `ma_sv` | `sinh_vien(ma_sv)` | SET NULL | CASCADE |
+| 23 | `quan_tri_vien` | `fk_qtv_tk` | `ma_tai_khoan` | `tai_khoan(ma_tai_khoan)` | CASCADE | CASCADE |
+| 24 | `thong_bao` | `fk_tb_nguoitao` | `nguoi_tao` | `tai_khoan(ma_tai_khoan)` | SET NULL | CASCADE |
+| 25 | `thong_bao_ca_nhan` | `fk_tbcn_tk` | `ma_tai_khoan` | `tai_khoan(ma_tai_khoan)` | CASCADE | CASCADE |
 
 ---
 
@@ -919,15 +931,16 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
 | STT | Bảng | Tên Constraint | Cột | Mô tả |
 |-----|------|----------------|-----|-------|
 | 1 | `sinh_vien` | `sinh_vien_cccd_key` | `cccd` | Mỗi CCCD là duy nhất |
-| 2 | `doi_tuong_sinh_vien` | `uq_dtsv` | `(ma_sv, ma_doi_tuong)` | SV chỉ gán 1 lần/đối tượng |
-| 3 | `chuong_trinh_hoc` | `uq_cth` | `(ma_nganh, ma_mon_hoc)` | Môn chỉ xuất hiện 1 lần/ngành |
-| 4 | `lop_mo` | `uq_lopmo` | `(ma_hoc_ky, ma_lop)` | Lớp chỉ mở 1 lần/học kỳ |
-| 5 | `phieu_dang_ky` | `uq_pdk` | `(ma_sv, ma_hoc_ky)` | SV chỉ có 1 phiếu ĐK/học kỳ |
-| 6 | `chi_tiet_dang_ky` | `uq_ctdk` | `(so_phieu, ma_lop)` | Lớp chỉ ĐK 1 lần/phiếu |
-| 7 | `don_gia_tin_chi` | `uq_dongia` | `(loai_mon, loai_hoc, ma_hoc_ky)` | Mỗi loại môn + loại học chỉ có 1 đơn giá/HK |
-| 8 | `tai_khoan` | `tai_khoan_ten_dang_nhap_key` | `ten_dang_nhap` | Tên đăng nhập duy nhất |
-| 9 | `tai_khoan` | `tai_khoan_ma_sv_key` | `ma_sv` | Mỗi SV chỉ có 1 tài khoản |
-| 10 | `quan_tri_vien` | `quan_tri_vien_ma_tai_khoan_key` | `ma_tai_khoan` | Mỗi quản trị viên chỉ có 1 tài khoản |
+| 2 | `sinh_vien` | `sinh_vien_ma_tai_khoan_key` | `ma_tai_khoan` | Mỗi sinh viên chỉ có 1 tài khoản |
+| 3 | `doi_tuong_sinh_vien` | `uq_dtsv` | `(ma_sv, ma_doi_tuong)` | SV chỉ gán 1 lần/đối tượng |
+| 4 | `chuong_trinh_hoc` | `uq_cth` | `(ma_nganh, ma_mon_hoc)` | Môn chỉ xuất hiện 1 lần/ngành |
+| 5 | `lop_mo` | `uq_lopmo` | `(ma_hoc_ky, ma_lop)` | Lớp chỉ mở 1 lần/học kỳ |
+| 6 | `phieu_dang_ky` | `uq_pdk` | `(ma_sv, ma_hoc_ky)` | SV chỉ có 1 phiếu ĐK/học kỳ |
+| 7 | `chi_tiet_dang_ky` | `uq_ctdk` | `(so_phieu, ma_lop)` | Lớp chỉ ĐK 1 lần/phiếu |
+| 8 | `don_gia_tin_chi` | `uq_dongia` | `(loai_mon, loai_hoc, ma_hoc_ky)` | Mỗi loại môn + loại học chỉ có 1 đơn giá/HK |
+| 9 | `tai_khoan` | `tai_khoan_ten_dang_nhap_key` | `ten_dang_nhap` | Tên đăng nhập duy nhất |
+| 10 | `tai_khoan` | `tai_khoan_ma_sv_key` | `ma_sv` | Mỗi SV chỉ có 1 tài khoản (tham chiếu từ tai_khoan) |
+| 11 | `quan_tri_vien` | `quan_tri_vien_ma_tai_khoan_key` | `ma_tai_khoan` | Mỗi quản trị viên chỉ có 1 tài khoản |
 
 ### 5.3. Check Constraints (Ràng buộc kiểm tra)
 
@@ -1670,6 +1683,7 @@ $$ LANGUAGE plpgsql;
                                 │   sinh_vien     │
                                 │─────────────────│
                                 │ * ma_sv (PK)    │
+                                │ # ma_tai_khoan  │
                                 │   ho_ten        │
                                 │   ngay_sinh     │
                                 │   gioi_tinh     │
@@ -1741,6 +1755,11 @@ $$ LANGUAGE plpgsql;
           │ * ma_khoa (PK)    │
           │   ten_khoa        │
           └───────────────────┘
+
+Ghi chú mối quan hệ sinh_vien - tai_khoan:
+- sinh_vien.ma_tai_khoan → tai_khoan.ma_tai_khoan (FK: fk_sv_tk)
+- tai_khoan.ma_sv → sinh_vien.ma_sv (FK: fk_tk_sv)
+- Đây là mối quan hệ 1-1 hai chiều để dễ dàng truy vấn thông tin từ cả hai phía
 
 Chú thích:
   * :  Primary Key (Khóa chính)
@@ -1828,15 +1847,30 @@ INSERT INTO mon_hoc (ma_mon_hoc, ten_mon_hoc, loai_mon, so_tiet) VALUES
 INSERT INTO tai_khoan (ten_dang_nhap, mat_khau, role, ho_ten, email) VALUES 
 ('admin', '$2a$10$...', 'admin', 'Quản trị viên', 'admin@school.edu.vn');
 
--- Tạo tài khoản Sinh viên (liên kết với bảng sinh_vien qua ma_sv)
-INSERT INTO tai_khoan (ten_dang_nhap, mat_khau, role, ma_sv, email) VALUES 
-('SV001', '$2a$10$...', 'sinh_vien', 'SV001', 'sv001@student.edu.vn'),
-('SV002', '$2a$10$...', 'sinh_vien', 'SV002', 'sv002@student.edu.vn');
+-- Tạo tài khoản Sinh viên (liên kết với bảng sinh_vien qua ma_sv và ngược lại)
+-- Bước 1: Tạo tài khoản trước
+INSERT INTO tai_khoan (ten_dang_nhap, mat_khau, role, email) VALUES 
+('SV001', '$2a$10$...', 'sinh_vien', 'sv001@student.edu.vn'),
+('SV002', '$2a$10$...', 'sinh_vien', 'sv002@student.edu.vn');
+
+-- Bước 2: Tạo sinh viên với ma_tai_khoan tham chiếu tới tài khoản vừa tạo
+-- (Giả sử ma_tai_khoan của SV001 = 2, SV002 = 3)
+INSERT INTO sinh_vien (ma_sv, ma_tai_khoan, ho_ten, ngay_sinh, gioi_tinh, ma_huyen, ma_nganh, email) VALUES 
+('SV001', 2, 'Nguyễn Văn An', '2003-05-15', 'Nam', 'Q1', 'KTPM', 'sv001@student.edu.vn'),
+('SV002', 3, 'Trần Thị Bích', '2003-08-20', 'Nữ', 'Q1', 'KTPM', 'sv002@student.edu.vn');
+
+-- Bước 3: Cập nhật lại tài khoản để liên kết ngược với sinh viên
+UPDATE tai_khoan SET ma_sv = 'SV001' WHERE ma_tai_khoan = 2;
+UPDATE tai_khoan SET ma_sv = 'SV002' WHERE ma_tai_khoan = 3;
 ```
 
-**Lưu ý:** Phân quyền được thực hiện trực tiếp trong code backend dựa trên giá trị cột `role`:
-- `admin`: Toàn quyền quản lý
-- `sinh_vien`: Chỉ xem thông tin cá nhân, đăng ký lớp học, xem học phí
+**Lưu ý:** 
+- Mối quan hệ hai chiều giữa `sinh_vien` và `tai_khoan` cho phép:
+  - Từ `sinh_vien` truy vấn `tai_khoan` qua `ma_tai_khoan`
+  - Từ `tai_khoan` truy vấn `sinh_vien` qua `ma_sv`
+- Phân quyền được thực hiện trực tiếp trong code backend dựa trên giá trị cột `role`:
+  - `admin`: Toàn quyền quản lý
+  - `sinh_vien`: Chỉ xem thông tin cá nhân, đăng ký lớp học, xem học phí
 
 ---
 
@@ -1863,23 +1897,34 @@ CREATE DATABASE ql_dangky_hocphi
 #### 11.2.1. Thêm sinh viên mới (BM1)
 
 ```sql
--- Thêm sinh viên
+-- Bước 1: Tạo tài khoản trước
+INSERT INTO tai_khoan (ten_dang_nhap, mat_khau, role, email)
+VALUES ('SV001', '$2a$10$...', 'sinh_vien', 'an.nv@email.com')
+RETURNING ma_tai_khoan;
+-- Giả sử trả về ma_tai_khoan = 10
+
+-- Bước 2: Thêm sinh viên với ma_tai_khoan
 INSERT INTO sinh_vien (
-    ma_sv, ho_ten, ngay_sinh, gioi_tinh, 
+    ma_sv, ma_tai_khoan, ho_ten, ngay_sinh, gioi_tinh, 
     ma_huyen, ma_nganh, sdt, email
 ) VALUES (
-    'SV001', 'Nguyễn Văn An', '2003-05-15', 'Nam',
-    'Q1', 'KTPM', '0901234567', 'an. nv@email.com'
+    'SV001', 10, 'Nguyễn Văn An', '2003-05-15', 'Nam',
+    'Q1', 'KTPM', '0901234567', 'an.nv@email.com'
 );
+
+-- Bước 3: Cập nhật lại tài khoản để liên kết với sinh viên (tùy chọn, để hỗ trợ truy vấn 2 chiều)
+UPDATE tai_khoan SET ma_sv = 'SV001' WHERE ma_tai_khoan = 10;
 
 -- Gán đối tượng ưu tiên cho sinh viên (nếu có)
 INSERT INTO doi_tuong_sinh_vien (ma_sv, ma_doi_tuong, ghi_chu)
 VALUES ('SV001', 'DT03', 'Sinh viên hộ nghèo');
-
--- Tạo tài khoản cho sinh viên (phân quyền trực tiếp qua role)
-INSERT INTO tai_khoan (ten_dang_nhap, mat_khau, role, ma_sv, email)
-VALUES ('SV001', '$2a$10$...', 'sinh_vien', 'SV001', 'an.nv@email.com');
 ```
+
+**Lưu ý:** Mối quan hệ hai chiều giữa `sinh_vien` và `tai_khoan`:
+- `sinh_vien.ma_tai_khoan` → tham chiếu tới `tai_khoan.ma_tai_khoan`
+- `tai_khoan.ma_sv` → tham chiếu tới `sinh_vien.ma_sv`
+
+Điều này cho phép truy vấn thông tin từ cả hai phía một cách thuận tiện.
 
 #### 11.2.2. Thêm môn học (BM2)
 
