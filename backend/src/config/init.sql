@@ -7,22 +7,27 @@
 -- =====================================================
 -- HƯỚNG DẪN SỬ DỤNG:
 -- =====================================================
--- Cách 1: Chạy từ terminal với psql (tạo database + khởi tạo schema + dữ liệu)
+-- Cách 1: Chạy toàn bộ script từ terminal với psql (tạo database + khởi tạo schema + dữ liệu)
 --   psql -U postgres -f init.sql
+--   (Lưu ý: Cách này sẽ XÓA database hiện tại và tạo lại từ đầu)
 --
--- Cách 2: Nếu database đã tồn tại, chỉ cần chạy phần schema + dữ liệu:
---   psql -U postgres -d ql_dangky_hocphi -f init.sql
+-- Cách 2: Chỉ khởi tạo schema và dữ liệu (database đã tồn tại):
+--   Sử dụng file init_schema_only.sql hoặc copy phần từ dòng "BẮT ĐẦU KHỞI TẠO SCHEMA"
+--   psql -U postgres -d ql_dangky_hocphi -f init_schema_only.sql
 --
 -- Cách 3: Sử dụng trong ứng dụng Node.js:
---   Đọc nội dung file và thực thi qua pg client
+--   Đọc nội dung file và thực thi qua pg client (bỏ qua phần tạo database)
 -- =====================================================
 
 -- =====================================================
 -- TẠO DATABASE (Chạy với quyền superuser/postgres)
--- Lưu ý: Phần này cần chạy riêng nếu dùng psql -d <database>
+-- CẢNH BÁO: Phần này sẽ XÓA toàn bộ database hiện tại nếu tồn tại!
+-- Mọi dữ liệu chưa được backup sẽ bị mất.
 -- =====================================================
 
 -- Kết thúc tất cả connections đến database nếu tồn tại
+-- CẢNH BÁO: Lệnh này sẽ ngắt kết nối của tất cả người dùng đang truy cập database
+-- Đảm bảo không có giao dịch quan trọng đang thực hiện trước khi chạy
 SELECT pg_terminate_backend(pg_stat_activity.pid)
 FROM pg_stat_activity
 WHERE pg_stat_activity.datname = 'ql_dangky_hocphi'
@@ -32,12 +37,13 @@ WHERE pg_stat_activity.datname = 'ql_dangky_hocphi'
 DROP DATABASE IF EXISTS ql_dangky_hocphi;
 
 -- Tạo database mới
+-- Sử dụng locale 'C' để đảm bảo tương thích với tất cả hệ thống
 CREATE DATABASE ql_dangky_hocphi
     WITH 
     OWNER = postgres
     ENCODING = 'UTF8'
-    LC_COLLATE = 'en_US.UTF-8'
-    LC_CTYPE = 'en_US.UTF-8'
+    LC_COLLATE = 'C'
+    LC_CTYPE = 'C'
     TEMPLATE = template0
     CONNECTION LIMIT = -1;
 
