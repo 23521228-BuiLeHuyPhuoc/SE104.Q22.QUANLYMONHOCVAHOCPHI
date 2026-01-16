@@ -62,18 +62,22 @@ VALUES ('SV001', '  nguyễn văn an  ', '2003-05-15', 'Nam', 'Q1', 'KTPM');
 
 **Logic xử lý:**
 1. Tạo username từ `ma_sv` (VD: 'SV001' → username: 'sv001')
-2. Tạo mật khẩu mặc định: hash của `ma_sv + ngay_sinh` (VD: 'sv001@2003-05-15')
+2. Tạo mật khẩu mặc định ngẫu nhiên (random string 12 ký tự) hoặc hash của thông tin không dễ đoán
+   - **⚠️ Lưu ý bảo mật:** KHÔNG sử dụng thông tin cá nhân dễ đoán như mã SV + ngày sinh
+   - Gợi ý: Sử dụng UUID v4 hoặc random string generator
 3. INSERT vào bảng `tai_khoan` với `role = 'sinh_vien'`
 4. UPDATE `sinh_vien` để liên kết `ma_tai_khoan`
+5. Gửi email/thông báo mật khẩu mặc định cho sinh viên (nếu có)
 
 **Output:** Tự động tạo record trong bảng `tai_khoan`
 
 **Ví dụ:**
 ```sql
 -- Sau khi INSERT sinh viên SV001:
--- Tự động tạo tài khoản:
+-- Tự động tạo tài khoản với mật khẩu ngẫu nhiên:
 -- | ten_dang_nhap | mat_khau          | role       |
 -- | sv001         | $2a$10$...hash... | sinh_vien  |
+-- Mật khẩu gốc được gửi qua email/thông báo
 ```
 
 ---
