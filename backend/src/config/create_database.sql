@@ -21,11 +21,16 @@
 --   5. Chạy script (F5 hoặc nút Execute)
 --   6. SAU KHI CHẠY XONG: Kết nối vào database 'ql_dangky_hocphi' và chạy file init_schema.sql
 --
--- CẢNH BÁO: Script này sẽ XÓA database hiện tại nếu tồn tại!
+-- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+-- !!!                         CẢNH BÁO                              !!!
+-- !!!  Script này sẽ XÓA TOÀN BỘ database 'ql_dangky_hocphi'        !!!
+-- !!!  Mọi dữ liệu hiện có sẽ bị mất vĩnh viễn nếu chưa backup!     !!!
+-- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 -- =====================================================
 
 -- Kết thúc tất cả connections đến database nếu tồn tại
 -- CẢNH BÁO: Lệnh này sẽ ngắt kết nối của tất cả người dùng đang truy cập database
+-- Các giao dịch đang thực hiện sẽ bị rollback và có thể gây mất dữ liệu chưa commit
 -- Đảm bảo không có giao dịch quan trọng đang thực hiện trước khi chạy
 SELECT pg_terminate_backend(pg_stat_activity.pid)
 FROM pg_stat_activity
