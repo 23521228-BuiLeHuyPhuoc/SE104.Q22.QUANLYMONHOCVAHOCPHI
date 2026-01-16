@@ -35,16 +35,29 @@ Hệ thống web application quản lý việc đăng ký môn học và thu h�
 
 ### 1. Cài đặt Database
 
+#### Cách 1: Sử dụng Terminal (psql)
+
 ```bash
-# Đăng nhập vào PostgreSQL
-psql -U postgres
-
-# Tạo database
-CREATE DATABASE course_registration;
-
-# Chạy script khởi tạo (từ thư mục backend)
-psql -U postgres -d course_registration -f src/config/init.sql
+# Chạy toàn bộ script từ terminal (tạo database + khởi tạo dữ liệu)
+psql -U postgres -f backend/src/config/init.sql
 ```
+
+#### Cách 2: Sử dụng pgAdmin 4 hoặc GUI tools khác
+
+Do file `init.sql` chứa lệnh `\connect` (chỉ hoạt động trong psql), bạn cần sử dụng 2 file riêng biệt:
+
+**Bước 1: Tạo database**
+1. Mở pgAdmin 4
+2. Kết nối đến server PostgreSQL
+3. Mở Query Tool (chọn database `postgres` hoặc bất kỳ database nào)
+4. Mở file `backend/src/config/create_database.sql`
+5. Chạy script (F5 hoặc nút Execute)
+
+**Bước 2: Khởi tạo schema và dữ liệu**
+1. Refresh danh sách Databases
+2. Kết nối vào database `ql_dangky_hocphi` (Click phải -> Query Tool)
+3. Mở file `backend/src/config/init_schema.sql`
+4. Chạy script (F5 hoặc nút Execute)
 
 ### 2. Cài đặt Backend
 
