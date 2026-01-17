@@ -3087,22 +3087,33 @@ INSERT INTO doi_tuong_sinh_vien (ma_sv, ma_doi_tuong, ghi_chu) VALUES
 -- INSERT DATA - Phiếu đăng ký học phần (Course Registration Forms)
 -- Sử dụng giá trị so_phieu cụ thể để đảm bảo tính nhất quán với chi_tiet_dang_ky và phieu_thu_hoc_phi
 -- Cập nhật với các trường thống kê theo loại đăng ký
+-- Ghi chú: tien_hoc_* = so_tin_chi * don_gia (27000 cho LT, 37000 cho TH)
 -- =====================================================
 INSERT INTO phieu_dang_ky (so_phieu, ma_sv, ma_hoc_ky, ngay_lap, tong_tin_chi, so_mon_hoc_moi, so_tin_chi_hoc_moi, tien_hoc_moi, so_mon_hoc_lai, so_tin_chi_hoc_lai, tien_hoc_lai, so_mon_hoc_cai_thien, so_tin_chi_hoc_cai_thien, tien_hoc_cai_thien, tong_tien_dang_ky, ti_le_giam, tien_mien_giam, tong_tien_phai_dong, trang_thai) VALUES
 -- Sinh viên 22520001 - Nguyễn Văn An (không có đối tượng ưu tiên)
+-- Phiếu 1: 6 môn LT, 18 tín chỉ, tổng = 486,000
 (1, '22520001', 'HK2-2425', '2025-01-20 08:30:00', 18, 6, 18, 486000, 0, 0, 0, 0, 0, 0, 486000, 0, 0, 486000, 'Đã đăng ký'),
+-- Phiếu 2: 5 môn LT, 16 tín chỉ, tổng = 432,000
 (2, '22520001', 'HK1-2425', '2024-09-15 09:00:00', 16, 5, 16, 432000, 0, 0, 0, 0, 0, 0, 432000, 0, 0, 432000, 'Đã đăng ký'),
 -- Sinh viên 22520002 - Trần Thị Bình (vùng sâu vùng xa - giảm 50%)
-(3, '22520002', 'HK2-2425', '2025-01-21 10:15:00', 16, 6, 16, 469000, 0, 0, 0, 0, 0, 0, 469000, 50, 234500, 234500, 'Đã đăng ký'),
+-- Phiếu 3: 5 môn LT (15 TC) + 1 môn TH (1 TC), tổng = 5*81000 + 37000 = 442,000
+(3, '22520002', 'HK2-2425', '2025-01-21 10:15:00', 16, 6, 16, 442000, 0, 0, 0, 0, 0, 0, 442000, 50, 221000, 221000, 'Đã đăng ký'),
+-- Phiếu 4: 4 môn LT, 13 tín chỉ, tổng = 351,000
 (4, '22520002', 'HK1-2425', '2024-09-16 14:30:00', 13, 4, 13, 351000, 0, 0, 0, 0, 0, 0, 351000, 50, 175500, 175500, 'Đã đăng ký'),
 -- Sinh viên 22520003 - Lê Văn Cường (hộ cận nghèo - giảm 50%)
+-- Phiếu 5: 6 môn LT (18 TC) + 1 môn TH (1 TC), tổng = 6*81000 + 37000 = 523,000
 (5, '22520003', 'HK2-2425', '2025-01-22 09:45:00', 19, 7, 19, 523000, 0, 0, 0, 0, 0, 0, 523000, 50, 261500, 261500, 'Đã đăng ký'),
+-- Phiếu 6: 5 môn LT, 16 tín chỉ, tổng = 432,000
 (6, '22520003', 'HK1-2425', '2024-09-17 11:20:00', 16, 5, 16, 432000, 0, 0, 0, 0, 0, 0, 432000, 50, 216000, 216000, 'Đã đăng ký'),
 -- Sinh viên 22520004 - Phạm Thị Dung (không có đối tượng ưu tiên)
+-- Phiếu 7: 5 môn LT, 15 tín chỉ, tổng = 405,000
 (7, '22520004', 'HK2-2425', '2025-01-20 15:00:00', 15, 5, 15, 405000, 0, 0, 0, 0, 0, 0, 405000, 0, 0, 405000, 'Đã đăng ký'),
-(8, '22520004', 'HK1-2425', '2024-09-15 16:45:00', 18, 6, 18, 486000, 0, 0, 0, 0, 0, 0, 486000, 0, 0, 486000, 'Đã đăng ký'),
+-- Phiếu 8: 6 môn LT, 19 tín chỉ, tổng = 513,000
+(8, '22520004', 'HK1-2425', '2024-09-15 16:45:00', 19, 6, 19, 513000, 0, 0, 0, 0, 0, 0, 513000, 0, 0, 513000, 'Đã đăng ký'),
 -- Sinh viên 22520005 - Hoàng Minh Đức (dân tộc thiểu số - giảm 30%)
+-- Phiếu 9: 6 môn LT, 18 tín chỉ, tổng = 486,000
 (9, '22520005', 'HK2-2425', '2025-01-23 08:00:00', 18, 6, 18, 486000, 0, 0, 0, 0, 0, 0, 486000, 30, 145800, 340200, 'Đã đăng ký'),
+-- Phiếu 10: 5 môn LT, 16 tín chỉ, tổng = 432,000
 (10, '22520005', 'HK1-2425', '2024-09-18 10:30:00', 16, 5, 16, 432000, 0, 0, 0, 0, 0, 0, 432000, 30, 129600, 302400, 'Đã đăng ký');
 
 -- Cập nhật sequence cho phieu_dang_ky để các INSERT tiếp theo bắt đầu từ giá trị đúng
@@ -3181,20 +3192,21 @@ INSERT INTO chi_tiet_dang_ky (so_phieu, ma_lop, loai_dang_ky, so_tin_chi, loai_m
 -- =====================================================
 -- INSERT DATA - Phiếu thu học phí (Tuition Payment Receipts)
 -- Sử dụng giá trị so_phieu_thu cụ thể để đảm bảo tính nhất quán
+-- Số tiền thu phải khớp với tong_tien_phai_dong trong phieu_dang_ky tương ứng
 -- =====================================================
 INSERT INTO phieu_thu_hoc_phi (so_phieu_thu, so_phieu_dang_ky, ma_sv, ngay_lap, so_tien_thu, hinh_thuc_thu, ma_giao_dich, nguoi_thu, ghi_chu, trang_thai) VALUES
 -- Thanh toán đầy đủ cho HK1-2425
-(1, 2, '22520001', '2024-09-20 09:30:00', 4320000, 'Chuyển khoản', 'GD20240920001', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025', 'Thành công'),
-(2, 4, '22520002', '2024-09-21 10:15:00', 2025000, 'Tiền mặt', 'GD20240921001', 'Nguyễn Thị Thu', 'Thanh toán học phí HK1 2024-2025 (sau giảm 50%)', 'Thành công'),
-(3, 6, '22520003', '2024-09-22 14:00:00', 2295000, 'Chuyển khoản', 'GD20240922001', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025 (sau giảm 50%)', 'Thành công'),
-(4, 8, '22520004', '2024-09-20 16:30:00', 4860000, 'Ví điện tử', 'GD20240920002', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025 qua MoMo', 'Thành công'),
-(5, 10, '22520005', '2024-09-23 11:00:00', 3024000, 'Chuyển khoản', 'GD20240923001', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025 (sau giảm 30%)', 'Thành công'),
+(1, 2, '22520001', '2024-09-20 09:30:00', 432000, 'Chuyển khoản', 'GD20240920001', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025', 'Thành công'),
+(2, 4, '22520002', '2024-09-21 10:15:00', 175500, 'Tiền mặt', 'GD20240921001', 'Nguyễn Thị Thu', 'Thanh toán học phí HK1 2024-2025 (sau giảm 50%)', 'Thành công'),
+(3, 6, '22520003', '2024-09-22 14:00:00', 216000, 'Chuyển khoản', 'GD20240922001', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025 (sau giảm 50%)', 'Thành công'),
+(4, 8, '22520004', '2024-09-20 16:30:00', 513000, 'Ví điện tử', 'GD20240920002', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025 qua MoMo', 'Thành công'),
+(5, 10, '22520005', '2024-09-23 11:00:00', 302400, 'Chuyển khoản', 'GD20240923001', 'Hệ thống', 'Thanh toán học phí HK1 2024-2025 (sau giảm 30%)', 'Thành công'),
 -- Thanh toán cho HK2-2425 (một số đã đóng, một số chưa đóng đủ)
-(6, 1, '22520001', '2025-01-25 08:45:00', 4860000, 'Chuyển khoản', 'GD20250125001', 'Hệ thống', 'Thanh toán học phí HK2 2024-2025', 'Thành công'),
-(7, 3, '22520002', '2025-01-26 09:30:00', 2295000, 'Tiền mặt', 'GD20250126001', 'Trần Văn Hùng', 'Thanh toán học phí HK2 2024-2025 (sau giảm 50%)', 'Thành công'),
-(8, 5, '22520003', '2025-01-27 10:00:00', 1500000, 'Chuyển khoản', 'GD20250127001', 'Hệ thống', 'Thanh toán một phần học phí HK2 2024-2025', 'Thành công'),
-(9, 7, '22520004', '2025-01-28 14:15:00', 2000000, 'Ví điện tử', 'GD20250128001', 'Hệ thống', 'Thanh toán một phần học phí HK2 2024-2025', 'Thành công'),
-(10, 9, '22520005', '2025-01-29 11:30:00', 3402000, 'Chuyển khoản', 'GD20250129001', 'Hệ thống', 'Thanh toán học phí HK2 2024-2025 (sau giảm 30%)', 'Thành công');
+(6, 1, '22520001', '2025-01-25 08:45:00', 486000, 'Chuyển khoản', 'GD20250125001', 'Hệ thống', 'Thanh toán học phí HK2 2024-2025', 'Thành công'),
+(7, 3, '22520002', '2025-01-26 09:30:00', 221000, 'Tiền mặt', 'GD20250126001', 'Trần Văn Hùng', 'Thanh toán học phí HK2 2024-2025 (sau giảm 50%)', 'Thành công'),
+(8, 5, '22520003', '2025-01-27 10:00:00', 150000, 'Chuyển khoản', 'GD20250127001', 'Hệ thống', 'Thanh toán một phần học phí HK2 2024-2025', 'Thành công'),
+(9, 7, '22520004', '2025-01-28 14:15:00', 200000, 'Ví điện tử', 'GD20250128001', 'Hệ thống', 'Thanh toán một phần học phí HK2 2024-2025', 'Thành công'),
+(10, 9, '22520005', '2025-01-29 11:30:00', 340200, 'Chuyển khoản', 'GD20250129001', 'Hệ thống', 'Thanh toán học phí HK2 2024-2025 (sau giảm 30%)', 'Thành công');
 
 -- Cập nhật sequence cho phieu_thu_hoc_phi để các INSERT tiếp theo bắt đầu từ giá trị đúng
 SELECT setval('phieu_thu_hoc_phi_so_phieu_thu_seq', 10, true);
@@ -3202,26 +3214,27 @@ SELECT setval('phieu_thu_hoc_phi_so_phieu_thu_seq', 10, true);
 -- =====================================================
 -- INSERT DATA - Thông báo cá nhân (Personal Notifications)
 -- Sử dụng bảng thong_bao đã gộp với loai='ca_nhan'
+-- Số tiền trong thông báo phải khớp với dữ liệu thực tế
 -- =====================================================
 INSERT INTO thong_bao (loai, tieu_de, noi_dung, loai_thong_bao, ma_tai_khoan_nhan, duong_dan, da_doc, trang_thai) VALUES
 -- Thông báo cho sinh viên 22520001 (ma_tai_khoan từ subquery)
-('ca_nhan', 'Đăng ký môn học thành công', 'Bạn đã đăng ký thành công 6 môn học cho HK2 2024-2025. Tổng số tín chỉ: 18. Học phí: 4,860,000 VNĐ.', 'Đăng ký', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520001'), '/phieu-dang-ky/1', TRUE, TRUE),
-('ca_nhan', 'Thanh toán học phí thành công', 'Bạn đã thanh toán thành công 4,860,000 VNĐ học phí HK2 2024-2025.', 'Học phí', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520001'), '/phieu-thu/6', TRUE, TRUE),
+('ca_nhan', 'Đăng ký môn học thành công', 'Bạn đã đăng ký thành công 6 môn học cho HK2 2024-2025. Tổng số tín chỉ: 18. Học phí: 486,000 VNĐ.', 'Đăng ký', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520001'), '/phieu-dang-ky/1', TRUE, TRUE),
+('ca_nhan', 'Thanh toán học phí thành công', 'Bạn đã thanh toán thành công 486,000 VNĐ học phí HK2 2024-2025.', 'Học phí', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520001'), '/phieu-thu/6', TRUE, TRUE),
 ('ca_nhan', 'Nhắc nhở lịch học', 'Môn Cấu trúc dữ liệu và giải thuật sẽ bắt đầu vào thứ 2 tuần sau tại phòng B3.01.', 'Lịch học', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520001'), '/lich-hoc', FALSE, TRUE),
 -- Thông báo cho sinh viên 22520002
-('ca_nhan', 'Đăng ký môn học thành công', 'Bạn đã đăng ký thành công 6 môn học cho HK2 2024-2025. Được giảm 50% học phí do thuộc đối tượng vùng sâu vùng xa.', 'Đăng ký', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520002'), '/phieu-dang-ky/3', TRUE, TRUE),
-('ca_nhan', 'Thanh toán học phí thành công', 'Bạn đã thanh toán thành công 2,295,000 VNĐ học phí HK2 2024-2025 (sau giảm 50%).', 'Học phí', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520002'), '/phieu-thu/7', TRUE, TRUE),
+('ca_nhan', 'Đăng ký môn học thành công', 'Bạn đã đăng ký thành công 6 môn học cho HK2 2024-2025. Tổng số tín chỉ: 16. Được giảm 50% học phí do thuộc đối tượng vùng sâu vùng xa. Học phí sau giảm: 221,000 VNĐ.', 'Đăng ký', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520002'), '/phieu-dang-ky/3', TRUE, TRUE),
+('ca_nhan', 'Thanh toán học phí thành công', 'Bạn đã thanh toán thành công 221,000 VNĐ học phí HK2 2024-2025 (sau giảm 50%).', 'Học phí', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520002'), '/phieu-thu/7', TRUE, TRUE),
 -- Thông báo cho sinh viên 22520003
-('ca_nhan', 'Đăng ký môn học thành công', 'Bạn đã đăng ký thành công 7 môn học cho HK2 2024-2025. Được giảm 50% học phí do thuộc hộ cận nghèo.', 'Đăng ký', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520003'), '/phieu-dang-ky/5', TRUE, TRUE),
-('ca_nhan', 'Nhắc nhở đóng học phí', 'Bạn còn nợ 1,065,000 VNĐ học phí HK2 2024-2025. Hạn đóng: 15/03/2025.', 'Học phí', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520003'), '/cong-no', FALSE, TRUE),
+('ca_nhan', 'Đăng ký môn học thành công', 'Bạn đã đăng ký thành công 7 môn học cho HK2 2024-2025. Tổng số tín chỉ: 19. Được giảm 50% học phí do thuộc hộ cận nghèo. Học phí sau giảm: 261,500 VNĐ.', 'Đăng ký', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520003'), '/phieu-dang-ky/5', TRUE, TRUE),
+('ca_nhan', 'Nhắc nhở đóng học phí', 'Bạn còn nợ 111,500 VNĐ học phí HK2 2024-2025. Hạn đóng: 15/03/2025.', 'Học phí', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520003'), '/cong-no', FALSE, TRUE),
 -- Thông báo cho sinh viên 22520004
-('ca_nhan', 'Đăng ký môn học thành công', 'Bạn đã đăng ký thành công 5 môn học cho HK2 2024-2025. Tổng số tín chỉ: 16.', 'Đăng ký', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520004'), '/phieu-dang-ky/7', TRUE, TRUE),
-('ca_nhan', 'Nhắc nhở đóng học phí', 'Bạn còn nợ 2,320,000 VNĐ học phí HK2 2024-2025. Hạn đóng: 15/03/2025.', 'Học phí', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520004'), '/cong-no', FALSE, TRUE),
+('ca_nhan', 'Đăng ký môn học thành công', 'Bạn đã đăng ký thành công 5 môn học cho HK2 2024-2025. Tổng số tín chỉ: 15. Học phí: 405,000 VNĐ.', 'Đăng ký', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520004'), '/phieu-dang-ky/7', TRUE, TRUE),
+('ca_nhan', 'Nhắc nhở đóng học phí', 'Bạn còn nợ 205,000 VNĐ học phí HK2 2024-2025. Hạn đóng: 15/03/2025.', 'Học phí', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520004'), '/cong-no', FALSE, TRUE),
 -- Thông báo cho sinh viên 22520005
-('ca_nhan', 'Đăng ký môn học thành công', 'Bạn đã đăng ký thành công 6 môn học cho HK2 2024-2025. Được giảm 30% học phí do thuộc dân tộc thiểu số.', 'Đăng ký', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520005'), '/phieu-dang-ky/9', TRUE, TRUE),
-('ca_nhan', 'Thanh toán học phí thành công', 'Bạn đã thanh toán thành công 3,402,000 VNĐ học phí HK2 2024-2025 (sau giảm 30%).', 'Học phí', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520005'), '/phieu-thu/10', TRUE, TRUE),
+('ca_nhan', 'Đăng ký môn học thành công', 'Bạn đã đăng ký thành công 6 môn học cho HK2 2024-2025. Tổng số tín chỉ: 18. Được giảm 30% học phí do thuộc dân tộc thiểu số. Học phí sau giảm: 340,200 VNĐ.', 'Đăng ký', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520005'), '/phieu-dang-ky/9', TRUE, TRUE),
+('ca_nhan', 'Thanh toán học phí thành công', 'Bạn đã thanh toán thành công 340,200 VNĐ học phí HK2 2024-2025 (sau giảm 30%).', 'Học phí', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = '22520005'), '/phieu-thu/10', TRUE, TRUE),
 -- Thông báo cho Admin
-('ca_nhan', 'Báo cáo đăng ký HK2 2024-2025', 'Tổng số sinh viên đã đăng ký: 5. Tổng số lớp mở: 45. Tổng doanh thu dự kiến: 21,442,000 VNĐ.', 'Báo cáo', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = 'admin'), '/bao-cao/dang-ky', FALSE, TRUE),
+('ca_nhan', 'Báo cáo đăng ký HK2 2024-2025', 'Tổng số sinh viên đã đăng ký: 5. Tổng số lớp mở: 45. Tổng doanh thu dự kiến: 2,144,200 VNĐ.', 'Báo cáo', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = 'admin'), '/bao-cao/dang-ky', FALSE, TRUE),
 ('ca_nhan', 'Cảnh báo sinh viên nợ học phí', 'Có 2 sinh viên chưa đóng đủ học phí HK2 2024-2025. Vui lòng kiểm tra danh sách.', 'Cảnh báo', (SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = 'admin'), '/bao-cao/cong-no', FALSE, TRUE);
 
 -- =====================================================
