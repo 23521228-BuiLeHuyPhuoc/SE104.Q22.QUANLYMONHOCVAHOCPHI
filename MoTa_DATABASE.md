@@ -11,7 +11,7 @@
 | Tên Database | `ql_dangky_hocphi` |
 | Hệ quản trị CSDL | PostgreSQL |
 | Phiên bản | 12+ |
-| Số lượng bảng | 22 bảng |
+| Số lượng bảng | 20 bảng |
 | Mã hóa | UTF-8 |
 
 ### 1.2. Danh sách các bảng theo nhóm chức năng
@@ -32,14 +32,13 @@
 | 12 | Thời gian | `nam_hoc` | Danh sách năm học |
 | 13 | Thời gian | `hoc_ky` | Danh sách học kỳ |
 | 14 | Đào tạo | `lop_mo` | Lớp mở trong học kỳ (thay thế mon_hoc_mo) |
-| 15 | Đăng ký | `phieu_dang_ky` | Phiếu đăng ký học phần |
+| 15 | Đăng ký | `phieu_dang_ky` | Phiếu đăng ký học phần (có thống kê theo loại học) |
 | 16 | Đăng ký | `chi_tiet_dang_ky` | Chi tiết lớp đăng ký |
 | 17 | Học phí | `phieu_thu_hoc_phi` | Phiếu thu học phí |
 | 18 | Cấu hình | `don_gia_tin_chi` | Đơn giá tín chỉ theo loại học |
 | 19 | Tài khoản | `tai_khoan` | Tài khoản đăng nhập (phân quyền trực tiếp) |
 | 20 | Quản trị | `quan_tri_vien` | Thông tin quản trị viên |
-| 21 | Thông báo | `thong_bao` | Thông báo chung |
-| 22 | Thông báo | `thong_bao_ca_nhan` | Thông báo cá nhân |
+| 21 | Thông báo | `thong_bao` | Thông báo (gộp chung và cá nhân, phân biệt qua thuộc tính `loai`) |
 
 ---
 
@@ -510,7 +509,7 @@ END
 
 ### 2.14. BẢNG `phieu_dang_ky` - Phiếu đăng ký học phần
 
-**Mô tả:** Phiếu đăng ký học phần của sinh viên (BM5, QĐ5, QĐ7)
+**Mô tả:** Phiếu đăng ký học phần của sinh viên (BM5, QĐ5, QĐ7). Bao gồm thống kê chi tiết theo loại đăng ký (học mới, học lại, học cải thiện) để theo dõi tác động của đối tượng sinh viên và loại học lên học phí.
 
 **Cấu trúc:**
 
@@ -521,6 +520,15 @@ END
 | `ma_hoc_ky` | VARCHAR(15) | NO | - | **FK** → `hoc_ky.ma_hoc_ky` (BM5) |
 | `ngay_lap` | TIMESTAMP | YES | CURRENT_TIMESTAMP | Ngày lập (BM5) |
 | `tong_tin_chi` | INTEGER | YES | 0 | Tổng tín chỉ đăng ký |
+| `so_mon_hoc_moi` | INTEGER | YES | 0 | Số môn học mới |
+| `so_tin_chi_hoc_moi` | INTEGER | YES | 0 | Số tín chỉ học mới |
+| `tien_hoc_moi` | DECIMAL(15,0) | YES | 0 | Tiền học mới |
+| `so_mon_hoc_lai` | INTEGER | YES | 0 | Số môn học lại |
+| `so_tin_chi_hoc_lai` | INTEGER | YES | 0 | Số tín chỉ học lại |
+| `tien_hoc_lai` | DECIMAL(15,0) | YES | 0 | Tiền học lại |
+| `so_mon_hoc_cai_thien` | INTEGER | YES | 0 | Số môn học cải thiện |
+| `so_tin_chi_hoc_cai_thien` | INTEGER | YES | 0 | Số tín chỉ học cải thiện |
+| `tien_hoc_cai_thien` | DECIMAL(15,0) | YES | 0 | Tiền học cải thiện |
 | `tong_tien_dang_ky` | DECIMAL(15,0) | YES | 0 | Tổng tiền đăng ký (BM7) |
 | `ti_le_giam` | DECIMAL(5,2) | YES | 0 | Tỷ lệ giảm HP (QĐ1) |
 | `tien_mien_giam` | DECIMAL(15,0) | YES | 0 | Tiền được miễn giảm |
@@ -544,10 +552,13 @@ END
 
 **Công thức tính toán:**
 ```
-tong_tien_dang_ky = SUM(chi_tiet_dang_ky. thanh_tien)
+tong_tien_dang_ky = tien_hoc_moi + tien_hoc_lai + tien_hoc_cai_thien
+                  = SUM(chi_tiet_dang_ky.thanh_tien)
 tien_mien_giam = tong_tien_dang_ky * ti_le_giam / 100
 tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
 ```
+
+**Lưu ý:** Tỷ lệ giảm (`ti_le_giam`) được xác định dựa trên đối tượng ưu tiên của sinh viên (bảng `doi_tuong_sinh_vien`). Đơn giá của từng loại đăng ký (học mới, học lại, học cải thiện) khác nhau theo cấu hình trong bảng `don_gia_tin_chi`.
 
 ---
 
@@ -765,23 +776,30 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
 
 ---
 
-### 2.20. BẢNG `thong_bao` - Thông báo chung
+### 2.20. BẢNG `thong_bao` - Thông báo (gộp chung và cá nhân)
 
-**Mô tả:** Thông báo gửi đến người dùng
+**Mô tả:** Bảng thông báo duy nhất, gộp cả thông báo chung (gửi đến tất cả hoặc nhóm người dùng) và thông báo cá nhân (gửi đến từng người dùng cụ thể). Phân biệt qua thuộc tính `loai`:
+- `'chung'`: Thông báo chung cho tất cả hoặc nhóm người dùng
+- `'ca_nhan'`: Thông báo riêng cho từng người dùng
 
 **Cấu trúc:**
 
 | Tên cột | Kiểu dữ liệu | Null | Mặc định | Mô tả |
 |---------|--------------|------|----------|-------|
 | `ma_thong_bao` | SERIAL | NO | Auto | **PK** - Mã thông báo |
+| `loai` | VARCHAR(20) | NO | 'chung' | Loại: 'chung' hoặc 'ca_nhan' |
 | `tieu_de` | VARCHAR(200) | NO | - | Tiêu đề |
 | `noi_dung` | TEXT | NO | - | Nội dung |
-| `loai_thong_bao` | VARCHAR(50) | YES | - | Loại thông báo |
-| `doi_tuong` | VARCHAR(30) | YES | 'Tất cả' | Đối tượng nhận |
-| `ghim_top` | BOOLEAN | YES | FALSE | Ghim lên đầu |
-| `ngay_tao` | TIMESTAMP | YES | CURRENT_TIMESTAMP | Ngày tạo |
-| `ngay_het_han` | TIMESTAMP | YES | - | Ngày hết hạn |
+| `loai_thong_bao` | VARCHAR(50) | YES | - | Phân loại thông báo (Học phí, Đăng ký, ...) |
+| `doi_tuong` | VARCHAR(30) | YES | 'Tất cả' | Đối tượng nhận (cho thông báo chung) |
+| `ghim_top` | BOOLEAN | YES | FALSE | Ghim lên đầu (cho thông báo chung) |
+| `ngay_het_han` | TIMESTAMP | YES | - | Ngày hết hạn (cho thông báo chung) |
+| `ma_tai_khoan_nhan` | INTEGER | YES | - | **FK** → `tai_khoan.ma_tai_khoan` (cho thông báo cá nhân) |
+| `duong_dan` | VARCHAR(255) | YES | - | Link đến trang liên quan (cho thông báo cá nhân) |
+| `da_doc` | BOOLEAN | YES | FALSE | Đã đọc (cho thông báo cá nhân) |
+| `ngay_doc` | TIMESTAMP | YES | - | Ngày đọc (cho thông báo cá nhân) |
 | `nguoi_tao` | INTEGER | YES | - | **FK** → `tai_khoan.ma_tai_khoan` |
+| `ngay_tao` | TIMESTAMP | YES | CURRENT_TIMESTAMP | Ngày tạo |
 | `trang_thai` | BOOLEAN | YES | TRUE | Trạng thái |
 
 **Khóa chính:** `ma_thong_bao`
@@ -791,34 +809,29 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
 | Tên FK | Cột | Tham chiếu | Mô tả |
 |--------|-----|------------|-------|
 | `fk_tb_nguoitao` | `nguoi_tao` | `tai_khoan(ma_tai_khoan)` | Người tạo |
+| `fk_tb_nguoinhan` | `ma_tai_khoan_nhan` | `tai_khoan(ma_tai_khoan)` | Người nhận (cho thông báo cá nhân) |
 
----
+**Ràng buộc:**
+- `loai` IN ('chung', 'ca_nhan')
 
-### 2.21. BẢNG `thong_bao_ca_nhan` - Thông báo cá nhân
+**Ưu điểm của thiết kế gộp:**
+1. Đơn giản hóa cấu trúc database (giảm từ 2 bảng xuống 1 bảng)
+2. Dễ dàng quản lý và truy vấn thông báo
+3. Linh hoạt trong việc mở rộng thêm loại thông báo mới
+4. Giảm độ phức tạp của code backend
 
-**Mô tả:** Thông báo gửi đến từng người dùng
+**Ví dụ dữ liệu:**
+```sql
+-- Thông báo chung
+| ma_thong_bao | loai   | tieu_de            | doi_tuong | ma_tai_khoan_nhan |
+|--------------|--------|--------------------|-----------|--------------------|
+| 1            | chung  | Đợt đăng ký HK2    | Tất cả    | NULL               |
 
-**Cấu trúc:**
-
-| Tên cột | Kiểu dữ liệu | Null | Mặc định | Mô tả |
-|---------|--------------|------|----------|-------|
-| `id` | BIGSERIAL | NO | Auto | **PK** - ID |
-| `ma_tai_khoan` | INTEGER | NO | - | **FK** → `tai_khoan.ma_tai_khoan` |
-| `tieu_de` | VARCHAR(200) | NO | - | Tiêu đề |
-| `noi_dung` | TEXT | YES | - | Nội dung |
-| `loai_thong_bao` | VARCHAR(50) | YES | - | Loại thông báo |
-| `duong_dan` | VARCHAR(255) | YES | - | Link đến trang liên quan |
-| `da_doc` | BOOLEAN | YES | FALSE | Đã đọc |
-| `ngay_doc` | TIMESTAMP | YES | - | Ngày đọc |
-| `ngay_tao` | TIMESTAMP | YES | CURRENT_TIMESTAMP | Ngày tạo |
-
-**Khóa chính:** `id`
-
-**Khóa ngoại:**
-
-| Tên FK | Cột | Tham chiếu | Mô tả |
-|--------|-----|------------|-------|
-| `fk_tbcn_tk` | `ma_tai_khoan` | `tai_khoan(ma_tai_khoan)` | Tài khoản nhận |
+-- Thông báo cá nhân
+| ma_thong_bao | loai     | tieu_de               | doi_tuong | ma_tai_khoan_nhan |
+|--------------|----------|-----------------------|-----------|-------------------|
+| 10           | ca_nhan  | Đăng ký thành công    | NULL      | 5                 |
+```
 
 ---
 
@@ -863,11 +876,11 @@ tong_tien_phai_dong = tong_tien_dang_ky - tien_mien_giam  (QĐ7)
        │ n              └──────┬──────┘   └─────────────────┘   └──────────┬──────────┘
   ┌────┴────┐                  │ 1                                        │
   │  lop_mo │                  │                              ┌───────────┼───────────┐
-  └────┬────┘                  │ n                            │ 1         │           │ 1
+  └────┬────┘                  │ n                            │ 1         │           │ n
        │ n              ┌──────┴──────┐              ┌────────┴────┐  ┌───┴───────────┴───┐
-       │                │chi_tiet_dk  │              │quan_tri_vien│  │thong_bao_ca_nhan  │
-       │ 1              └──────┬──────┘              └─────────────┘  └───────────────────┘
-  ┌────┴────┐                  │ n
+       │                │chi_tiet_dk  │              │quan_tri_vien│  │     thong_bao     │
+       │ 1              └──────┬──────┘              └─────────────┘  │ (chung + cá nhân) │
+  ┌────┴────┐                  │ n                                    └───────────────────┘
   │  hoc_ky │◄─────────────────┘
   └────┬────┘              (FK: ma_lop)
        │ n
@@ -881,6 +894,11 @@ Ghi chú mối quan hệ sinh_vien - tai_khoan:
 - sinh_vien.ma_tai_khoan → tai_khoan.ma_tai_khoan (FK: fk_sv_tk)
 - tai_khoan.ma_sv → sinh_vien.ma_sv (FK: fk_tk_sv)
 - Đây là mối quan hệ 1-1 hai chiều để dễ dàng truy vấn thông tin từ cả hai phía
+
+Ghi chú bảng thong_bao:
+- Bảng thong_bao gộp cả thông báo chung và cá nhân
+- Thuộc tính loai='chung' hoặc 'ca_nhan' để phân biệt
+- Thông báo cá nhân sử dụng ma_tai_khoan_nhan để xác định người nhận
 ```
 
 ### 3.2. Chi tiết các mối quan hệ
@@ -908,7 +926,7 @@ Ghi chú mối quan hệ sinh_vien - tai_khoan:
 | 19 | `lop` | `chi_tiet_dang_ky` | 1 - n | Mỗi lớp được ĐK nhiều lần |
 | 20 | `phieu_dang_ky` | `chi_tiet_dang_ky` | 1 - n | Mỗi phiếu ĐK có nhiều chi tiết (lớp) |
 | 21 | `phieu_dang_ky` | `phieu_thu_hoc_phi` | 1 - n | Mỗi phiếu ĐK có nhiều phiếu thu (QĐ6) |
-| 22 | `tai_khoan` | `thong_bao_ca_nhan` | 1 - n | Mỗi TK nhận nhiều thông báo |
+| 22 | `tai_khoan` | `thong_bao` (loai='ca_nhan') | 1 - n | Mỗi TK nhận nhiều thông báo cá nhân |
 | 23 | `tai_khoan` | `quan_tri_vien` | 1 - 1 | Mỗi TK admin có 1 thông tin quản trị viên |
 
 ---
