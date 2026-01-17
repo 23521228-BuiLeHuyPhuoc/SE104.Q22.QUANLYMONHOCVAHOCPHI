@@ -527,14 +527,55 @@ Trang tổng quan hiển thị thống kê và trạng thái hệ thống.
 | **QĐ2** - Loại môn, số tín chỉ | Module 5 |
 | **BM3** - Nhập chương trình học | Module 7 |
 | **QĐ3** - Kế hoạch đào tạo | Module 7, 9 |
-| **BM4** - Môn học mở trong học kỳ | Module 8, 9 |
-| **QĐ4** - Học kỳ chính/hè | Module 8 |
-| **BM5** - Phiếu đăng ký học phần | Module 11 |
-| **QĐ5** - Đơn giá, đăng ký lớp mở | Module 10, 11 |
+| **BM4** - Môn học mở trong học kỳ | Module 8, 9, **17** |
+| **QĐ4** - Học kỳ chính/hè | Module 8, **17** |
+| **BM5** - Phiếu đăng ký học phần | Module 11, **17** |
+| **QĐ5** - Đơn giá, đăng ký lớp mở | Module 10, 11, **17** |
 | **BM6** - Phiếu thu học phí | Module 12 |
 | **QĐ6** - Đóng nhiều lần, hạn đóng | Module 12, 13 |
-| **BM7** - Báo cáo SV chưa đóng HP | Module 14 |
+| **BM7** - Báo cáo SV chưa đóng HP | Module 14, **18** |
 | **QĐ7** - Miễn giảm theo đối tượng | Module 13 |
+| **Điểm & GPA** - Quản lý điểm SV | Module **18** |
+| **Giới hạn tín chỉ** - Đăng ký vượt 24TC | Module **18** |
+
+---
+
+## 👥 PHÂN CÔNG MODULE THEO THÀNH VIÊN
+
+| Thành viên | Modules phụ trách | BM/QĐ |
+|------------|-------------------|-------|
+| **TV1** | Module 1, 2, 3, 4, **18** | BM1, QĐ1, Điểm & GPA |
+| **TV2** | Module 5, 6, 7 | BM2, BM3, QĐ2, QĐ3 |
+| **TV3** | Module 8, 9, 10, 11, **17** | BM4, BM5, QĐ4, QĐ5, Lịch học |
+| **TV4** | Module 12, 13, 14, 15, 16 | BM6, BM7, QĐ6, QĐ7 |
+
+### Chi tiết phân công:
+
+**👤 THÀNH VIÊN 1** - Quản lý Sinh viên, Đối tượng, Điểm & GPA
+- Module 1: Quản lý địa danh (Tỉnh/Huyện)
+- Module 2: Quản lý đối tượng ưu tiên  
+- Module 3: Quản lý sinh viên
+- Module 4: Quản lý Khoa & Ngành học
+- **Module 18: Quản lý Điểm & GPA** (mới)
+
+**👤 THÀNH VIÊN 2** - Quản lý Môn học & Chương trình đào tạo
+- Module 5: Quản lý môn học
+- Module 6: Quản lý lớp học
+- Module 7: Chương trình học
+
+**👤 THÀNH VIÊN 3** - Quản lý Học kỳ, Đăng ký & Lịch học
+- Module 8: Năm học & Học kỳ
+- Module 9: Lớp mở trong học kỳ
+- Module 10: Đơn giá tín chỉ
+- Module 11: Đăng ký học phần
+- **Module 17: Quản lý Lịch học & Tiết học** (mới)
+
+**👤 THÀNH VIÊN 4** - Quản lý Học phí, Báo cáo & Hệ thống
+- Module 12: Thu học phí
+- Module 13: Học phí & Miễn giảm
+- Module 14: Báo cáo
+- Module 15: Thông báo
+- Module 16: Dashboard
 
 ---
 
@@ -606,7 +647,9 @@ Trang tổng quan hiển thị thống kê và trạng thái hệ thống.
 
 ---
 
-## 🆕 MODULE 17: QUẢN LÝ LỊCH HỌC & TIẾT HỌC
+## 🆕 MODULE 17: QUẢN LÝ LỊCH HỌC & TIẾT HỌC (TV3 - Thành viên 3)
+
+### Phân công: **THÀNH VIÊN 3** (cùng với BM4, BM5, QĐ4, QĐ5)
 
 ### Mô tả:
 Quản lý lịch học chi tiết của các lớp theo tiết học. Trường mở cửa từ Thứ 2 đến Thứ 7, có 10 tiết trong ngày và buổi tối.
@@ -654,7 +697,9 @@ GET    /api/schedule/check-conflict       - Kiểm tra trùng lịch
 
 ---
 
-## 🆕 MODULE 18: QUẢN LÝ ĐIỂM & GPA
+## 🆕 MODULE 18: QUẢN LÝ ĐIỂM & GPA (TV1 - Thành viên 1)
+
+### Phân công: **THÀNH VIÊN 1** (cùng với BM1, QĐ1 - Quản lý Sinh viên)
 
 ### Mô tả:
 Quản lý điểm môn học của sinh viên. Tính điểm trung bình tích lũy (GPA). Xác định đậu/rớt để kiểm tra điều kiện đăng ký môn và vượt quá giới hạn tín chỉ.
