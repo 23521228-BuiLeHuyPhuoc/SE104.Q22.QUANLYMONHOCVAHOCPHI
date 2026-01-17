@@ -51,6 +51,9 @@ DROP TABLE IF EXISTS chi_tiet_dang_ky CASCADE;
 DROP TABLE IF EXISTS phieu_dang_ky CASCADE;
 DROP TABLE IF EXISTS don_gia_tin_chi CASCADE;
 DROP TABLE IF EXISTS lop_mo CASCADE;
+DROP TABLE IF EXISTS lich_hoc CASCADE;
+DROP TABLE IF EXISTS tiet_hoc CASCADE;
+DROP TABLE IF EXISTS diem_mon_hoc CASCADE;
 DROP TABLE IF EXISTS chuong_trinh_hoc CASCADE;
 DROP TABLE IF EXISTS hoc_ky CASCADE;
 DROP TABLE IF EXISTS nam_hoc CASCADE;
@@ -166,6 +169,8 @@ CREATE TABLE tai_khoan (
 
 -- =====================================================
 -- 7. BẢNG sinh_vien - Sinh viên (BM1, QĐ1)
+-- Bao gồm điểm trung bình tích lũy (GPA) để kiểm tra đăng ký vượt quá 24 tín chỉ
+-- Sinh viên muốn đăng ký > 24 tín chỉ phải có GPA >= 8.5
 -- =====================================================
 CREATE TABLE sinh_vien (
     ma_sv VARCHAR(15) NOT NULL,
@@ -185,6 +190,8 @@ CREATE TABLE sinh_vien (
     ho_ten_me VARCHAR(100),
     sdt_me VARCHAR(15),
     ngay_nhap_hoc DATE DEFAULT CURRENT_DATE,
+    diem_trung_binh_tich_luy DECIMAL(4,2) DEFAULT 0,
+    so_tin_chi_tich_luy INTEGER DEFAULT 0,
     trang_thai VARCHAR(30) DEFAULT 'Đang học',
     ghi_chu VARCHAR(300),
     ngay_tao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -194,6 +201,7 @@ CREATE TABLE sinh_vien (
     CONSTRAINT sinh_vien_ma_tai_khoan_key UNIQUE (ma_tai_khoan),
     CONSTRAINT chk_gioi_tinh CHECK (gioi_tinh IN ('Nam', 'Nữ')),
     CONSTRAINT chk_trang_thai_sv CHECK (trang_thai IN ('Đang học', 'Bảo lưu', 'Nghỉ học', 'Tốt nghiệp')),
+    CONSTRAINT chk_diem_tb CHECK (diem_trung_binh_tich_luy >= 0 AND diem_trung_binh_tich_luy <= 10),
     CONSTRAINT fk_sv_huyen FOREIGN KEY (ma_huyen) 
         REFERENCES huyen(ma_huyen) ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT fk_sv_nganh FOREIGN KEY (ma_nganh) 
@@ -318,6 +326,87 @@ CREATE TABLE lop (
     CONSTRAINT lop_pkey PRIMARY KEY (ma_lop),
     CONSTRAINT fk_lop_monhoc FOREIGN KEY (ma_mon_hoc) 
         REFERENCES mon_hoc(ma_mon_hoc) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- =====================================================
+-- 11.1. BẢNG tiet_hoc - Tiết học (Quản lý lịch học)
+-- Trường mở cửa từ Thứ 2 đến Thứ 7, có 10 tiết trong ngày + buổi tối
+-- =====================================================
+CREATE TABLE tiet_hoc (
+    ma_tiet VARCHAR(10) NOT NULL,
+    ten_tiet VARCHAR(50) NOT NULL,
+    gio_bat_dau TIME NOT NULL,
+    gio_ket_thuc TIME NOT NULL,
+    buoi VARCHAR(20) NOT NULL DEFAULT 'Sáng',
+    thu_tu INTEGER NOT NULL,
+    trang_thai BOOLEAN DEFAULT TRUE,
+    ngay_tao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT tiet_hoc_pkey PRIMARY KEY (ma_tiet),
+    CONSTRAINT chk_buoi CHECK (buoi IN ('Sáng', 'Chiều', 'Tối'))
+);
+
+-- =====================================================
+-- 11.2. BẢNG lich_hoc - Lịch học của lớp (Chi tiết thời gian, tiết, phòng)
+-- =====================================================
+CREATE TABLE lich_hoc (
+    id SERIAL NOT NULL,
+    ma_lop VARCHAR(20) NOT NULL,
+    thu INTEGER NOT NULL,
+    ma_tiet_bat_dau VARCHAR(10) NOT NULL,
+    ma_tiet_ket_thuc VARCHAR(10) NOT NULL,
+    phong_hoc VARCHAR(50),
+    ghi_chu VARCHAR(200),
+    trang_thai BOOLEAN DEFAULT TRUE,
+    ngay_tao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT lich_hoc_pkey PRIMARY KEY (id),
+    CONSTRAINT chk_thu CHECK (thu >= 2 AND thu <= 7),
+    CONSTRAINT fk_lichhoc_lop FOREIGN KEY (ma_lop) 
+        REFERENCES lop(ma_lop) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_lichhoc_tiet_bd FOREIGN KEY (ma_tiet_bat_dau) 
+        REFERENCES tiet_hoc(ma_tiet) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_lichhoc_tiet_kt FOREIGN KEY (ma_tiet_ket_thuc) 
+        REFERENCES tiet_hoc(ma_tiet) ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- =====================================================
+-- 11.3. BẢNG diem_mon_hoc - Điểm môn học của sinh viên
+-- Dùng để xác định đậu/rớt và tính điểm trung bình tích lũy (GPA)
+-- Rớt khi điểm trung bình môn < 5.0
+-- =====================================================
+CREATE TABLE diem_mon_hoc (
+    id SERIAL NOT NULL,
+    ma_sv VARCHAR(15) NOT NULL,
+    ma_mon_hoc VARCHAR(15) NOT NULL,
+    ma_hoc_ky VARCHAR(15) NOT NULL,
+    diem_qua_trinh DECIMAL(4,2),
+    diem_giua_ky DECIMAL(4,2),
+    diem_cuoi_ky DECIMAL(4,2),
+    diem_trung_binh DECIMAL(4,2) GENERATED ALWAYS AS (
+        COALESCE(diem_qua_trinh * 0.2, 0) + 
+        COALESCE(diem_giua_ky * 0.3, 0) + 
+        COALESCE(diem_cuoi_ky * 0.5, 0)
+    ) STORED,
+    ket_qua VARCHAR(10) GENERATED ALWAYS AS (
+        CASE 
+            WHEN (COALESCE(diem_qua_trinh * 0.2, 0) + COALESCE(diem_giua_ky * 0.3, 0) + COALESCE(diem_cuoi_ky * 0.5, 0)) >= 5.0 THEN 'Đậu'
+            ELSE 'Rớt'
+        END
+    ) STORED,
+    so_lan_hoc INTEGER DEFAULT 1,
+    ghi_chu VARCHAR(200),
+    ngay_tao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ngay_cap_nhat TIMESTAMP,
+    CONSTRAINT diem_mon_hoc_pkey PRIMARY KEY (id),
+    CONSTRAINT uq_diem UNIQUE (ma_sv, ma_mon_hoc, ma_hoc_ky),
+    CONSTRAINT chk_diem_qt CHECK (diem_qua_trinh IS NULL OR (diem_qua_trinh >= 0 AND diem_qua_trinh <= 10)),
+    CONSTRAINT chk_diem_gk CHECK (diem_giua_ky IS NULL OR (diem_giua_ky >= 0 AND diem_giua_ky <= 10)),
+    CONSTRAINT chk_diem_ck CHECK (diem_cuoi_ky IS NULL OR (diem_cuoi_ky >= 0 AND diem_cuoi_ky <= 10)),
+    CONSTRAINT fk_diem_sv FOREIGN KEY (ma_sv) 
+        REFERENCES sinh_vien(ma_sv) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_diem_mh FOREIGN KEY (ma_mon_hoc) 
+        REFERENCES mon_hoc(ma_mon_hoc) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_diem_hk FOREIGN KEY (ma_hoc_ky) 
+        REFERENCES hoc_ky(ma_hoc_ky) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- =====================================================
@@ -565,6 +654,17 @@ CREATE INDEX idx_dkmh_loai_dieu_kien ON dieu_kien_mon_hoc(loai_dieu_kien);
 -- Index cho bảng lop
 CREATE INDEX idx_lop_ma_mon_hoc ON lop(ma_mon_hoc);
 
+-- Index cho bảng lich_hoc
+CREATE INDEX idx_lh_ma_lop ON lich_hoc(ma_lop);
+CREATE INDEX idx_lh_thu ON lich_hoc(thu);
+CREATE INDEX idx_lh_tiet_bd ON lich_hoc(ma_tiet_bat_dau);
+CREATE INDEX idx_lh_tiet_kt ON lich_hoc(ma_tiet_ket_thuc);
+
+-- Index cho bảng diem_mon_hoc
+CREATE INDEX idx_dmh_ma_sv ON diem_mon_hoc(ma_sv);
+CREATE INDEX idx_dmh_ma_mon_hoc ON diem_mon_hoc(ma_mon_hoc);
+CREATE INDEX idx_dmh_ma_hoc_ky ON diem_mon_hoc(ma_hoc_ky);
+
 -- Index cho bảng chuong_trinh_hoc
 CREATE INDEX idx_cth_ma_nganh ON chuong_trinh_hoc(ma_nganh);
 CREATE INDEX idx_cth_ma_mon_hoc ON chuong_trinh_hoc(ma_mon_hoc);
@@ -694,9 +794,126 @@ WHERE pdk.trang_thai = 'Đã đăng ký'
         WHERE so_phieu_dang_ky = pdk.so_phieu AND trang_thai = 'Thành công'
     ), 0);
 
+-- View: Bảng điểm sinh viên (Transcript)
+CREATE OR REPLACE VIEW v_bang_diem_sinh_vien AS
+SELECT 
+    sv.ma_sv,
+    sv.ho_ten,
+    nh.ten_nganh,
+    mh.ma_mon_hoc,
+    mh.ten_mon_hoc,
+    mh.so_tin_chi,
+    hk.ma_hoc_ky,
+    hk.ten_hoc_ky,
+    dmh.diem_qua_trinh,
+    dmh.diem_giua_ky,
+    dmh.diem_cuoi_ky,
+    dmh.diem_trung_binh,
+    dmh.ket_qua,
+    dmh.so_lan_hoc
+FROM diem_mon_hoc dmh
+JOIN sinh_vien sv ON dmh.ma_sv = sv.ma_sv
+JOIN nganh_hoc nh ON sv.ma_nganh = nh.ma_nganh
+JOIN mon_hoc mh ON dmh.ma_mon_hoc = mh.ma_mon_hoc
+JOIN hoc_ky hk ON dmh.ma_hoc_ky = hk.ma_hoc_ky
+ORDER BY sv.ma_sv, hk.ma_hoc_ky, mh.ma_mon_hoc;
+
+-- View: Điểm trung bình tích lũy (GPA) của sinh viên
+CREATE OR REPLACE VIEW v_diem_trung_binh_tich_luy AS
+SELECT 
+    sv.ma_sv,
+    sv.ho_ten,
+    nh.ten_nganh,
+    COUNT(DISTINCT dmh.ma_mon_hoc) AS so_mon_da_hoc,
+    SUM(CASE WHEN dmh.ket_qua = 'Đậu' THEN mh.so_tin_chi ELSE 0 END) AS so_tin_chi_tich_luy,
+    CASE 
+        WHEN SUM(CASE WHEN dmh.ket_qua = 'Đậu' THEN mh.so_tin_chi ELSE 0 END) = 0 THEN 0
+        ELSE ROUND(
+            SUM(CASE WHEN dmh.ket_qua = 'Đậu' THEN dmh.diem_trung_binh * mh.so_tin_chi ELSE 0 END) / 
+            SUM(CASE WHEN dmh.ket_qua = 'Đậu' THEN mh.so_tin_chi ELSE 0 END), 2
+        )
+    END AS diem_trung_binh_tich_luy,
+    COUNT(CASE WHEN dmh.ket_qua = 'Rớt' THEN 1 END) AS so_mon_rot
+FROM sinh_vien sv
+JOIN nganh_hoc nh ON sv.ma_nganh = nh.ma_nganh
+LEFT JOIN diem_mon_hoc dmh ON sv.ma_sv = dmh.ma_sv
+LEFT JOIN mon_hoc mh ON dmh.ma_mon_hoc = mh.ma_mon_hoc
+GROUP BY sv.ma_sv, sv.ho_ten, nh.ten_nganh;
+
+-- View: Danh sách môn đã học của sinh viên (để kiểm tra điều kiện tiên quyết)
+CREATE OR REPLACE VIEW v_mon_da_hoc AS
+SELECT 
+    sv.ma_sv,
+    sv.ho_ten,
+    mh.ma_mon_hoc,
+    mh.ten_mon_hoc,
+    mh.so_tin_chi,
+    dmh.diem_trung_binh,
+    dmh.ket_qua,
+    hk.ma_hoc_ky,
+    hk.ten_hoc_ky
+FROM sinh_vien sv
+JOIN diem_mon_hoc dmh ON sv.ma_sv = dmh.ma_sv
+JOIN mon_hoc mh ON dmh.ma_mon_hoc = mh.ma_mon_hoc
+JOIN hoc_ky hk ON dmh.ma_hoc_ky = hk.ma_hoc_ky
+WHERE dmh.ket_qua = 'Đậu'
+ORDER BY sv.ma_sv, hk.ma_hoc_ky;
+
+-- View: Thời khóa biểu (Schedule)
+CREATE OR REPLACE VIEW v_thoi_khoa_bieu AS
+SELECT 
+    lm.ma_hoc_ky,
+    hk.ten_hoc_ky,
+    l.ma_lop,
+    l.ten_lop,
+    mh.ma_mon_hoc,
+    mh.ten_mon_hoc,
+    mh.so_tin_chi,
+    l.giang_vien,
+    lh.thu,
+    CASE lh.thu 
+        WHEN 2 THEN 'Thứ 2'
+        WHEN 3 THEN 'Thứ 3'
+        WHEN 4 THEN 'Thứ 4'
+        WHEN 5 THEN 'Thứ 5'
+        WHEN 6 THEN 'Thứ 6'
+        WHEN 7 THEN 'Thứ 7'
+    END AS ten_thu,
+    th_bd.ten_tiet AS tiet_bat_dau,
+    th_bd.gio_bat_dau,
+    th_kt.ten_tiet AS tiet_ket_thuc,
+    th_kt.gio_ket_thuc,
+    COALESCE(lh.phong_hoc, l.phong_hoc) AS phong_hoc
+FROM lop_mo lm
+JOIN hoc_ky hk ON lm.ma_hoc_ky = hk.ma_hoc_ky
+JOIN lop l ON lm.ma_lop = l.ma_lop
+JOIN mon_hoc mh ON l.ma_mon_hoc = mh.ma_mon_hoc
+LEFT JOIN lich_hoc lh ON l.ma_lop = lh.ma_lop
+LEFT JOIN tiet_hoc th_bd ON lh.ma_tiet_bat_dau = th_bd.ma_tiet
+LEFT JOIN tiet_hoc th_kt ON lh.ma_tiet_ket_thuc = th_kt.ma_tiet
+WHERE lm.trang_thai = TRUE
+ORDER BY lm.ma_hoc_ky, lh.thu, th_bd.thu_tu;
+
 -- =====================================================
 -- SAMPLE DATA - Dữ liệu mẫu
 -- =====================================================
+
+-- =====================================================
+-- INSERT DATA - Tiết học (Time Slots)
+-- Trường mở cửa từ Thứ 2 đến Thứ 7
+-- =====================================================
+INSERT INTO tiet_hoc (ma_tiet, ten_tiet, gio_bat_dau, gio_ket_thuc, buoi, thu_tu) VALUES
+('TIET01', 'Tiết 1', '07:30:00', '08:15:00', 'Sáng', 1),
+('TIET02', 'Tiết 2', '08:15:00', '09:00:00', 'Sáng', 2),
+('TIET03', 'Tiết 3', '09:00:00', '09:45:00', 'Sáng', 3),
+('TIET04', 'Tiết 4', '10:00:00', '10:45:00', 'Sáng', 4),
+('TIET05', 'Tiết 5', '10:45:00', '11:30:00', 'Sáng', 5),
+('TIET06', 'Tiết 6', '13:00:00', '13:45:00', 'Chiều', 6),
+('TIET07', 'Tiết 7', '13:45:00', '14:30:00', 'Chiều', 7),
+('TIET08', 'Tiết 8', '14:30:00', '15:15:00', 'Chiều', 8),
+('TIET09', 'Tiết 9', '15:30:00', '16:15:00', 'Chiều', 9),
+('TIET10', 'Tiết 10', '16:15:00', '17:00:00', 'Chiều', 10),
+('TIETTOI', 'Buổi tối', '17:45:00', '20:45:00', 'Tối', 11);
 
 -- =====================================================
 -- INSERT DATA - Tỉnh/Thành phố (Provinces/Cities)
@@ -2901,6 +3118,72 @@ INSERT INTO lop (ma_lop, ten_lop, ma_mon_hoc, giang_vien, lich_hoc, phong_hoc, s
 ('ENG04.N02', 'Tiếng Anh 4 - N02', 'ENG04', 'ThS. Michael Brown', 'Thứ 5 (7h30-9h30)', 'NN.04', 35);
 
 -- =====================================================
+-- INSERT DATA - Lịch học chi tiết (Class Schedules)
+-- Thu: 2=Thứ 2, 3=Thứ 3, 4=Thứ 4, 5=Thứ 5, 6=Thứ 6, 7=Thứ 7
+-- =====================================================
+INSERT INTO lich_hoc (ma_lop, thu, ma_tiet_bat_dau, ma_tiet_ket_thuc, phong_hoc) VALUES
+-- Lịch học môn Nhập môn Lập trình
+('IT001.N01', 2, 'TIET01', 'TIET03', 'B2.01'),
+('IT001.N02', 3, 'TIET03', 'TIET05', 'B2.02'),
+('IT001.N03', 4, 'TIET06', 'TIET08', 'B2.03'),
+-- Lịch học môn CTDL&GT
+('IT002.N01', 2, 'TIET06', 'TIET08', 'B3.01'),
+('IT002.N02', 5, 'TIET01', 'TIET03', 'B3.02'),
+-- Lịch học môn Cấu trúc rời rạc
+('IT003.N01', 3, 'TIET06', 'TIET08', 'A1.01'),
+('IT003.N02', 6, 'TIET01', 'TIET03', 'A1.02'),
+-- Lịch học môn Cơ sở dữ liệu
+('IT004.N01', 4, 'TIET01', 'TIET03', 'B4.01'),
+('IT004.N02', 2, 'TIET03', 'TIET05', 'B4.02'),
+-- Lịch học môn Nhập môn Mạng máy tính
+('IT005.N01', 5, 'TIET06', 'TIET08', 'C1.01'),
+('IT005.N02', 6, 'TIET03', 'TIET05', 'C1.02'),
+-- Lịch học môn Kiến trúc máy tính
+('IT006.N01', 3, 'TIET01', 'TIET03', 'B5.01'),
+('IT006.N02', 4, 'TIET03', 'TIET05', 'B5.02'),
+-- Lịch học môn Hệ điều hành
+('IT007.N01', 2, 'TIET09', 'TIET10', 'B6.01'),
+('IT007.N02', 5, 'TIET03', 'TIET05', 'B6.02'),
+-- Lịch học môn Lập trình hướng đối tượng
+('IT008.N01', 6, 'TIET06', 'TIET08', 'B7.01'),
+('IT008.N02', 4, 'TIET09', 'TIET10', 'B7.02'),
+-- Lịch học môn SE104
+('SE104.N01', 2, 'TIET01', 'TIET03', 'E1.01'),
+('SE104.N02', 3, 'TIET06', 'TIET08', 'E1.02'),
+-- Lịch học môn CS106
+('CS106.N01', 4, 'TIET01', 'TIET03', 'E2.01'),
+('CS106.N02', 5, 'TIET09', 'TIET10', 'E2.02'),
+('CS106_TH.N01', 6, 'TIET01', 'TIET03', 'PM.01'),
+('CS106_TH.N02', 6, 'TIET06', 'TIET08', 'PM.02'),
+-- Lịch học môn IS207
+('IS207.N01', 2, 'TIET03', 'TIET05', 'E3.01'),
+('IS207.N02', 4, 'TIET06', 'TIET08', 'E3.02'),
+('IS207_TH.N01', 3, 'TIET01', 'TIET03', 'PM.03'),
+('IS207_TH.N02', 5, 'TIET03', 'TIET05', 'PM.04'),
+-- Lịch học môn NT101
+('NT101.N01', 3, 'TIET03', 'TIET05', 'E4.01'),
+('NT101.N02', 6, 'TIET09', 'TIET10', 'E4.02'),
+-- Lịch học môn CE103
+('CE103.N01', 4, 'TIET03', 'TIET05', 'E5.01'),
+('CE103.N02', 2, 'TIET06', 'TIET08', 'E5.02'),
+('CE103_TH.N01', 5, 'TIET01', 'TIET03', 'LAB.01'),
+('CE103_TH.N02', 6, 'TIET03', 'TIET05', 'LAB.02'),
+-- Lịch học môn Toán
+('MA001.N01', 2, 'TIET01', 'TIET03', 'A2.01'),
+('MA001.N02', 4, 'TIET01', 'TIET03', 'A2.02'),
+('MA002.N01', 3, 'TIET03', 'TIET05', 'A3.01'),
+('MA002.N02', 5, 'TIET06', 'TIET08', 'A3.02'),
+('MA003.N01', 2, 'TIET03', 'TIET05', 'A4.01'),
+('MA003.N02', 6, 'TIET01', 'TIET03', 'A4.02'),
+('MA005.N01', 4, 'TIET06', 'TIET08', 'A5.01'),
+('MA005.N02', 3, 'TIET01', 'TIET03', 'A5.02'),
+-- Lịch học môn Tiếng Anh
+('ENG03.N01', 2, 'TIET06', 'TIET08', 'NN.01'),
+('ENG03.N02', 4, 'TIET03', 'TIET05', 'NN.02'),
+('ENG04.N01', 3, 'TIET09', 'TIET10', 'NN.03'),
+('ENG04.N02', 5, 'TIET01', 'TIET03', 'NN.04');
+
+-- =====================================================
 -- INSERT DATA - Chương trình học (Curriculum)
 -- =====================================================
 INSERT INTO chuong_trinh_hoc (ma_nganh, ma_mon_hoc, hoc_ky_du_kien, bat_buoc) VALUES
@@ -3206,6 +3489,71 @@ INSERT INTO thong_bao_ca_nhan (ma_tai_khoan, tieu_de, noi_dung, loai_thong_bao, 
 -- Thông báo cho Admin
 ((SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = 'admin'), 'Báo cáo đăng ký HK2 2024-2025', 'Tổng số sinh viên đã đăng ký: 5. Tổng số lớp mở: 45. Tổng doanh thu dự kiến: 21,442,000 VNĐ.', 'Báo cáo', '/bao-cao/dang-ky', FALSE),
 ((SELECT ma_tai_khoan FROM tai_khoan WHERE ten_dang_nhap = 'admin'), 'Cảnh báo sinh viên nợ học phí', 'Có 2 sinh viên chưa đóng đủ học phí HK2 2024-2025. Vui lòng kiểm tra danh sách.', 'Cảnh báo', '/bao-cao/cong-no', FALSE);
+
+-- =====================================================
+-- INSERT DATA - Điểm môn học (Course Grades)
+-- Dùng để kiểm tra đậu/rớt và tính điểm trung bình tích lũy (GPA)
+-- Rớt khi điểm trung bình môn < 5.0
+-- Sinh viên muốn đăng ký > 24 tín chỉ phải có GPA >= 8.5
+-- =====================================================
+INSERT INTO diem_mon_hoc (ma_sv, ma_mon_hoc, ma_hoc_ky, diem_qua_trinh, diem_giua_ky, diem_cuoi_ky, so_lan_hoc, ghi_chu) VALUES
+-- Điểm của sinh viên 22520001 - Nguyễn Văn An (HK1-2425) - GPA khoảng 7.5
+('22520001', 'IT001', 'HK1-2425', 8.0, 7.5, 8.0, 1, 'Hoàn thành tốt'),
+('22520001', 'MA001', 'HK1-2425', 7.0, 7.5, 7.0, 1, NULL),
+('22520001', 'MA003', 'HK1-2425', 8.0, 8.0, 7.5, 1, NULL),
+('22520001', 'ENG03', 'HK1-2425', 7.5, 7.0, 7.5, 1, NULL),
+('22520001', 'IT006', 'HK1-2425', 8.5, 8.0, 8.0, 1, NULL),
+-- Điểm của sinh viên 22520002 - Trần Thị Bình (HK1-2425) - GPA cao khoảng 8.8
+('22520002', 'IT001', 'HK1-2425', 9.0, 9.0, 8.5, 1, 'Xuất sắc'),
+('22520002', 'MA001', 'HK1-2425', 8.5, 9.0, 9.0, 1, NULL),
+('22520002', 'MA003', 'HK1-2425', 9.0, 8.5, 9.0, 1, NULL),
+('22520002', 'ENG03', 'HK1-2425', 8.0, 8.5, 8.5, 1, NULL),
+-- Điểm của sinh viên 22520003 - Lê Văn Cường (HK1-2425) - GPA khoảng 6.5
+('22520003', 'IT001', 'HK1-2425', 7.0, 6.5, 6.5, 1, NULL),
+('22520003', 'MA001', 'HK1-2425', 6.5, 6.0, 6.5, 1, NULL),
+('22520003', 'MA003', 'HK1-2425', 7.0, 7.0, 6.5, 1, NULL),
+('22520003', 'IT005', 'HK1-2425', 6.5, 7.0, 6.5, 1, NULL),
+('22520003', 'ENG03', 'HK1-2425', 6.0, 6.5, 6.5, 1, NULL),
+-- Điểm của sinh viên 22520004 - Phạm Thị Dung (HK1-2425) - GPA khoảng 7.8
+('22520004', 'IT001', 'HK1-2425', 8.0, 8.0, 7.5, 1, NULL),
+('22520004', 'MA001', 'HK1-2425', 7.5, 8.0, 8.0, 1, NULL),
+('22520004', 'MA003', 'HK1-2425', 8.5, 7.5, 8.0, 1, NULL),
+('22520004', 'IT006', 'HK1-2425', 8.0, 7.5, 7.5, 1, NULL),
+('22520004', 'ENG03', 'HK1-2425', 7.5, 8.0, 7.5, 1, NULL),
+('22520004', 'IT008', 'HK1-2425', 8.0, 8.5, 8.0, 1, NULL),
+-- Điểm của sinh viên 22520005 - Hoàng Minh Đức (HK1-2425) - GPA khoảng 7.2
+('22520005', 'IT001', 'HK1-2425', 7.5, 7.0, 7.5, 1, NULL),
+('22520005', 'MA001', 'HK1-2425', 7.0, 7.5, 7.0, 1, NULL),
+('22520005', 'MA003', 'HK1-2425', 7.5, 7.0, 7.0, 1, NULL),
+('22520005', 'IT006', 'HK1-2425', 7.0, 7.5, 7.5, 1, NULL),
+('22520005', 'ENG03', 'HK1-2425', 7.5, 7.0, 7.0, 1, NULL),
+-- Ví dụ sinh viên rớt môn (điểm < 5.0)
+('22520003', 'MA002', 'HK1-2425', 4.0, 4.5, 4.5, 1, 'Cần học lại');
+
+-- =====================================================
+-- Cập nhật điểm trung bình tích lũy cho sinh viên (tính từ bảng điểm)
+-- =====================================================
+UPDATE sinh_vien SET 
+    diem_trung_binh_tich_luy = (
+        SELECT CASE 
+            WHEN SUM(CASE WHEN dmh.ket_qua = 'Đậu' THEN mh.so_tin_chi ELSE 0 END) = 0 THEN 0
+            ELSE ROUND(
+                SUM(CASE WHEN dmh.ket_qua = 'Đậu' THEN dmh.diem_trung_binh * mh.so_tin_chi ELSE 0 END) / 
+                SUM(CASE WHEN dmh.ket_qua = 'Đậu' THEN mh.so_tin_chi ELSE 0 END), 2
+            )
+        END
+        FROM diem_mon_hoc dmh
+        JOIN mon_hoc mh ON dmh.ma_mon_hoc = mh.ma_mon_hoc
+        WHERE dmh.ma_sv = sinh_vien.ma_sv
+    ),
+    so_tin_chi_tich_luy = (
+        SELECT COALESCE(SUM(CASE WHEN dmh.ket_qua = 'Đậu' THEN mh.so_tin_chi ELSE 0 END), 0)
+        FROM diem_mon_hoc dmh
+        JOIN mon_hoc mh ON dmh.ma_mon_hoc = mh.ma_mon_hoc
+        WHERE dmh.ma_sv = sinh_vien.ma_sv
+    ),
+    ngay_cap_nhat = CURRENT_TIMESTAMP
+WHERE ma_sv IN ('22520001', '22520002', '22520003', '22520004', '22520005');
 
 -- =====================================================
 -- END OF INIT.SQL

@@ -11,7 +11,7 @@
 | Tên Database | `ql_dangky_hocphi` |
 | Hệ quản trị CSDL | PostgreSQL |
 | Phiên bản | 12+ |
-| Số lượng bảng | 22 bảng |
+| Số lượng bảng | 25 bảng |
 | Mã hóa | UTF-8 |
 
 ### 1.2. Danh sách các bảng theo nhóm chức năng
@@ -24,22 +24,25 @@
 | 4 | Đối tượng | `doi_tuong_sinh_vien` | Liên kết SV với đối tượng |
 | 5 | Tổ chức | `khoa` | Danh sách khoa |
 | 6 | Tổ chức | `nganh_hoc` | Danh sách ngành học |
-| 7 | Nhân sự | `sinh_vien` | Thông tin sinh viên |
+| 7 | Nhân sự | `sinh_vien` | Thông tin sinh viên (bao gồm GPA, tín chỉ tích lũy) |
 | 8 | Môn học | `mon_hoc` | Danh sách môn học (thuộc khoa quản lý) |
 | 9 | Môn học | `dieu_kien_mon_hoc` | Điều kiện môn học (tiên quyết, học trước) |
 | 10 | Môn học | `lop` | Danh sách lớp học (một môn có nhiều lớp) |
-| 11 | Đào tạo | `chuong_trinh_hoc` | Chương trình đào tạo |
-| 12 | Thời gian | `nam_hoc` | Danh sách năm học |
-| 13 | Thời gian | `hoc_ky` | Danh sách học kỳ |
-| 14 | Đào tạo | `lop_mo` | Lớp mở trong học kỳ (thay thế mon_hoc_mo) |
-| 15 | Đăng ký | `phieu_dang_ky` | Phiếu đăng ký học phần |
-| 16 | Đăng ký | `chi_tiet_dang_ky` | Chi tiết lớp đăng ký |
-| 17 | Học phí | `phieu_thu_hoc_phi` | Phiếu thu học phí |
-| 18 | Cấu hình | `don_gia_tin_chi` | Đơn giá tín chỉ theo loại học |
-| 19 | Tài khoản | `tai_khoan` | Tài khoản đăng nhập (phân quyền trực tiếp) |
-| 20 | Quản trị | `quan_tri_vien` | Thông tin quản trị viên |
-| 21 | Thông báo | `thong_bao` | Thông báo chung |
-| 22 | Thông báo | `thong_bao_ca_nhan` | Thông báo cá nhân |
+| 11 | Lịch học | `tiet_hoc` | Danh sách tiết học (11 tiết/ngày, từ Thứ 2 đến Thứ 7) |
+| 12 | Lịch học | `lich_hoc` | Lịch học chi tiết của lớp (theo tiết, thứ, phòng) |
+| 13 | Điểm | `diem_mon_hoc` | Điểm môn học của sinh viên (để tính GPA và đậu/rớt) |
+| 14 | Đào tạo | `chuong_trinh_hoc` | Chương trình đào tạo |
+| 15 | Thời gian | `nam_hoc` | Danh sách năm học |
+| 16 | Thời gian | `hoc_ky` | Danh sách học kỳ |
+| 17 | Đào tạo | `lop_mo` | Lớp mở trong học kỳ (thay thế mon_hoc_mo) |
+| 18 | Đăng ký | `phieu_dang_ky` | Phiếu đăng ký học phần |
+| 19 | Đăng ký | `chi_tiet_dang_ky` | Chi tiết lớp đăng ký |
+| 20 | Học phí | `phieu_thu_hoc_phi` | Phiếu thu học phí |
+| 21 | Cấu hình | `don_gia_tin_chi` | Đơn giá tín chỉ theo loại học |
+| 22 | Tài khoản | `tai_khoan` | Tài khoản đăng nhập (phân quyền trực tiếp) |
+| 23 | Quản trị | `quan_tri_vien` | Thông tin quản trị viên |
+| 24 | Thông báo | `thong_bao` | Thông báo chung |
+| 25 | Thông báo | `thong_bao_ca_nhan` | Thông báo cá nhân |
 
 ---
 

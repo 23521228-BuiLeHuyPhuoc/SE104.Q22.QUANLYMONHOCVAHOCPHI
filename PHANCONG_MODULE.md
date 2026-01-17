@@ -527,14 +527,55 @@ Trang tổng quan hiển thị thống kê và trạng thái hệ thống.
 | **QĐ2** - Loại môn, số tín chỉ | Module 5 |
 | **BM3** - Nhập chương trình học | Module 7 |
 | **QĐ3** - Kế hoạch đào tạo | Module 7, 9 |
-| **BM4** - Môn học mở trong học kỳ | Module 8, 9 |
-| **QĐ4** - Học kỳ chính/hè | Module 8 |
-| **BM5** - Phiếu đăng ký học phần | Module 11 |
-| **QĐ5** - Đơn giá, đăng ký lớp mở | Module 10, 11 |
+| **BM4** - Môn học mở trong học kỳ | Module 8, 9, **17** |
+| **QĐ4** - Học kỳ chính/hè | Module 8, **17** |
+| **BM5** - Phiếu đăng ký học phần | Module 11, **17** |
+| **QĐ5** - Đơn giá, đăng ký lớp mở | Module 10, 11, **17** |
 | **BM6** - Phiếu thu học phí | Module 12 |
 | **QĐ6** - Đóng nhiều lần, hạn đóng | Module 12, 13 |
-| **BM7** - Báo cáo SV chưa đóng HP | Module 14 |
+| **BM7** - Báo cáo SV chưa đóng HP | Module 14, **18** |
 | **QĐ7** - Miễn giảm theo đối tượng | Module 13 |
+| **Điểm & GPA** - Quản lý điểm SV | Module **18** |
+| **Giới hạn tín chỉ** - Đăng ký vượt 24TC | Module **18** |
+
+---
+
+## 👥 PHÂN CÔNG MODULE THEO THÀNH VIÊN
+
+| Thành viên | Modules phụ trách | BM/QĐ |
+|------------|-------------------|-------|
+| **TV1** | Module 1, 2, 3, 4, **18** | BM1, QĐ1, Điểm & GPA |
+| **TV2** | Module 5, 6, 7 | BM2, BM3, QĐ2, QĐ3 |
+| **TV3** | Module 8, 9, 10, 11, **17** | BM4, BM5, QĐ4, QĐ5, Lịch học |
+| **TV4** | Module 12, 13, 14, 15, 16 | BM6, BM7, QĐ6, QĐ7 |
+
+### Chi tiết phân công:
+
+**👤 THÀNH VIÊN 1** - Quản lý Sinh viên, Đối tượng, Điểm & GPA
+- Module 1: Quản lý địa danh (Tỉnh/Huyện)
+- Module 2: Quản lý đối tượng ưu tiên  
+- Module 3: Quản lý sinh viên
+- Module 4: Quản lý Khoa & Ngành học
+- **Module 18: Quản lý Điểm & GPA** (mới)
+
+**👤 THÀNH VIÊN 2** - Quản lý Môn học & Chương trình đào tạo
+- Module 5: Quản lý môn học
+- Module 6: Quản lý lớp học
+- Module 7: Chương trình học
+
+**👤 THÀNH VIÊN 3** - Quản lý Học kỳ, Đăng ký & Lịch học
+- Module 8: Năm học & Học kỳ
+- Module 9: Lớp mở trong học kỳ
+- Module 10: Đơn giá tín chỉ
+- Module 11: Đăng ký học phần
+- **Module 17: Quản lý Lịch học & Tiết học** (mới)
+
+**👤 THÀNH VIÊN 4** - Quản lý Học phí, Báo cáo & Hệ thống
+- Module 12: Thu học phí
+- Module 13: Học phí & Miễn giảm
+- Module 14: Báo cáo
+- Module 15: Thông báo
+- Module 16: Dashboard
 
 ---
 
@@ -603,3 +644,99 @@ Trang tổng quan hiển thị thống kê và trạng thái hệ thống.
 3. **Error Handling**: Mỗi module cần có xử lý lỗi riêng
 4. **Testing**: Viết test cho từng module trước khi tích hợp
 5. **Documentation**: Cập nhật API documentation khi thay đổi
+
+---
+
+## 🆕 MODULE 17: QUẢN LÝ LỊCH HỌC & TIẾT HỌC (TV3 - Thành viên 3)
+
+### Phân công: **THÀNH VIÊN 3** (cùng với BM4, BM5, QĐ4, QĐ5)
+
+### Mô tả:
+Quản lý lịch học chi tiết của các lớp theo tiết học. Trường mở cửa từ Thứ 2 đến Thứ 7, có 10 tiết trong ngày và buổi tối.
+
+### Bảng Database:
+- `tiet_hoc` - Danh sách tiết học (11 tiết/ngày)
+- `lich_hoc` - Lịch học chi tiết của lớp
+
+### Files liên quan:
+
+| Loại | File | Mô tả |
+|------|------|-------|
+| **SQL** | `backend/src/config/init.sql` | Bảng `tiet_hoc`, `lich_hoc`, View `v_thoi_khoa_bieu` |
+| **Backend** | `backend/src/controllers/scheduleController.js` | API lịch học |
+| **Backend** | `backend/src/routes/scheduleRoutes.js` | Routes |
+| **Frontend** | `frontend/src/pages/admin/ScheduleManagement.jsx` | Giao diện quản lý |
+| **Frontend** | `frontend/src/pages/MySchedule.jsx` | Thời khóa biểu của SV |
+
+### Khung giờ tiết học:
+
+| Tiết | Thời gian | Buổi |
+|------|-----------|------|
+| Tiết 1 | 7:30 - 8:15 | Sáng |
+| Tiết 2 | 8:15 - 9:00 | Sáng |
+| Tiết 3 | 9:00 - 9:45 | Sáng |
+| Tiết 4 | 10:00 - 10:45 | Sáng |
+| Tiết 5 | 10:45 - 11:30 | Sáng |
+| Tiết 6 | 13:00 - 13:45 | Chiều |
+| Tiết 7 | 13:45 - 14:30 | Chiều |
+| Tiết 8 | 14:30 - 15:15 | Chiều |
+| Tiết 9 | 15:30 - 16:15 | Chiều |
+| Tiết 10 | 16:15 - 17:00 | Chiều |
+| Buổi tối | 17:45 - 20:45 | Tối |
+
+### API Endpoints:
+```
+GET    /api/schedule/time-slots           - Lấy danh sách tiết học
+GET    /api/schedule/class/:class_id      - Lịch học của lớp
+POST   /api/schedule/class/:class_id      - Thêm lịch học cho lớp
+PUT    /api/schedule/:id                  - Sửa lịch học
+DELETE /api/schedule/:id                  - Xóa lịch học
+GET    /api/schedule/student/:id/:semester_id - Thời khóa biểu của SV
+GET    /api/schedule/check-conflict       - Kiểm tra trùng lịch
+```
+
+---
+
+## 🆕 MODULE 18: QUẢN LÝ ĐIỂM & GPA (TV1 - Thành viên 1)
+
+### Phân công: **THÀNH VIÊN 1** (cùng với BM1, QĐ1 - Quản lý Sinh viên)
+
+### Mô tả:
+Quản lý điểm môn học của sinh viên. Tính điểm trung bình tích lũy (GPA). Xác định đậu/rớt để kiểm tra điều kiện đăng ký môn và vượt quá giới hạn tín chỉ.
+
+### Quy định:
+- **Điểm trung bình môn** = Điểm QT × 0.2 + Điểm GK × 0.3 + Điểm CK × 0.5
+- **Đậu**: Điểm trung bình môn >= 5.0
+- **Rớt**: Điểm trung bình môn < 5.0 (cần học lại)
+- **Tối đa tín chỉ/học kỳ**: 24 tín chỉ
+- **Vượt quá 24 tín chỉ**: Yêu cầu GPA >= 8.5
+
+### Bảng Database:
+- `diem_mon_hoc` - Điểm môn học của sinh viên
+- `sinh_vien` - Có thêm cột `diem_trung_binh_tich_luy`, `so_tin_chi_tich_luy`
+
+### Files liên quan:
+
+| Loại | File | Mô tả |
+|------|------|-------|
+| **SQL** | `backend/src/config/init.sql` | Bảng `diem_mon_hoc`, View `v_bang_diem_sinh_vien`, `v_diem_trung_binh_tich_luy`, `v_mon_da_hoc` |
+| **Backend** | `backend/src/controllers/gradeController.js` | API điểm |
+| **Backend** | `backend/src/routes/gradeRoutes.js` | Routes |
+| **Frontend** | `frontend/src/pages/admin/GradeManagement.jsx` | Giao diện quản lý điểm |
+| **Frontend** | `frontend/src/pages/MyGrades.jsx` | Bảng điểm của SV |
+| **Frontend** | `frontend/src/pages/MyTranscript.jsx` | Bảng điểm tích lũy |
+
+### API Endpoints:
+```
+GET    /api/grades                        - Lấy danh sách điểm
+GET    /api/grades/:id                    - Chi tiết điểm
+GET    /api/grades/student/:id            - Điểm của SV
+GET    /api/grades/student/:id/semester/:semester_id - Điểm theo học kỳ
+POST   /api/grades                        - Nhập điểm
+PUT    /api/grades/:id                    - Sửa điểm
+GET    /api/grades/student/:id/gpa        - Lấy GPA của SV
+GET    /api/grades/student/:id/transcript - Bảng điểm tích lũy
+GET    /api/grades/student/:id/passed-courses - Danh sách môn đã đậu
+GET    /api/grades/check-prerequisite/:sv_id/:course_id - Kiểm tra điều kiện tiên quyết
+GET    /api/grades/check-credit-limit/:sv_id/:credits - Kiểm tra giới hạn tín chỉ
+```

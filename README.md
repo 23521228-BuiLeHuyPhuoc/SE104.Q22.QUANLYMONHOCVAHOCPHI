@@ -15,16 +15,52 @@ Hệ thống web application quản lý việc đăng ký môn học và thu h�
 - Quản lý sinh viên (CRUD)
 - Quản lý môn học (CRUD)
 - Quản lý học kỳ
+- Quản lý lịch học và tiết học
 - Xem danh sách đăng ký môn học
 - Quản lý học phí và theo dõi công nợ
 - Ghi nhận thanh toán học phí
+- Quản lý điểm sinh viên
 - Xem báo cáo thống kê
 
 ### 👨‍🎓 Sinh viên
-- Đăng ký môn học theo học kỳ
+- Đăng ký môn học theo học kỳ (tối đa 24 tín chỉ, vượt quá cần GPA >= 8.5)
 - Xem danh sách môn học đã đăng ký
+- Xem thời khóa biểu (lịch học theo tiết)
+- Xem bảng điểm và điểm trung bình tích lũy (GPA)
+- Xem danh sách môn đã hoàn thành (để đăng ký môn có điều kiện tiên quyết)
 - Xem thông tin học phí
 - Xem lịch sử thanh toán
+
+## 📅 Quản lý Lịch học và Tiết học
+
+Hệ thống hỗ trợ quản lý thời khóa biểu theo tiết học:
+
+| Tiết | Thời gian | Buổi |
+|------|-----------|------|
+| Tiết 1 | 7:30 - 8:15 | Sáng |
+| Tiết 2 | 8:15 - 9:00 | Sáng |
+| Tiết 3 | 9:00 - 9:45 | Sáng |
+| Tiết 4 | 10:00 - 10:45 | Sáng |
+| Tiết 5 | 10:45 - 11:30 | Sáng |
+| Tiết 6 | 13:00 - 13:45 | Chiều |
+| Tiết 7 | 13:45 - 14:30 | Chiều |
+| Tiết 8 | 14:30 - 15:15 | Chiều |
+| Tiết 9 | 15:30 - 16:15 | Chiều |
+| Tiết 10 | 16:15 - 17:00 | Chiều |
+| Buổi tối | 17:45 - 20:45 | Tối |
+
+Trường mở cửa từ **Thứ 2 đến Thứ 7**.
+
+## 📊 Quản lý Điểm và GPA
+
+### Quy định về điểm
+- **Điểm trung bình môn** = Điểm QT × 0.2 + Điểm GK × 0.3 + Điểm CK × 0.5
+- **Đậu**: Điểm trung bình môn >= 5.0
+- **Rớt**: Điểm trung bình môn < 5.0 (cần học lại)
+
+### Quy định về đăng ký tín chỉ
+- **Tối đa**: 24 tín chỉ/học kỳ (mặc định)
+- **Vượt quá 24 tín chỉ**: Yêu cầu điểm trung bình tích lũy (GPA) >= 8.5
 
 ## 🚀 Cài đặt và Chạy
 

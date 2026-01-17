@@ -1329,3 +1329,35 @@ CS519			2	0
 1020	VCPH1	Lịch sử Đảng CSVN	History of the Communist Party of Vietnam	Hiện không còn mở	P.ĐTĐH	ĐC					3	0
 1021	VCPL1	Đường lối cách mạng của Đảng CSVN	Revolution Directions of Vietnam Communist Party	Hiện không còn mở	TTNN	ĐC		SS002			3	0
 1022	WINP1	Lập trình trên Windows	Windows Programming	Hiện không còn mở	CNPM	ĐC		IT008			3	1
+
+---
+
+## QUY ĐỊNH ĐĂNG KÝ MÔN HỌC VÀ LỊCH HỌC
+
+### Giới hạn tín chỉ đăng ký
+- **Tối đa mặc định:** 24 tín chỉ/học kỳ
+- **Vượt quá 24 tín chỉ:** Yêu cầu điểm trung bình tích lũy (GPA) >= 8.5
+
+### Quy định về điểm và đậu/rớt
+- **Điểm trung bình môn** = Điểm QT × 0.2 + Điểm GK × 0.3 + Điểm CK × 0.5
+- **Đậu:** Điểm trung bình môn >= 5.0
+- **Rớt:** Điểm trung bình môn < 5.0 (cần học lại)
+
+### Khung giờ tiết học
+
+| Tiết | Thời gian | Buổi |
+|------|-----------|------|
+| Tiết 1 | 7:30 - 8:15 | Sáng |
+| Tiết 2 | 8:15 - 9:00 | Sáng |
+| Tiết 3 | 9:00 - 9:45 | Sáng |
+| Tiết 4 | 10:00 - 10:45 | Sáng |
+| Tiết 5 | 10:45 - 11:30 | Sáng |
+| Tiết 6 | 13:00 - 13:45 | Chiều |
+| Tiết 7 | 13:45 - 14:30 | Chiều |
+| Tiết 8 | 14:30 - 15:15 | Chiều |
+| Tiết 9 | 15:30 - 16:15 | Chiều |
+| Tiết 10 | 16:15 - 17:00 | Chiều |
+| Buổi tối | 17:45 - 20:45 | Tối |
+
+### Thứ học trong tuần
+Trường mở cửa từ Thứ 2 đến Thứ 7 (6 ngày/tuần).
