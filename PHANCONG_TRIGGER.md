@@ -1316,8 +1316,8 @@ Ví dụ: sp_dang_ky_lop
 
 | STT | Tên Trigger/Function | Mô tả | Bảng liên quan |
 |-----|---------------------|-------|----------------|
-| 1 | `trg_diem_mon_hoc_before_insert` | Kiểm tra điểm hợp lệ (0-10) | `diem_mon_hoc` |
-| 2 | `trg_diem_mon_hoc_after_insert_update` | Cập nhật GPA và tín chỉ tích lũy của sinh viên | `diem_mon_hoc`, `sinh_vien` |
+| 1 | `trg_kiem_tra_diem` | Kiểm tra điểm hợp lệ (0-10) trước khi INSERT/UPDATE | `diem_mon_hoc` |
+| 2 | `trg_cap_nhat_gpa_sau_diem` | Cập nhật GPA và tín chỉ tích lũy sau khi thêm/sửa điểm | `diem_mon_hoc`, `sinh_vien` |
 | 3 | `fn_tinh_diem_trung_binh_tich_luy(ma_sv)` | Tính điểm trung bình tích lũy (GPA) | `diem_mon_hoc`, `mon_hoc` |
 | 4 | `fn_tinh_so_tin_chi_tich_luy(ma_sv)` | Tính tổng số tín chỉ đã tích lũy (chỉ tính môn đậu) | `diem_mon_hoc`, `mon_hoc` |
 | 5 | `fn_kiem_tra_dieu_kien_tien_quyet(ma_sv, ma_mon_hoc)` | Kiểm tra sinh viên đã đậu môn tiên quyết chưa | `diem_mon_hoc`, `dieu_kien_mon_hoc` |
