@@ -12,7 +12,7 @@ Tài liệu này phân chia công việc viết Trigger và Stored Procedures ch
 
 ## 👤 THÀNH VIÊN 1: Quản lý Sinh viên & Đối tượng ưu tiên
 
-### Phụ trách: BM1, QĐ1
+### Phụ trách: BM1, QĐ1, **Module 18 - Điểm & GPA**
 
 | STT | Tên Trigger/Function | Mô tả | Bảng liên quan |
 |-----|---------------------|-------|----------------|
@@ -24,6 +24,12 @@ Tài liệu này phân chia công việc viết Trigger và Stored Procedures ch
 | 6 | `fn_kiem_tra_vung_sau_vung_xa(ma_huyen)` | Kiểm tra huyện có thuộc vùng sâu/xa không (QĐ1) | `huyen` |
 | 7 | `sp_lap_ho_so_sinh_vien(...)` | Procedure tạo hồ sơ sinh viên đầy đủ (BM1) | `sinh_vien`, `tai_khoan`, `doi_tuong_sinh_vien` |
 | 8 | `trg_huyen_before_update` | Cập nhật tỷ lệ giảm cho SV khi thay đổi vùng sâu/xa | `huyen`, `sinh_vien`, `phieu_dang_ky` |
+| **9** | **`trg_kiem_tra_diem`** | **Kiểm tra điểm hợp lệ (0-10) trước khi INSERT/UPDATE** | **`diem_mon_hoc`** |
+| **10** | **`trg_cap_nhat_gpa_sau_diem`** | **Cập nhật GPA và tín chỉ tích lũy sau khi thêm/sửa điểm** | **`diem_mon_hoc`, `sinh_vien`** |
+| **11** | **`fn_tinh_diem_trung_binh_tich_luy(ma_sv)`** | **Tính điểm trung bình tích lũy (GPA)** | **`diem_mon_hoc`, `mon_hoc`** |
+| **12** | **`fn_tinh_so_tin_chi_tich_luy(ma_sv)`** | **Tính tổng số tín chỉ đã tích lũy (chỉ tính môn đậu)** | **`diem_mon_hoc`, `mon_hoc`** |
+| **13** | **`fn_kiem_tra_dieu_kien_tien_quyet(ma_sv, ma_mon_hoc)`** | **Kiểm tra sinh viên đã đậu môn tiên quyết chưa** | **`diem_mon_hoc`, `dieu_kien_mon_hoc`** |
+| **14** | **`fn_kiem_tra_gioi_han_tin_chi(ma_sv, so_tin_chi_dang_ky)`** | **Kiểm tra sinh viên có được đăng ký vượt quá 24 tín chỉ (yêu cầu GPA >= 8.5)** | **`sinh_vien`, `phieu_dang_ky`** |
 
 ### 📝 MÔ TẢ CHI TIẾT TỪNG TRIGGER/FUNCTION:
 
@@ -535,7 +541,7 @@ SELECT * FROM fn_lay_chuong_trinh_hoc_theo_nganh('KTPM');
 
 ## 👤 THÀNH VIÊN 3: Quản lý Học kỳ & Đăng ký môn học
 
-### Phụ trách: BM4, BM5, QĐ4, QĐ5
+### Phụ trách: BM4, BM5, QĐ4, QĐ5, **Module 17 - Lịch học & Tiết học**
 
 | STT | Tên Trigger/Function | Mô tả | Bảng liên quan |
 |-----|---------------------|-------|----------------|
@@ -550,6 +556,10 @@ SELECT * FROM fn_lay_chuong_trinh_hoc_theo_nganh('KTPM');
 | 9 | `fn_kiem_tra_lop_mo(ma_hoc_ky, ma_lop)` | Kiểm tra lớp có mở trong học kỳ không (QĐ5) | `lop_mo` |
 | 10 | `fn_kiem_tra_si_so_lop(ma_lop, ma_hoc_ky)` | Kiểm tra sĩ số còn chỗ trống | `lop_mo`, `lop` |
 | 11 | `sp_huy_dang_ky_lop(ma_sv, ma_hoc_ky, ma_lop)` | Procedure hủy đăng ký lớp | `chi_tiet_dang_ky`, `phieu_dang_ky`, `lop_mo` |
+| **12** | **`trg_lich_hoc_before_insert`** | **Kiểm tra lịch học không trùng với các lớp khác** | **`lich_hoc`, `tiet_hoc`** |
+| **13** | **`fn_kiem_tra_trung_lich(ma_sv, thu, ma_tiet_bd, ma_tiet_kt, ma_hoc_ky)`** | **Kiểm tra sinh viên có bị trùng lịch học không** | **`lich_hoc`, `chi_tiet_dang_ky`** |
+| **14** | **`fn_lay_thoi_khoa_bieu(ma_sv, ma_hoc_ky)`** | **Lấy thời khóa biểu của sinh viên** | **`lich_hoc`, `chi_tiet_dang_ky`** |
+| **15** | **`trg_chi_tiet_dang_ky_before_insert`** | **Kiểm tra giới hạn tín chỉ và trùng lịch trước khi đăng ký** | **`chi_tiet_dang_ky`, `phieu_dang_ky`, `lich_hoc`** |
 
 ### 📝 MÔ TẢ CHI TIẾT TỪNG TRIGGER/FUNCTION:
 
@@ -1249,12 +1259,17 @@ WHERE so_phieu_thu = 1;
 
 ## 📊 TỔNG HỢP CÔNG VIỆC
 
-| Thành viên | BM | QĐ | Số Trigger | Số Function | Số Procedure |
-|------------|----|----|------------|-------------|--------------|
-| **TV1** | BM1 | QĐ1 | 4 | 2 | 1 |
-| **TV2** | BM2, BM3 | QĐ2, QĐ3 | 4 | 2 | 2 |
-| **TV3** | BM4, BM5 | QĐ4, QĐ5 | 4 | 3 | 3 |
-| **TV4** | BM6, BM7 | QĐ6, QĐ7 | 3 | 3 | 3 |
+| Thành viên | BM/QĐ | Module | Số Trigger | Số Function | Số Procedure |
+|------------|-------|--------|------------|-------------|--------------|
+| **TV1** | BM1, QĐ1 | 1, 2, 3, 4, **18** | 6 | 6 | 1 |
+| **TV2** | BM2, BM3, QĐ2, QĐ3 | 5, 6, 7 | 4 | 2 | 2 |
+| **TV3** | BM4, BM5, QĐ4, QĐ5 | 8, 9, 10, 11, **17** | 6 | 5 | 3 |
+| **TV4** | BM6, BM7, QĐ6, QĐ7 | 12, 13, 14, 15, 16 | 3 | 3 | 3 |
+
+### Chi tiết phân công mới:
+
+- **TV1** bổ sung: Module 18 (Điểm & GPA) - 6 trigger/function mới cho quản lý điểm, GPA, giới hạn tín chỉ
+- **TV3** bổ sung: Module 17 (Lịch học & Tiết học) - 4 trigger/function mới cho quản lý lịch học, kiểm tra trùng lịch
 
 ---
 
@@ -1299,3 +1314,69 @@ Ví dụ: sp_dang_ky_lop
 3. **Transaction**: Các procedure phức tạp cần sử dụng transaction để đảm bảo atomic
 4. **Performance**: Tránh các query không hiệu quả trong trigger (vì trigger chạy với mỗi row)
 5. **Documentation**: Comment rõ ràng cho mỗi trigger/function/procedure
+
+---
+
+## 🆕 CHỨC NĂNG MỚI BỔ SUNG (ĐÃ PHÂN CÔNG)
+
+> **Lưu ý:** Các trigger/function mới đã được phân công vào các thành viên tương ứng ở trên.
+
+### 📅 Module 17: Quản lý Lịch học và Tiết học → **THÀNH VIÊN 3** (TV3)
+
+Các trigger/function sau đã được bổ sung vào phần công việc của **TV3**:
+- `trg_lich_hoc_before_insert` - Kiểm tra lịch học không trùng với các lớp khác
+- `fn_kiem_tra_trung_lich(ma_sv, thu, ma_tiet_bd, ma_tiet_kt, ma_hoc_ky)` - Kiểm tra sinh viên có bị trùng lịch học không
+- `fn_lay_thoi_khoa_bieu(ma_sv, ma_hoc_ky)` - Lấy thời khóa biểu của sinh viên
+- `trg_chi_tiet_dang_ky_before_insert` - Kiểm tra giới hạn tín chỉ và trùng lịch trước khi đăng ký
+
+### 📊 Module 18: Quản lý Điểm và GPA → **THÀNH VIÊN 1** (TV1)
+
+Các trigger/function sau đã được bổ sung vào phần công việc của **TV1**:
+- `trg_kiem_tra_diem` - Kiểm tra điểm hợp lệ (0-10) trước khi INSERT/UPDATE
+- `trg_cap_nhat_gpa_sau_diem` - Cập nhật GPA và tín chỉ tích lũy sau khi thêm/sửa điểm
+- `fn_tinh_diem_trung_binh_tich_luy(ma_sv)` - Tính điểm trung bình tích lũy (GPA)
+- `fn_tinh_so_tin_chi_tich_luy(ma_sv)` - Tính tổng số tín chỉ đã tích lũy (chỉ tính môn đậu)
+- `fn_kiem_tra_dieu_kien_tien_quyet(ma_sv, ma_mon_hoc)` - Kiểm tra sinh viên đã đậu môn tiên quyết chưa
+- `fn_kiem_tra_gioi_han_tin_chi(ma_sv, so_tin_chi_dang_ky)` - Kiểm tra sinh viên có được đăng ký vượt quá 24 tín chỉ (yêu cầu GPA >= 8.5)
+
+### 📝 MÔ TẢ CHI TIẾT:
+
+#### `fn_kiem_tra_gioi_han_tin_chi(p_ma_sv, p_so_tin_chi_dang_ky)`
+**Mục đích:** Kiểm tra sinh viên có được đăng ký số tín chỉ theo quy định.
+
+**Quy định:**
+- **Tối đa mặc định:** 24 tín chỉ/học kỳ
+- **Vượt quá 24 tín chỉ:** Yêu cầu điểm trung bình tích lũy (GPA) >= 8.5
+
+**Logic xử lý:**
+1. Lấy GPA hiện tại của sinh viên từ `sinh_vien.diem_trung_binh_tich_luy`
+2. Nếu `p_so_tin_chi_dang_ky <= 24` → Cho phép đăng ký
+3. Nếu `p_so_tin_chi_dang_ky > 24`:
+   - Nếu `GPA >= 8.5` → Cho phép đăng ký
+   - Nếu `GPA < 8.5` → Không cho phép (raise exception)
+
+**Output:** BOOLEAN - TRUE nếu được phép, FALSE nếu không
+
+**Ví dụ:**
+```sql
+-- Sinh viên có GPA = 9.0, đăng ký 27 tín chỉ
+SELECT fn_kiem_tra_gioi_han_tin_chi('SV001', 27);  -- TRUE
+
+-- Sinh viên có GPA = 7.5, đăng ký 25 tín chỉ
+SELECT fn_kiem_tra_gioi_han_tin_chi('SV002', 25);  -- FALSE (GPA < 8.5)
+```
+
+#### `fn_tinh_diem_trung_binh_tich_luy(p_ma_sv)`
+**Mục đích:** Tính điểm trung bình tích lũy (GPA) của sinh viên.
+
+**Công thức:**
+```
+GPA = Σ(Điểm TB môn × Số tín chỉ môn) / Σ(Số tín chỉ các môn đậu)
+```
+
+**Quy định:**
+- Chỉ tính các môn có kết quả **Đậu** (điểm >= 5.0)
+- Điểm trung bình môn = Điểm QT × 0.2 + Điểm GK × 0.3 + Điểm CK × 0.5
+- **Rớt:** Điểm trung bình môn < 5.0
+
+**Output:** DECIMAL(4,2) - Điểm trung bình tích lũy (0-10)
